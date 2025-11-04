@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { GamesDTO } from './games.dto';
 import { UsersDTO } from './users.dto';
@@ -31,8 +31,8 @@ export class AdminController {
     return this.adminService.updateFullGame(game, id);
   }
   
-  @Delete('games/remove/:id')
-  removeGame(@Param('id') id: number): string {
+  @Delete('games/remove')
+  removeGame(@Query('id') id: number): string {
     return this.adminService.removeGame(id);
   }
   
@@ -56,8 +56,8 @@ export class AdminController {
     return this.adminService.updateFullUser(user, id);
   }
   
-  @Delete('users/remove/:id')
-  removeUser(@Param('id') id: number): string {
+  @Delete('users/remove')
+  removeUser(@Query('id') id: number): string {
     return this.adminService.removeUser(id);
   }
   
@@ -81,8 +81,8 @@ export class AdminController {
     return this.adminService.updateFullPurchase(purchase, id);
   }
   
-  @Delete('purchases/remove/:id')
-  deletePurchase(@Param('id') id: number): string {
+  @Delete('purchases/remove')
+  deletePurchase(@Query('id') id: number): string {
     return this.adminService.deletePurchase(id);
   }
   
@@ -106,8 +106,8 @@ export class AdminController {
     return this.adminService.updateFullView(view, id);
   }
   
-  @Delete('views/remove/:id')
-  deleteView(@Param('id') id: number): string {
+  @Delete('views/remove')
+  deleteView(@Query('id') id: number): string {
     return this.adminService.deleteView(id);
   }
   
@@ -131,8 +131,8 @@ export class AdminController {
     return this.adminService.updateFullPlay(play, id);
   }
   
-  @Delete('plays/remove/:id')
-  deletePlay(@Param('id') id: number): string {
+  @Delete('plays/remove')
+  deletePlay(@Query('id') id: number): string {
     return this.adminService.deletePlay(id);
   }
   
@@ -156,8 +156,8 @@ export class AdminController {
     return this.adminService.updateFullCategory(category, id);
   }
   
-  @Delete('categories/remove/:id')
-  removeCategory(@Param('id') id: number): string {
+  @Delete('categories/remove')
+  removeCategory(@Query('id') id: number): string {
     return this.adminService.removeCategory(id);
   }
 }
