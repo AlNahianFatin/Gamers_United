@@ -1,13 +1,26 @@
 import { Injectable } from '@nestjs/common';
+import * as path from 'path';
 import { GamesDTO } from './games.dto';
 import { UsersDTO } from './users.dto';
 import { PurchasesDTO } from './purchases.dto';
 import { ViewsDTO } from './views.dto';
 import { PlaysDTO } from './plays.dto';
 import { CategoriesDTO } from './categories.dto';
+import { AdminDTO } from './admin.dto';
 
 @Injectable()
 export class AdminService {
+
+  addAdmin(admin: AdminDTO): object {
+    return { message: `${admin.username} has been added successfully`, admin };
+  }
+
+  getAdmin(name: string, res: any) {
+    const filePath = path.join(process.cwd(), 'uploads', 'users', 'admin', name);
+    console.log('Serving file:', filePath);
+    return res.sendFile(filePath);
+  }
+
   getGames(): object {
     let game1: Object = {
       id: 101,
@@ -28,15 +41,15 @@ export class AdminService {
   addGame(game: GamesDTO): string {
     return game.title + " has been added successfully";
   }
-  
+
   updateGame(game: GamesDTO, oldTitle: string, newTitle: string): string {
     return `${game.id} has been updated from '${oldTitle}' to '${newTitle}' successfully`;
   }
-  
+
   updateFullGame(game: GamesDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   removeGame(id: number): string {
     return `Game with ID ${id} has been removed successfully`;
   }
@@ -52,23 +65,23 @@ export class AdminService {
     };
     return user1;
   }
-  
+
   addUser(user: UsersDTO): string {
     return user.username + " has been added successfully";
   }
-  
+
   updateUser(user: UsersDTO, oldUsername: string, newUsername: string): string {
     return `${user.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
   }
-  
+
   updateFullUser(user: UsersDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   removeUser(id: number): string {
     return `User with ID ${id} has been removed successfully`;
   }
-  
+
   getPurchases(): object {
     let purchase1: Object = {
       id: 453146,
@@ -79,23 +92,23 @@ export class AdminService {
     };
     return purchase1;
   }
-  
+
   addPurchase(purchase: PurchasesDTO): string {
     return purchase.id + " has been added successfully";
   }
-  
+
   updatePurchase(purchase: PurchasesDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   updateFullPurchase(purchase: PurchasesDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   deletePurchase(id: number): string {
     return `Purchase record with ID ${id} has been deleted successfully`;
   }
-  
+
   getViews(): object {
     let view1: Object = {
       id: 132,
@@ -105,23 +118,23 @@ export class AdminService {
     };
     return view1;
   }
-  
+
   addView(view: ViewsDTO): string {
     return view.id + " has been added successfully";
   }
-  
+
   updateView(view: ViewsDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   updateFullView(view: ViewsDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   deleteView(id: number): string {
     return `View record with ID ${id} has been deleted successfully`;
   }
-  
+
   getPlays(): object {
     let play1: Object = {
       id: 132,
@@ -131,23 +144,23 @@ export class AdminService {
     };
     return play1;
   }
-  
+
   addPlay(play: PlaysDTO): string {
     return play.id + " has been added successfully";
   }
-  
+
   updatePlay(play: PlaysDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   updateFullPlay(play: PlaysDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   deletePlay(id: number): string {
     return `Play record with ID ${id} has been deleted successfully`;
   }
-  
+
   getCategories(): object {
     let category1: Object = {
       id: 1345,
@@ -157,19 +170,19 @@ export class AdminService {
     };
     return category1;
   }
-  
+
   addCategory(category: CategoriesDTO): string {
     return category.id + " has been added successfully";
   }
-  
+
   updateCategory(category: CategoriesDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   updateFullCategory(category: CategoriesDTO, id: number): string {
     return `${id} has been updated successfully`;
   }
-  
+
   removeCategory(id: number): string {
     return `Play record with ID ${id} has been deleted successfully`;
   }

@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Res, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { MulterError, diskStorage } from 'multer';
 import { AdminService } from './admin.service';
 import { GamesDTO } from './games.dto';
 import { UsersDTO } from './users.dto';
@@ -6,10 +8,40 @@ import { PurchasesDTO } from './purchases.dto';
 import { ViewsDTO } from './views.dto';
 import { PlaysDTO } from './plays.dto';
 import { CategoriesDTO } from './categories.dto';
+import { AdminDTO } from './admin.dto';
+import path from 'path';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService) { }
+
+  @Post('addAdmin')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: process.cwd() + '/uploads/users/admin',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) admin: AdminDTO): object {
+    console.log(file);
+    return this.adminService.addAdmin(admin);
+  }
+
+  @Get('getAdmin/:name')
+  getAdmin(@Param('name') name: string, @Res() res) {
+    res.sendFile(name, {root:'./uploads/users/admin'})
+   // return this.adminService.getAdmin(name, res);
+  }
 
   @Get('games')
   getGames(): object {
@@ -25,17 +57,17 @@ export class AdminController {
   updateGame(@Param('newTitle') newTitle: string, @Body() game: GamesDTO): string {
     return this.adminService.updateGame(game, game.title, newTitle);
   }
-  
+
   @Put('games/update/:id')
   updateFullGame(@Param('id') id: number, @Body() game: GamesDTO): string {
     return this.adminService.updateFullGame(game, id);
   }
-  
+
   @Delete('games/remove')
   removeGame(@Query('id') id: number): string {
     return this.adminService.removeGame(id);
   }
-  
+
   @Get('users')
   getUsers(): object {
     return this.adminService.getUsers();
@@ -50,17 +82,17 @@ export class AdminController {
   updateUser(@Param('newUsername') newUsername: string, @Body() user: UsersDTO): string {
     return this.adminService.updateUser(user, user.username, newUsername);
   }
-  
+
   @Put('users/update/:id')
   updateFullUser(@Param('id') id: number, @Body() user: UsersDTO): string {
     return this.adminService.updateFullUser(user, id);
   }
-  
+
   @Delete('users/remove')
   removeUser(@Query('id') id: number): string {
     return this.adminService.removeUser(id);
   }
-  
+
   @Get('purchases')
   getPurchases(): object {
     return this.adminService.getPurchases();
@@ -75,17 +107,17 @@ export class AdminController {
   updatePurchase(@Param('id') id: number, @Body() purchase: PurchasesDTO): string {
     return this.adminService.updatePurchase(purchase, id);
   }
-  
+
   @Put('purchases/update/:id')
   updateFullPurchase(@Param('id') id: number, @Body() purchase: PurchasesDTO): string {
     return this.adminService.updateFullPurchase(purchase, id);
   }
-  
+
   @Delete('purchases/remove')
   deletePurchase(@Query('id') id: number): string {
     return this.adminService.deletePurchase(id);
   }
-  
+
   @Get('views')
   getViews(): object {
     return this.adminService.getViews();
@@ -100,17 +132,17 @@ export class AdminController {
   updateView(@Param('id') id: number, @Body() view: ViewsDTO): string {
     return this.adminService.updateView(view, id);
   }
-  
+
   @Put('views/update/:id')
   updateFullView(@Param('id') id: number, @Body() view: ViewsDTO): string {
     return this.adminService.updateFullView(view, id);
   }
-  
+
   @Delete('views/remove')
   deleteView(@Query('id') id: number): string {
     return this.adminService.deleteView(id);
   }
-  
+
   @Get('plays')
   getPlays(): object {
     return this.adminService.getPlays();
@@ -125,17 +157,17 @@ export class AdminController {
   updatePlay(@Param('id') id: number, @Body() play: PlaysDTO): string {
     return this.adminService.updatePlay(play, id);
   }
-  
+
   @Put('plays/update/:id')
   updateFullPlay(@Param('id') id: number, @Body() play: PlaysDTO): string {
     return this.adminService.updateFullPlay(play, id);
   }
-  
+
   @Delete('plays/remove')
   deletePlay(@Query('id') id: number): string {
     return this.adminService.deletePlay(id);
   }
-  
+
   @Get('categories')
   getCategories(): object {
     return this.adminService.getCategories();
@@ -150,12 +182,12 @@ export class AdminController {
   updateCategory(@Param('id') id: number, @Body() category: CategoriesDTO): string {
     return this.adminService.updateCategory(category, id);
   }
-  
+
   @Put('categories/update/:id')
   updateFullCategory(@Param('id') id: number, @Body() category: CategoriesDTO): string {
     return this.adminService.updateFullCategory(category, id);
   }
-  
+
   @Delete('categories/remove')
   removeCategory(@Query('id') id: number): string {
     return this.adminService.removeCategory(id);
