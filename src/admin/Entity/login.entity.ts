@@ -11,16 +11,16 @@ export class LoginEntity {
     @Column({type: "varchar", nullable: true})
     username: string;
     
-    @Column()
+    @Column({nullable: true})
     password_hash: string;
     
-    @Column()
+    @Column({nullable: true})
     role: string;
     
-    @Column({type: "boolean", default: true})
+    @Column({type: "boolean", default: true, nullable: true})
     activation: boolean;
     
-    @Column({type: "boolean", default: false})
+    @Column({type: "boolean", default: false, nullable: true})
     ban: boolean;
 
     @BeforeInsert() 

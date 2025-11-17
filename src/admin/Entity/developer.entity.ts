@@ -9,19 +9,19 @@ export class DeveloperEntity {
     @Column({type: "varchar", nullable: true})
     username: string;
 
-    @Column()
+    @Column({nullable: true})
     email: string;
     
-    @Column()
+    @Column({nullable: true})
     profile_image: string;
     
-    @Column()
+    @Column({nullable: true})
     NID: number;
     
-    @Column({type: "bigint"})
+    @Column({type: "bigint", nullable: true})
     phone: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({nullable: true})
     created_at: Date;
 
     @ManyToOne(() => LoginEntity, login => login.admins, {cascade: true})
