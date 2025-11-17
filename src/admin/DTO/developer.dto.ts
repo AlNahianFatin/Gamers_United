@@ -1,9 +1,9 @@
-import { IsString, IsEmail, IsNotEmpty, Matches, MinLength, MaxLength, Length } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform } from "class-transformer";
+import { IsEmail, IsNotEmpty, IsString, Matches } from "class-validator";
 
-export class AdminDTO {
+export class DeveloperDTO {
     id: number;
-
+    
     @IsString()
     @IsNotEmpty({ message: 'Username is required' })
     @Matches(/^[a-zA-Z\s]*$/, {
@@ -20,14 +20,21 @@ export class AdminDTO {
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     email: string;
 
-    profile_image_url: string;
+    profile_image: string;
 
     @IsNotEmpty({ message: 'NID is required' })
-    @MinLength(10, {
+    @Matches(/^\d{10}$/, {
         message: 'NID must be a valid format of 10 digits'
     })
-    @Transform(({ value }) => (value?.toString()).trim())
-    NID: number;
+    @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
+    NID: string;
+
+    @IsNotEmpty({ message: 'NID is required' })
+    @Matches(/^\d{11}$/, {
+        message: 'Phone No. must be a valid format of 11 digits'
+    })
+    @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
+    phone: string;
 
     created_at: Date;
 }

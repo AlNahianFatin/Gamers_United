@@ -2,18 +2,33 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Res, Upl
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MulterError, diskStorage } from 'multer';
 import { AdminService } from './admin.service';
-import { GamesDTO } from './games.dto';
-import { UsersDTO } from './users.dto';
-import { PurchasesDTO } from './purchases.dto';
-import { ViewsDTO } from './views.dto';
-import { PlaysDTO } from './plays.dto';
-import { CategoriesDTO } from './categories.dto';
-import { AdminDTO } from './admin.dto';
+import { GamesDTO } from './DTO/games.dto';
+import { PurchasesDTO } from './DTO/purchases.dto';
+import { ViewsDTO } from './DTO/views.dto';
+import { PlaysDTO } from './DTO/plays.dto';
+import { CategoriesDTO } from './DTO/categories.dto';
+import { AdminDTO } from './DTO/admin.dto';
+import { PlayerDTO } from './DTO/player.dto';
+import { DeveloperDTO } from './DTO/developer.dto';
 import path from 'path';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AdminEntity } from './Entity/admin.entity';
+import { Repository } from 'typeorm';
+import { PlayerEntity } from './Entity/player.entity';
+import { DeveloperEntity } from './Entity/developer.entity';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) { }
+  constructor(private readonly adminService: AdminService,
+              @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
+              @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
+              @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>) { }
+
+  @Get('getAdmin/:name')
+  getAdmin(@Param('name') name: string, @Res() res) {
+    res.sendFile(name, {root:'./uploads/users/admin'})
+   // return this.adminService.getAdmin(name, res);
+  }
 
   @Post('addAdmin')
   @UseInterceptors(FileInterceptor('profile_image', {
@@ -32,15 +47,110 @@ export class AdminController {
     })
   }))
   @UsePipes(new ValidationPipe())
-  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) admin: AdminDTO): object {
+  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) admin: AdminEntity): object {
     console.log(file);
     return this.adminService.addAdmin(admin);
   }
 
-  @Get('getAdmin/:name')
-  getAdmin(@Param('name') name: string, @Res() res) {
-    res.sendFile(name, {root:'./uploads/users/admin'})
+  @Patch('updateAdmin/:newUsername')
+  updateAdmin(@Param('newUsername') newUsername: string, @Body() admin: AdminDTO): string {
+    return this.adminService.updateAdmin(admin, admin.username, newUsername);
+  }
+
+  @Put('updateAdmin/:id')
+  updateFullAdmin(@Param('id') id: number, @Body() admin: AdminDTO): string {
+    return this.adminService.updateFullAdmin(admin, id);
+  }
+
+  @Delete('removeAdmin')
+  removeAdmin(@Query('id') id: number): string {
+    return this.adminService.removeAdmin(id);
+  }
+
+  @Get('getPlayer/:name')
+  getPlayer(@Param('name') name: string, @Res() res) {
+    res.sendFile(name, {root:'./uploads/users/player'})
    // return this.adminService.getAdmin(name, res);
+  }
+
+  @Post('addPlayer')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: process.cwd() + '/uploads/users/player',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  addPlayer(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) player: PlayerDTO): object {
+    console.log(file);
+    return this.adminService.addPlayer(player);
+  }
+
+  @Patch('updatePlayer/:newUsername')
+  updatePlayer(@Param('newUsername') newUsername: string, @Body() player: PlayerDTO): string {
+    return this.adminService.updatePlayer(player, player.username, newUsername);
+  }
+
+  @Put('updatePlayer/:id')
+  updateFullPlayer(@Param('id') id: number, @Body() player: PlayerDTO): string {
+    return this.adminService.updateFullPlayer(player, id);
+  }
+
+  @Delete('removePlayer')
+  removePlayer(@Query('id') id: number): string {
+    return this.adminService.removePlayer(id);
+  }
+  
+  @Get('getDeveloper/:name')
+  getDeveloper(@Param('name') name: string, @Res() res) {
+    res.sendFile(name, {root:'./uploads/users/developer'})
+   // return this.adminService.getAdmin(name, res);
+  }
+
+  @Post('addDeveloper')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: process.cwd() + '/uploads/users/developer',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  addDeveloper(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) developer: DeveloperDTO): object {
+    console.log(file);
+    return this.adminService.addDeveloper(developer);
+  }
+
+  @Patch('updateDeveloper/:newUsername')
+  updateDeveloper(@Param('newUsername') newUsername: string, @Body() developer: DeveloperDTO): string {
+    return this.adminService.updateDeveloper(developer, developer.username, newUsername);
+  }
+
+  @Put('updateAdmin/:id')
+  updateFullDeveloper(@Param('id') id: number, @Body() developer: DeveloperDTO): string {
+    return this.adminService.updateFullDeveloper(developer, id);
+  }
+
+  @Delete('removeAdmin')
+  removeDeveloper(@Query('id') id: number): string {
+    return this.adminService.removeDeveloper(id);
   }
 
   @Get('games')
@@ -66,31 +176,6 @@ export class AdminController {
   @Delete('games/remove')
   removeGame(@Query('id') id: number): string {
     return this.adminService.removeGame(id);
-  }
-
-  @Get('users')
-  getUsers(): object {
-    return this.adminService.getUsers();
-  }
-
-  @Post('users/add')
-  addUser(@Body() user: UsersDTO): string {
-    return this.adminService.addUser(user);
-  }
-
-  @Patch('users/update/:newUsername')
-  updateUser(@Param('newUsername') newUsername: string, @Body() user: UsersDTO): string {
-    return this.adminService.updateUser(user, user.username, newUsername);
-  }
-
-  @Put('users/update/:id')
-  updateFullUser(@Param('id') id: number, @Body() user: UsersDTO): string {
-    return this.adminService.updateFullUser(user, id);
-  }
-
-  @Delete('users/remove')
-  removeUser(@Query('id') id: number): string {
-    return this.adminService.removeUser(id);
   }
 
   @Get('purchases')

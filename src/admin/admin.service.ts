@@ -1,24 +1,113 @@
 import { Injectable } from '@nestjs/common';
 import * as path from 'path';
-import { GamesDTO } from './games.dto';
-import { UsersDTO } from './users.dto';
-import { PurchasesDTO } from './purchases.dto';
-import { ViewsDTO } from './views.dto';
-import { PlaysDTO } from './plays.dto';
-import { CategoriesDTO } from './categories.dto';
-import { AdminDTO } from './admin.dto';
+import { GamesDTO } from './DTO/games.dto';
+import { PurchasesDTO } from './DTO/purchases.dto';
+import { ViewsDTO } from './DTO/views.dto';
+import { PlaysDTO } from './DTO/plays.dto';
+import { CategoriesDTO } from './DTO/categories.dto';
+import { AdminDTO } from './DTO/admin.dto';
+import { PlayerDTO } from './DTO/player.dto';
+import { DeveloperDTO } from './DTO/developer.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AdminEntity } from './Entity/admin.entity';
+import { PlayerEntity } from './Entity/player.entity';
+import { DeveloperEntity } from './Entity/developer.entity';
 
 @Injectable()
 export class AdminService {
+  constructor(@InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
+              @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
+              @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>) {}
 
-  addAdmin(admin: AdminDTO): object {
-    return { message: `${admin.username} has been added successfully`, admin };
+  async getAdmins(): Promise<AdminEntity[]> {
+    // let admin1: Object = {
+    //   id: 1002,
+    //   username: "Al Nahian Fatin",
+    //   email: "fatinnahian@gmail.com",
+    //   password_hash: "12345678",
+    //   role: "Admin",
+    //   created_at: "2025-11-03T18:21:00.000Z"
+    // };
+    return this.adminRepository.find();
+  }
+  
+  async addAdmin(admin: AdminEntity): Promise<object> {
+    return this.adminRepository.save(admin);
   }
 
-  getAdmin(name: string, res: any) {
-    const filePath = path.join(process.cwd(), 'uploads', 'users', 'admin', name);
-    console.log('Serving file:', filePath);
-    return res.sendFile(filePath);
+  updateAdmin(admin: AdminDTO, oldUsername: string, newUsername: string): string {
+    return `${admin.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
+  }
+
+  updateFullAdmin(admin: AdminDTO, id: number): string {
+    return `${id} has been updated successfully`;
+  }
+
+  removeAdmin(id: number): string {
+    return `Admin with ID ${id} has been removed successfully`;
+  }
+
+  // getAdmin(name: string, res: any) {
+  //   const filePath = path.join(process.cwd(), 'uploads', 'users', 'admin', name);
+  //   console.log('Serving file:', filePath);
+  //   return res.sendFile(filePath);
+  // }
+
+  getPlayers(): object {
+    let player1: Object = {
+      id: 1002,
+      username: "Al Nahian Fatin",
+      email: "fatinnahian@gmail.com",
+      password_hash: "12345678",
+      role: "Admin",
+      created_at: "2025-11-03T18:21:00.000Z"
+    };
+    return player1;
+  }
+
+  addPlayer(player: PlayerDTO): object {
+    return { message: `${player.username} has been added successfully`, player };
+  }
+
+  updatePlayer(player: PlayerDTO, oldUsername: string, newUsername: string): string {
+    return `${player.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
+  }
+
+  updateFullPlayer(player: PlayerDTO, id: number): string {
+    return `${id} has been updated successfully`;
+  }
+
+  removePlayer(id: number): string {
+    return `Player with ID ${id} has been removed successfully`;
+  }
+
+  getDevelopers(): object {
+    let developer1: Object = {
+      id: 1002,
+      username: "Al Nahian Fatin",
+      email: "fatinnahian@gmail.com",
+      password_hash: "12345678",
+      role: "Admin",
+      created_at: "2025-11-03T18:21:00.000Z"
+    };
+    return developer1;
+  }
+  
+  addDeveloper(developer: DeveloperDTO): object {
+    return { message: `${developer.username} has been added successfully`, developer };
+  }
+
+  updateDeveloper(developer: DeveloperDTO, oldUsername: string, newUsername: string): string {
+    return `${developer.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
+  }
+
+  updateFullDeveloper(developer: DeveloperDTO, id: number): string {
+    return `${id} has been updated successfully`;
+  }
+
+  removeDeveloper(id: number): string {
+    return `Developer with ID ${id} has been removed successfully`;
   }
 
   getGames(): object {
@@ -52,34 +141,6 @@ export class AdminService {
 
   removeGame(id: number): string {
     return `Game with ID ${id} has been removed successfully`;
-  }
-
-  getUsers(): object {
-    let user1: Object = {
-      id: 1002,
-      username: "Al Nahian Fatin",
-      email: "fatinnahian@gmail.com",
-      password_hash: "12345678",
-      role: "Admin",
-      created_at: "2025-11-03T18:21:00.000Z"
-    };
-    return user1;
-  }
-
-  addUser(user: UsersDTO): string {
-    return user.username + " has been added successfully";
-  }
-
-  updateUser(user: UsersDTO, oldUsername: string, newUsername: string): string {
-    return `${user.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
-  }
-
-  updateFullUser(user: UsersDTO, id: number): string {
-    return `${id} has been updated successfully`;
-  }
-
-  removeUser(id: number): string {
-    return `User with ID ${id} has been removed successfully`;
   }
 
   getPurchases(): object {
