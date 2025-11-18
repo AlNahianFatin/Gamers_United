@@ -9,19 +9,19 @@ export class LoginEntity {
     id: number;
 
     @Column({type: "varchar", nullable: true})
-    username: string;
+    username?: string;
     
     @Column({nullable: true})
-    password_hash: string;
+    password_hash?: string;
     
     @Column({nullable: true})
-    role: string;
+    role?: string;
     
     @Column({type: "boolean", default: true, nullable: true})
-    activation: boolean;
+    activation?: boolean;
     
     @Column({type: "boolean", default: false, nullable: true})
-    ban: boolean;
+    ban?: boolean;
 
     @BeforeInsert() 
     generateID() {
@@ -29,11 +29,11 @@ export class LoginEntity {
     }
 
     @OneToMany(() => AdminEntity, admin => admin.login)
-    admins: AdminEntity[];
+    admins?: AdminEntity[];
     
     @OneToMany(() => PlayerEntity, player => player.login)
-    players: PlayerEntity[];
+    players?: PlayerEntity[];
 
     @OneToMany(() => DeveloperEntity, developer => developer.login)
-    developers: DeveloperEntity[];
+    developers?: DeveloperEntity[];
 }

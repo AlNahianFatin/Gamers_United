@@ -13,6 +13,7 @@ import { LoginEntity } from './Entity/login.entity';
 import { AdminEntity } from './Entity/admin.entity';
 import { PlayerEntity } from './Entity/player.entity';
 import { DeveloperEntity } from './Entity/developer.entity';
+import { LoginDTO } from './DTO/login.dto';
 
 @Injectable()
 export class AdminService {
@@ -40,7 +41,7 @@ export class AdminService {
     return admins;
   }
 
-  async addAdmin(admin: AdminEntity, login: LoginEntity): Promise<AdminEntity> {
+  async addAdmin(admin: AdminEntity, login: LoginDTO): Promise<AdminEntity | AdminEntity[]> {
     const exists = await this.adminRepository.findOneBy({ id: admin.id });
     if (exists) 
       throw new Error(`Admin with id ${admin.id} already exists`);
@@ -74,6 +75,12 @@ export class AdminService {
       await this.adminRepository.delete(id);
       return {message: `Admin with id ${id} has been deleted`};
     }
+  }
+  
+  //lab performance
+  async removeAdminByEmail(email: string): Promise<object> {
+    await this.adminRepository.delete({ email: email });
+    return {message: `Admin with email ${email} has been deleted`};
   }
 //   getPlayers(): object {
 //     let player1: Object = {

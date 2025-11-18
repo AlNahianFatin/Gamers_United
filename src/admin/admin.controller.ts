@@ -17,6 +17,7 @@ import { Repository } from 'typeorm';
 import { PlayerEntity } from './Entity/player.entity';
 import { DeveloperEntity } from './Entity/developer.entity';
 import { LoginEntity } from './Entity/login.entity';
+import { LoginDTO } from './DTO/login.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -62,7 +63,7 @@ export class AdminController {
     })
   }))
   @UsePipes(new ValidationPipe())
-  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) admin: AdminEntity, login: LoginEntity): object {
+  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) admin: AdminDTO, login: LoginDTO): object {
     if(file) 
       admin.profile_image = file.filename;
     return this.adminService.addAdmin(admin, login);
@@ -81,6 +82,11 @@ export class AdminController {
   @Delete('removeAdmin')
   removeAdmin(@Query('id') id: number): Promise<object> {
     return this.adminService.removeAdmin(id);
+  }
+  
+  @Delete('removeAdminByEmail')
+  removeAdminByEmail(@Query('email') email: string): Promise<object> {
+    return this.adminService.removeAdminByEmail(email);
   }
 
   // @Get('getPlayer/:name')

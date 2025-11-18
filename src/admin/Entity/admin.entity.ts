@@ -4,27 +4,27 @@ import { LoginEntity } from "./login.entity";
 @Entity("admin")
 export class AdminEntity {
     @PrimaryColumn()
-    id: number;
+    id?: number;
 
     @Column({type: "varchar", nullable: true})
-    username: string;
+    username?: string;
 
     @Column({nullable: true})
-    email: string;
+    email?: string;
     
     @Column({nullable: true})
-    profile_image: string;
+    profile_image?: string;
     
     @Column({nullable: true})
-    NID: number;
+    NID?: string;
 
     @Column({type: "bigint", nullable: true})
-    phone: string;
+    phone?: string;
     
     @CreateDateColumn({nullable: true})
-    created_at: Date;
+    created_at?: Date;
 
     @ManyToOne(() => LoginEntity, login => login.admins, {cascade: true})
     @JoinColumn()
-    login: LoginEntity;
+    login?: LoginEntity;
 }
