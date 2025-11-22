@@ -1,30 +1,29 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToOne, PrimaryColumn } from "typeorm";
 import { LoginEntity } from "./login.entity";
 
 @Entity("admin")
 export class AdminEntity {
     @PrimaryColumn()
-    id?: number;
+    id: number;
 
-    @Column({type: "varchar", nullable: true})
-    username?: string;
+    @Column({type: "varchar", nullable: false, unique: true})
+    username: string;
 
     @Column({nullable: true})
-    email?: string;
+    email: string;
     
     @Column({nullable: true})
-    profile_image?: string;
+    profile_image: string;
     
     @Column({nullable: true})
-    NID?: string;
+    NID: string;
 
     @Column({type: "bigint", nullable: true})
-    phone?: string;
+    phone: string;
     
     @CreateDateColumn({nullable: true})
-    created_at?: Date;
+    created_at: Date;
 
-    @ManyToOne(() => LoginEntity, login => login.admins, {cascade: true})
-    @JoinColumn()
-    login?: LoginEntity;
+    @OneToOne(() => LoginEntity, login => login.admin)
+    login: LoginEntity;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Res } from '@nestjs/common';
 import { GamesDTO } from './DTO/games.dto';
 import { PurchasesDTO } from './DTO/purchases.dto';
 import { ViewsDTO } from './DTO/views.dto';
@@ -14,6 +14,7 @@ import { AdminEntity } from './Entity/admin.entity';
 import { PlayerEntity } from './Entity/player.entity';
 import { DeveloperEntity } from './Entity/developer.entity';
 import { LoginDTO } from './DTO/login.dto';
+import { stringify } from 'querystring';
 
 @Injectable()
 export class AdminService {
@@ -33,6 +34,13 @@ export class AdminService {
     else 
       return exists;
   }
+
+  async getAdminPicByID(adminID: number, @Res() res): Promise<any> {
+    const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { profile_image: true }});
+    if(!admin || !admin.profile_image)
+      return { message: 'Admin image not found' };
+    return res.sendFile(admin.profile_image, {root:'./uploads/users/admin'})
+  }
   
   async getAdminsByNullName(): Promise<object | AdminEntity[] | null> {
     const admins = await this.adminRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
@@ -41,15 +49,27 @@ export class AdminService {
     return admins;
   }
 
-  async addAdmin(admin: AdminEntity, login: LoginDTO): Promise<AdminEntity | AdminEntity[]> {
-    const exists = await this.adminRepository.findOneBy({ id: admin.id });
-    if (exists) 
-      throw new Error(`Admin with id ${admin.id} already exists`);
+  async addAdmin(adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity> {
+    const adminExists = await this.adminRepository.findOneBy({ username: adminDto.username });
+    const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
+    if (adminExists || loginExists) 
+      throw new Error(`Admin with username ${adminDto.username} already exists`);
     else {
-      // login.admins.push(admin);
-      admin.login = login;
-      return this.adminRepository.save(admin);
-    }
+      // Create login entity (this will auto-generate ID)
+      const login = this.loginRepository.create(loginDto);
+      // Save login so @BeforeInsert runs
+      const savedLogin = await this.loginRepository.save(login);
+
+      // Create admin entity but DO NOT assign id
+      const admin = this.adminRepository.create({...adminDto,
+        login: savedLogin,
+        id: savedLogin.id       // share primary key
+      });
+      // Save admin
+      const savedAdmin = await this.adminRepository.save(admin);
+
+      return savedAdmin;
+      }
   }
 
   async updateAdminPhoneById(id: number, newPhone: string): Promise<AdminEntity | null> {

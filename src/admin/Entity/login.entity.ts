@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
 import { AdminEntity } from "./admin.entity";
 import { PlayerEntity } from "./player.entity";
 import { DeveloperEntity } from "./developer.entity";
@@ -8,32 +8,35 @@ export class LoginEntity {
     @PrimaryColumn()
     id: number;
 
-    @Column({type: "varchar", nullable: true})
-    username?: string;
+    @Column({type: "varchar", unique: true})
+    username: string;
     
-    @Column({nullable: true})
-    password_hash?: string;
+    @Column()
+    password_hash: string;
     
-    @Column({nullable: true})
-    role?: string;
+    @Column()
+    role: string;
     
     @Column({type: "boolean", default: true, nullable: true})
-    activation?: boolean;
+    activation: boolean;
     
     @Column({type: "boolean", default: false, nullable: true})
-    ban?: boolean;
+    ban: boolean;
 
     @BeforeInsert() 
     generateID() {
-        this.id = Number(new Date()) + Math.floor(Math.random() * 100);
+        this.id = Number(String(Date.now()).slice(-8)) + Math.floor(Math.random() * 10);
     }
 
-    @OneToMany(() => AdminEntity, admin => admin.login)
-    admins?: AdminEntity[];
+    @OneToOne(() => AdminEntity, admin => admin.login, {cascade: true})
+    @JoinColumn()
+    admin: AdminEntity;
     
-    @OneToMany(() => PlayerEntity, player => player.login)
-    players?: PlayerEntity[];
-
-    @OneToMany(() => DeveloperEntity, developer => developer.login)
-    developers?: DeveloperEntity[];
+    @OneToOne(() => PlayerEntity, player => player.login, {cascade: true})
+    @JoinColumn()
+    player: PlayerEntity;
+    
+    @OneToOne(() => DeveloperEntity, developer => developer.login, {cascade: true})
+    @JoinColumn()
+    developer: DeveloperEntity;
 }

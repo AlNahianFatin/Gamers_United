@@ -1,18 +1,15 @@
 import { Transform } from 'class-transformer';
 import { IsString, IsEmail, IsNotEmpty, Matches } from 'class-validator';
-import { LoginDTO } from './login.dto';
 import { LoginEntity } from '../Entity/login.entity';
 
 export class AdminDTO {
-    id?: number;
-
     @IsString()
     @IsNotEmpty({ message: 'Username is required' })
     @Matches(/^[a-zA-Z\s]*$/, {
         message: 'Username should only contain alphabets and spaces',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-    username?: string;
+    username: string;
 
     @IsEmail({}, { message: 'Email must be a valid email address' })
     @IsNotEmpty({ message: 'Email is required' })
@@ -20,7 +17,7 @@ export class AdminDTO {
         message: 'Email must contain @ and a .xyz domain',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-    email?: string;
+    email: string;
 
     profile_image?: string;
 
@@ -29,14 +26,14 @@ export class AdminDTO {
         message: 'NID must be a valid format of 10 digits'
     })
     @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
-    NID?: string;
+    NID: string;
 
     @IsNotEmpty({ message: 'NID is required' })
     @Matches(/^\d{11}$/, {
         message: 'Phone No. must be a valid format of 11 digits'
     })
     @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
-    phone?: string;
+    phone: string;
 
     created_at?: Date;
 

@@ -13,7 +13,7 @@ import { DeveloperDTO } from './DTO/developer.dto';
 import path from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AdminEntity } from './Entity/admin.entity';
-import { Repository } from 'typeorm';
+import { Any, Repository } from 'typeorm';
 import { PlayerEntity } from './Entity/player.entity';
 import { DeveloperEntity } from './Entity/developer.entity';
 import { LoginEntity } from './Entity/login.entity';
@@ -31,14 +31,14 @@ export class AdminController {
     return this.adminService.getAdmins()
   }
   
-  @Get('getAdminPicByFileName/:fileName')
-  getAdminPicByFileName(@Param('fileName') fileName: string, @Res() res) {
-    res.sendFile(fileName, {root:'./uploads/users/admin'})
-  }
-  
   @Get('getAdminByID/:adminID')
   getAdminByID(@Param('adminID') adminID: number) {
-   return this.adminService.getAdminByID(adminID);
+    return this.adminService.getAdminByID(adminID);
+  }
+  
+  @Get('getAdminPicByID/:adminID')
+  getAdminPicByID(@Param('adminID') adminID: number, @Res() res) {
+    return this.adminService.getAdminPicByID(adminID, res);
   }
   
   @Get('getAdminsByNullName')
@@ -63,7 +63,21 @@ export class AdminController {
     })
   }))
   @UsePipes(new ValidationPipe())
-  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) admin: AdminDTO, login: LoginDTO): object {
+  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): object {
+    const admin: AdminDTO = {
+      username: body.username,
+      email: body.email,
+      NID: body.NID,
+      phone: body.phone,
+      profile_image: file ? file.filename : undefined,
+    };
+
+    const login: LoginDTO = {
+      username: body.username,
+      password_hash: body.password_hash,
+      role: body.role,
+      // generateID: body.id
+  };
     if(file) 
       admin.profile_image = file.filename;
     return this.adminService.addAdmin(admin, login);

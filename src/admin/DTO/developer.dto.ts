@@ -2,15 +2,13 @@ import { Transform } from "class-transformer";
 import { IsEmail, IsNotEmpty, IsString, Matches } from "class-validator";
 
 export class DeveloperDTO {
-    id: number;
-    
     @IsString()
     @IsNotEmpty({ message: 'Username is required' })
     @Matches(/^[a-zA-Z\s]*$/, {
         message: 'Username should only contain alphabets and spaces',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-    username: string;
+    username?: string;
 
     @IsEmail({}, { message: 'Email must be a valid email address' })
     @IsNotEmpty({ message: 'Email is required' })
