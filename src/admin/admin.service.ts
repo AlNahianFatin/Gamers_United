@@ -8,7 +8,7 @@ import { AdminDTO } from './DTO/admin.dto';
 import { PlayerDTO } from './DTO/player.dto';
 import { DeveloperDTO } from './DTO/developer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Like, Repository } from 'typeorm';
 import { LoginEntity } from './Entity/login.entity';
 import { AdminEntity } from './Entity/admin.entity';
 import { PlayerEntity } from './Entity/player.entity';
@@ -72,7 +72,7 @@ export class AdminService {
       }
   }
 
-  async updateAdminPhoneById(id: number, newPhone: string): Promise<AdminEntity | null> {
+  async updateAdminPhoneById(id: number, newPhone: number): Promise<AdminEntity | null> {
     const exists = await this.adminRepository.findOneBy({ id: id });
     if (!exists) 
       throw new Error(`Admin with id ${id} not found!`);
@@ -103,8 +103,35 @@ export class AdminService {
     return {message: `Admin with email ${email} has been deleted`};
   }
 
-  async searchAdmin(key: string): Promise<object> {
+  async searchAdmin(key: any): Promise<object> {
+    let admins: object[];
+    if(Number(key)) {
+      admins = await this.adminRepository.find({ where: { id: Number(key) } })
+      if(admins.length < 1)
+        admins = await this.adminRepository.find({ where: { phone: Number(key) } })
+    }
+    else
+      admins = await this.adminRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) } ] });
     
+    if(admins.length < 1) 
+      return {message: `No admin found!\nTry searching with another key`};
+    return admins;
+  }
+
+  async sortAdminByIDAsc(): Promise<object> {
+    return await this.adminRepository.find({ order: { id: 'ASC' } });
+  }
+  
+  async sortAdminByIDDesc(): Promise<object> {
+    return await this.adminRepository.find({ order: { id: 'DESC' } });
+  }
+  
+  async sortAdminByNameAsc(): Promise<object> {
+    return await this.adminRepository.find({ order: { username: 'ASC' } });
+  }
+  
+  async sortAdminByNameDesc(): Promise<object> {
+    return await this.adminRepository.find({ order: { username: 'DESC' } });
   }
 
 //   getPlayers(): object {

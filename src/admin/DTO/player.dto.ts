@@ -33,7 +33,7 @@ export class PlayerDTO {
         message: 'Phone No. must be a valid format of 11 digits'
     })
     @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
-    phone: string;
+    phone: number;
 
     created_at?: Date;
 

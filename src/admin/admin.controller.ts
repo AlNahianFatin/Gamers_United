@@ -88,7 +88,7 @@ export class AdminController {
     }
 
     @Patch('updateAdminPhoneByID/:id/:newPhone')
-    updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: string) {
+    updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: number) {
       return this.adminService.updateAdminPhoneById(id, newPhone);
   }
 
@@ -107,10 +107,30 @@ export class AdminController {
     return this.adminService.removeAdminByEmail(email);
   }
 
-  // @Get('searchAdmin')
-  // searchAdmin(@Query('key') key: string): Promise<object> {
-  //   return this.adminService.searchAdmin(key);
-  // }
+  @Get('searchAdmin/:key')
+  searchAdmin(@Param('key') key: any): Promise<object> {
+    return this.adminService.searchAdmin(key);
+  }
+  
+  @Get('sortAdminByIDAsc')
+  sortAdminByIDAsc(): Promise<object> {
+    return this.adminService.sortAdminByIDAsc();
+  }
+  
+  @Get('sortAdminByIDDesc')
+  sortAdminByIDDesc(): Promise<object> {
+    return this.adminService.sortAdminByIDDesc();
+  }
+  
+  @Get('sortAdminByNameAsc')
+  sortAdminByNameAsc(): Promise<object> {
+    return this.adminService.sortAdminByNameAsc();
+  }
+  
+  @Get('sortAdminByNameDesc')
+  sortAdminByNameDesc(): Promise<object> {
+    return this.adminService.sortAdminByNameDesc();
+  }
 
   // @Get('getPlayer/:name')
   // getPlayer(@Param('name') name: string, @Res() res) {
