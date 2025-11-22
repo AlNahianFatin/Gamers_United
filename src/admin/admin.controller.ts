@@ -115,7 +115,6 @@ export class AdminController {
     const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
       email: body.email,
-      // profile_image: file?.filename,
       phone: body.phone,
       NID: body.NID
     });
@@ -169,92 +168,288 @@ export class AdminController {
   sortAdminByNameDesc(): Promise<object> {
     return this.adminService.sortAdminByNameDesc();
   }
-
-  // @Get('getPlayer/:name')
-  // getPlayer(@Param('name') name: string, @Res() res) {
-  //   res.sendFile(name, {root:'./uploads/users/player'})
-  //  // return this.adminService.getAdmin(name, res);
-  // }
-
-  // @Post('addPlayer')
-  // @UseInterceptors(FileInterceptor('profile_image', {
-  //   fileFilter: (req, profile_image, cb) => {
-  //     if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
-  //       cb(null, true);
-  //     else
-  //       cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
-  //   },
-  //   limits: { fileSize: 2097152 },
-  //   storage: diskStorage({
-  //     destination: process.cwd() + '/uploads/users/player',
-  //     filename: function (req, profile_image, cb) {
-  //       cb(null, Date.now() + path.extname(profile_image.originalname));
-  //     },
-  //   })
-  // }))
-  // @UsePipes(new ValidationPipe())
-  // addPlayer(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) player: PlayerDTO): object {
-  //   console.log(file);
-  //   return this.adminService.addPlayer(player);
-  // }
-
-  // @Patch('updatePlayer/:newUsername')
-  // updatePlayer(@Param('newUsername') newUsername: string, @Body() player: PlayerDTO): string {
-  //   return this.adminService.updatePlayer(player, player.username, newUsername);
-  // }
-
-  // @Put('updatePlayer/:id')
-  // updateFullPlayer(@Param('id') id: number, @Body() player: PlayerDTO): string {
-  //   return this.adminService.updateFullPlayer(player, id);
-  // }
-
-  // @Delete('removePlayer')
-  // removePlayer(@Query('id') id: number): string {
-  //   return this.adminService.removePlayer(id);
-  // }
   
-  // @Get('getDeveloper/:name')
-  // getDeveloper(@Param('name') name: string, @Res() res) {
-  //   res.sendFile(name, {root:'./uploads/users/developer'})
-  //  // return this.adminService.getAdmin(name, res);
-  // }
+  @Get('getPlayers')
+  getPlayers() {
+    return this.adminService.getPlayers()
+  }
+  
+  @Get('getPlayerByID/:playerID')
+  getPlayerByID(@Param('playerID') playerID: number) {
+    return this.adminService.getPlayerByID(playerID);
+  }
+  
+  @Get('getPlayerPicByID/:playerID')
+  getPlayerPicByID(@Param('playerID') playerID: number, @Res() res) {
+    return this.adminService.getPlayerPicByID(playerID, res);
+  }
+  
+  @Get('getPlayersByNullName')
+  getPlayersByNullName(): Promise<object | PlayerEntity[] | null> {
+   return this.adminService.getPlayersByNullName();
+  }
 
-  // @Post('addDeveloper')
-  // @UseInterceptors(FileInterceptor('profile_image', {
-  //   fileFilter: (req, profile_image, cb) => {
-  //     if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
-  //       cb(null, true);
-  //     else
-  //       cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
-  //   },
-  //   limits: { fileSize: 2097152 },
-  //   storage: diskStorage({
-  //     destination: process.cwd() + '/uploads/users/developer',
-  //     filename: function (req, profile_image, cb) {
-  //       cb(null, Date.now() + path.extname(profile_image.originalname));
-  //     },
-  //   })
-  // }))
-  // @UsePipes(new ValidationPipe())
-  // addDeveloper(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) developer: DeveloperDTO): object {
-  //   console.log(file);
-  //   return this.adminService.addDeveloper(developer);
-  // }
+  @Post('addPlayer')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: 'uploads/users/admin',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  async addPlayer(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<PlayerEntity> {
+    const playerDto = plainToInstance(PlayerDTO, {
+      username: body.username,
+      email: body.email,
+      // profile_image: file?.filename,
+      phone: body.phone,
+      NID: body.NID
+    });
+    await validateOrReject(playerDto);
 
-  // @Patch('updateDeveloper/:newUsername')
-  // updateDeveloper(@Param('newUsername') newUsername: string, @Body() developer: DeveloperDTO): string {
-  //   return this.adminService.updateDeveloper(developer, developer.username, newUsername);
-  // }
+    const loginDto = plainToInstance(LoginDTO, {
+      username: body.username,
+      password_hash: body.password_hash,
+      role: body.role,
+      activation: body.activation,
+      ban: body.ban
+    });
+    await validateOrReject(loginDto);
 
-  // @Put('updateAdmin/:id')
-  // updateFullDeveloper(@Param('id') id: number, @Body() developer: DeveloperDTO): string {
-  //   return this.adminService.updateFullDeveloper(developer, id);
-  // }
+      if(file) 
+        playerDto.profile_image = file.filename;
+      return this.adminService.addPlayer(playerDto, loginDto);
+  }
 
-  // @Delete('removeAdmin')
-  // removeDeveloper(@Query('id') id: number): string {
-  //   return this.adminService.removeDeveloper(id);
-  // }
+  @Patch('updatePlayerPhoneByID/:id/:newPhone')
+  updatePlayerPhoneByID(@Param('id') id: number, @Param('newPhone') newPhone: number) {
+    return this.adminService.updatePlayerPhoneByID(id, newPhone);
+  }
+
+  @Put('updateFullPlayer/:id')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: 'uploads/users/player',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  async updateFullPlayer(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
+    const playerDto = plainToInstance(PlayerDTO, {
+      username: body.username,
+      email: body.email,
+      phone: body.phone,
+      NID: body.NID
+    });
+    await validateOrReject(playerDto);
+
+    const loginDto = plainToInstance(LoginDTO, {
+      username: body.username,
+      password_hash: body.password_hash,
+      role: body.role,
+      activation: body.activation,
+      ban: body.ban
+    });
+    await validateOrReject(loginDto);
+
+      if(file) 
+        playerDto.profile_image = file.filename;
+      return this.adminService.updateFullPlayer(id, playerDto, loginDto);
+  }
+
+  @Delete('removePlayer')
+  removePlayer(@Query('id') id: number): Promise<object> {
+    return this.adminService.removePlayer(id);
+  }
+  
+  @Delete('removePlayerByEmail')
+  removePlayerByEmail(@Query('email') email: string): Promise<object> {
+    return this.adminService.removePlayerByEmail(email);
+  }
+
+  @Get('searchPlayer/:key')
+  searchPlayer(@Param('key') key: any): Promise<object> {
+    return this.adminService.searchPlayer(key);
+  }
+  
+  @Get('sortPlayerByIDAsc')
+  sortPlayerByIDAsc(): Promise<object> {
+    return this.adminService.sortPlayerByIDAsc();
+  }
+  
+  @Get('sortPlayerByIDDesc')
+  sortPlayerByIDDesc(): Promise<object> {
+    return this.adminService.sortPlayerByIDDesc();
+  }
+  
+  @Get('sortPlayerByNameAsc')
+  sortPlayerByNameAsc(): Promise<object> {
+    return this.adminService.sortPlayerByNameAsc();
+  }
+  
+  @Get('sortPlayerByNameDesc')
+  sortPlayerByNameDesc(): Promise<object> {
+    return this.adminService.sortPlayerByNameDesc();
+  }
+
+  @Get('getDevelopers')
+  getDevelopers() {
+    return this.adminService.getDevelopers()
+  }
+  
+  @Get('getDeveloperByID/:developerID')
+  getDeveloperByID(@Param('playerID') developerID: number) {
+    return this.adminService.getDeveloperByID(developerID);
+  }
+  
+  @Get('getDeveloperPicByID/:developerID')
+  getDeveloperPicByID(@Param('developerID') developerID: number, @Res() res) {
+    return this.adminService.getDeveloperPicByID(developerID, res);
+  }
+  
+  @Get('getDevelopersByNullName')
+  getDevelopersByNullName(): Promise<object | DeveloperEntity[] | null> {
+   return this.adminService.getDevelopersByNullName();
+  }
+
+  @Post('addDeveloper')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: 'uploads/users/player',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  async addDeveloper(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<DeveloperEntity> {
+    const developerDto = plainToInstance(DeveloperDTO, {
+      username: body.username,
+      email: body.email,
+      // profile_image: file?.filename,
+      phone: body.phone,
+      NID: body.NID
+    });
+    await validateOrReject(developerDto);
+
+    const loginDto = plainToInstance(LoginDTO, {
+      username: body.username,
+      password_hash: body.password_hash,
+      role: body.role,
+      activation: body.activation,
+      ban: body.ban
+    });
+    await validateOrReject(loginDto);
+
+      if(file) 
+        developerDto.profile_image = file.filename;
+      return this.adminService.addDeveloper(developerDto, loginDto);
+  }
+
+  @Patch('updateDeveloperPhoneByID/:id/:newPhone')
+  updateDeveloperPhoneByID(@Param('id') id: number, @Param('newPhone') newPhone: number) {
+    return this.adminService.updateDeveloperPhoneByID(id, newPhone);
+  }
+
+  @Put('updateFullDeveloper/:id')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: 'uploads/users/developer',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  async updateFullDeveloper(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
+    const developerDto = plainToInstance(DeveloperDTO, {
+      username: body.username,
+      email: body.email,
+      phone: body.phone,
+      NID: body.NID
+    });
+    await validateOrReject(developerDto);
+
+    const loginDto = plainToInstance(LoginDTO, {
+      username: body.username,
+      password_hash: body.password_hash,
+      role: body.role,
+      activation: body.activation,
+      ban: body.ban
+    });
+    await validateOrReject(loginDto);
+
+      if(file) 
+        developerDto.profile_image = file.filename;
+      return this.adminService.updateFullDeveloper(id, developerDto, loginDto);
+  }
+
+  @Delete('removeDeveloper')
+  removeDeveloper(@Query('id') id: number): Promise<object> {
+    return this.adminService.removeDeveloper(id);
+  }
+  
+  @Delete('removeDeveloperByEmail')
+  removeDeveloperByEmail(@Query('email') email: string): Promise<object> {
+    return this.adminService.removeDeveloperByEmail(email);
+  }
+
+  @Get('searchDeveloper/:key')
+  searchDeveloper(@Param('key') key: any): Promise<object> {
+    return this.adminService.searchDeveloper(key);
+  }
+  
+  @Get('sortDeveloperByIDAsc')
+  sortDeveloperByIDAsc(): Promise<object> {
+    return this.adminService.sortDeveloperByIDAsc();
+  }
+  
+  @Get('sortDeveloperByIDDesc')
+  sortDeveloperByIDDesc(): Promise<object> {
+    return this.adminService.sortDeveloperByIDDesc();
+  }
+  
+  @Get('sortDeveloperByNameAsc')
+  sortDeveloperByNameAsc(): Promise<object> {
+    return this.adminService.sortDeveloperByNameAsc();
+  }
+  
+  @Get('sortDeveloperByNameDesc')
+  sortDeveloperByNameDesc(): Promise<object> {
+    return this.adminService.sortDeveloperByNameDesc();
+  }
 
   // @Get('games')
   // getGames(): object {

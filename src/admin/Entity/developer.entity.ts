@@ -19,7 +19,7 @@ export class DeveloperEntity {
     NID: string;
     
     @Column({type: "bigint", nullable: true})
-    phone: string;
+    phone: number;
 
     @CreateDateColumn({nullable: true})
     created_at: Date;

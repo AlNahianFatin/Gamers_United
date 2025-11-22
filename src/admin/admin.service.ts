@@ -42,7 +42,7 @@ export class AdminService {
     return res.sendFile(admin.profile_image, {root:'./uploads/users/admin'})
   }
   
-  async getAdminsByNullName(): Promise<object | AdminEntity[] | null> {
+  async getAdminsByNullName(): Promise<object | AdminEntity[]> {
     const admins = await this.adminRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
     if (admins.length === 0) 
       return {message: "No admin with null username has been found"};
@@ -162,62 +162,286 @@ export class AdminService {
   async sortAdminByNameDesc(): Promise<object> {
     return await this.adminRepository.find({ order: { username: 'DESC' } });
   }
-
-//   getPlayers(): object {
-//     let player1: Object = {
-//       id: 1002,
-//       username: "Al Nahian Fatin",
-//       email: "fatinnahian@gmail.com",
-//       password_hash: "12345678",
-//       role: "Admin",
-//       created_at: "2025-11-03T18:21:00.000Z"
-//     };
-//     return player1;
-//   }
-
-//   addPlayer(player: PlayerDTO): object {
-//     return { message: `${player.username} has been added successfully`, player };
-//   }
-
-//   updatePlayer(player: PlayerDTO, oldUsername: string, newUsername: string): string {
-//     return `${player.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
-//   }
-
-//   updateFullPlayer(player: PlayerDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
-
-//   removePlayer(id: number): string {
-//     return `Player with ID ${id} has been removed successfully`;
-//   }
-
-//   getDevelopers(): object {
-//     let developer1: Object = {
-//       id: 1002,
-//       username: "Al Nahian Fatin",
-//       email: "fatinnahian@gmail.com",
-//       password_hash: "12345678",
-//       role: "Admin",
-//       created_at: "2025-11-03T18:21:00.000Z"
-//     };
-//     return developer1;
-//   }
   
-//   addDeveloper(developer: DeveloperDTO): object {
-//     return { message: `${developer.username} has been added successfully`, developer };
-//   }
+  async getPlayers(): Promise<PlayerEntity[]> {
+    return this.playerRepository.find({ relations: ['login'] });
+  }
 
-//   updateDeveloper(developer: DeveloperDTO, oldUsername: string, newUsername: string): string {
-//     return `${developer.id} has been updated from '${oldUsername}' to '${newUsername}' successfully`;
-//   }
+  async getPlayerByID(playerID: number): Promise<PlayerEntity> {
+    const exists = await this.playerRepository.findOne({where: { id: playerID }});
+    if (!exists) 
+      throw new Error(`Player with id ${playerID} does not exist`);
+    else 
+      return exists;
+  }
 
-//   updateFullDeveloper(developer: DeveloperDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  async getPlayerPicByID(playerID: number, @Res() res): Promise<any> {
+    const player = await this.playerRepository.findOne({ where: { id: playerID }, select: { profile_image: true }});
+    if(!player || !player.profile_image)
+      return { message: 'Player image not found' };
+    return res.sendFile(player.profile_image, {root:'./uploads/users/player'})
+  }
+  
+  async getPlayersByNullName(): Promise<object | PlayerEntity[]> {
+    const players = await this.playerRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
+    if (players.length === 0) 
+      return {message: "No player with null username has been found"};
+    return players;
+  }
 
-//   removeDeveloper(id: number): string {
-//     return `Developer with ID ${id} has been removed successfully`;
-//   }
+  async addPlayer(playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity> {
+    const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
+    const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
+    if (playerExists || loginExists) 
+      throw new Error(`Player with username ${playerDto.username} already exists`);
+    else {
+      // Create login entity (this will auto-generate ID)
+      const login = this.loginRepository.create(loginDto);
+      // Save login so @BeforeInsert runs
+      const savedLogin = await this.loginRepository.save(login);
+
+      // Create admin entity but DO NOT assign id
+      const player = this.playerRepository.create({...playerDto,
+        login: savedLogin,
+        id: savedLogin.id       // share primary key
+      });
+      // Save admin
+      const savedPlayer = await this.adminRepository.save(player);
+
+      return savedPlayer;
+      }
+  }
+
+  async updatePlayerPhoneByID(id: number, newPhone: number): Promise<PlayerEntity | null> {
+    const exists = await this.playerRepository.findOneBy({ id: id });
+    if (!exists) 
+      throw new Error(`Player with id ${id} not found!`);
+    else {
+      await this.playerRepository.update({ id }, { phone: newPhone });
+      const updatedPlayer = await this.playerRepository.findOneBy({ id: id });
+      return updatedPlayer;
+    }
+  }
+
+  async updateFullPlayer(id: number, playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity | null> {
+    const exists = await this.playerRepository.findOne({ where: { id }, relations: ['login'] });
+    if (!exists) 
+      throw new Error(`Player with id ${id} not found!`);
+    else{ 
+      const playerExists = await this.playerRepository.findOne({ where: {username: playerDto.username, id: Not(id)} });
+      const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
+      if (playerExists || loginExists) 
+        throw new Error(`Admin with username ${playerDto.username} already exists`);
+      else {
+        await this.playerRepository.update({ id }, { username: playerDto.username || exists.username, 
+                                                    email: playerDto.email || exists.email, 
+                                                    profile_image: playerDto.profile_image || exists.profile_image, 
+                                                    phone: playerDto.phone || exists.phone, 
+                                                    NID: playerDto.NID || exists.NID});
+        
+        loginDto.ban = String(loginDto.ban) === "true";
+        loginDto.activation = String(loginDto.activation) === "true";
+        if (loginDto.ban) 
+          loginDto.activation = false;
+        if(loginDto.activation)
+          loginDto.ban = false;
+        await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
+                                                    password_hash: loginDto.password_hash || exists.login.password_hash,
+                                                    role: loginDto.role || exists.login.role,
+                                                    activation: loginDto.activation ?? exists.login.activation,
+                                                    ban: loginDto.ban ?? exists.login.ban });
+        const updatedPlayer = await this.playerRepository.findOne({ where: { id }, relations: ['login'] });
+        return updatedPlayer;
+      }
+    }
+  }
+
+  async removePlayer(id: number): Promise<object> {
+    const exists = await this.playerRepository.findOneBy({ id: id });
+    if (!exists) 
+      throw new Error(`Player with id ${id} not found!`);
+    else {
+      await this.playerRepository.delete(id);
+      return {message: `Player with id ${id} has been deleted`};
+    }
+  }
+  
+  //lab performance
+  async removePlayerByEmail(email: string): Promise<object> {
+    await this.playerRepository.delete({ email: email });
+    return {message: `Player with email ${email} has been deleted`};
+  }
+
+  async searchPlayer(key: any): Promise<object> {
+    let players: object[];
+    if(Number(key)) {
+      players = await this.playerRepository.find({ where: { id: Number(key) } })
+      if(players.length < 1)
+        players = await this.playerRepository.find({ where: { phone: Number(key) } })
+    }
+    else
+      players = await this.playerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) } ] });
+    
+    if(players.length < 1) 
+      return {message: `No player found!\nTry searching with another key`};
+    return players;
+  }
+
+  async sortPlayerByIDAsc(): Promise<object> {
+    return await this.playerRepository.find({ order: { id: 'ASC' } });
+  }
+  
+  async sortPlayerByIDDesc(): Promise<object> {
+    return await this.playerRepository.find({ order: { id: 'DESC' } });
+  }
+  
+  async sortPlayerByNameAsc(): Promise<object> {
+    return await this.playerRepository.find({ order: { username: 'ASC' } });
+  }
+  
+  async sortPlayerByNameDesc(): Promise<object> {
+    return await this.playerRepository.find({ order: { username: 'DESC' } });
+  }
+  
+  async getDevelopers(): Promise<DeveloperEntity[]> {
+    return this.developerRepository.find({ relations: ['login'] });
+  }
+
+  async getDeveloperByID(developerID: number): Promise<DeveloperEntity> {
+    const exists = await this.developerRepository.findOne({where: { id: developerID }});
+    if (!exists) 
+      throw new Error(`Player with id ${developerID} does not exist`);
+    else 
+      return exists;
+  }
+
+  async getDeveloperPicByID(developerID: number, @Res() res): Promise<any> {
+    const developer = await this.developerRepository.findOne({ where: { id: developerID }, select: { profile_image: true }});
+    if(!developer || !developer.profile_image)
+      return { message: 'Developer image not found' };
+    return res.sendFile(developer.profile_image, {root:'./uploads/users/developer'})
+  }
+  
+  async getDevelopersByNullName(): Promise<object | DeveloperEntity[]> {
+    const developers = await this.developerRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
+    if (developers.length === 0) 
+      return {message: "No developer with null username has been found"};
+    return developers;
+  }
+
+  async addDeveloper(developerDto: DeveloperDTO, loginDto: LoginDTO): Promise<DeveloperEntity> {
+    const developerExists = await this.developerRepository.findOneBy({ username: developerDto.username });
+    const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
+    if (developerExists || loginExists) 
+      throw new Error(`Developer with username ${developerDto.username} already exists`);
+    else {
+      // Create login entity (this will auto-generate ID)
+      const login = this.loginRepository.create(loginDto);
+      // Save login so @BeforeInsert runs
+      const savedLogin = await this.loginRepository.save(login);
+
+      // Create admin entity but DO NOT assign id
+      const developer = this.developerRepository.create({...developerDto,
+        login: savedLogin,
+        id: savedLogin.id       // share primary key
+      });
+      // Save admin
+      const savedDeveloper = await this.adminRepository.save(developer);
+
+      return savedDeveloper;
+      }
+  }
+
+  async updateDeveloperPhoneByID(id: number, newPhone: number): Promise<DeveloperEntity | null> {
+    const exists = await this.developerRepository.findOneBy({ id: id });
+    if (!exists) 
+      throw new Error(`Developer with id ${id} not found!`);
+    else {
+      await this.developerRepository.update({ id }, { phone: newPhone });
+      const updatedDeveloper = await this.developerRepository.findOneBy({ id: id });
+      return updatedDeveloper;
+    }
+  }
+
+  async updateFullDeveloper(id: number, developerDto: DeveloperDTO, loginDto: LoginDTO): Promise<DeveloperEntity | null> {
+    const exists = await this.developerRepository.findOne({ where: { id }, relations: ['login'] });
+    if (!exists) 
+      throw new Error(`Developer with id ${id} not found!`);
+    else{ 
+      const developerExists = await this.developerRepository.findOne({ where: {username: developerDto.username, id: Not(id)} });
+      const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
+      if (developerExists || loginExists) 
+        throw new Error(`Admin with username ${developerDto.username} already exists`);
+      else {
+        await this.developerRepository.update({ id }, { username: developerDto.username || exists.username, 
+                                                    email: developerDto.email || exists.email, 
+                                                    profile_image: developerDto.profile_image || exists.profile_image, 
+                                                    phone: developerDto.phone || exists.phone, 
+                                                    NID: developerDto.NID || exists.NID});
+        
+        loginDto.ban = String(loginDto.ban) === "true";
+        loginDto.activation = String(loginDto.activation) === "true";
+        if (loginDto.ban) 
+          loginDto.activation = false;
+        if(loginDto.activation)
+          loginDto.ban = false;
+        await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
+                                                    password_hash: loginDto.password_hash || exists.login.password_hash,
+                                                    role: loginDto.role || exists.login.role,
+                                                    activation: loginDto.activation ?? exists.login.activation,
+                                                    ban: loginDto.ban ?? exists.login.ban });
+        const updatedDeveloper = await this.developerRepository.findOne({ where: { id }, relations: ['login'] });
+        return updatedDeveloper;
+      }
+    }
+  }
+
+  async removeDeveloper(id: number): Promise<object> {
+    const exists = await this.developerRepository.findOneBy({ id: id });
+    if (!exists) 
+      throw new Error(`Developer with id ${id} not found!`);
+    else {
+      await this.developerRepository.delete(id);
+      return {message: `Developer with id ${id} has been deleted`};
+    }
+  }
+  
+  //lab performance
+  async removeDeveloperByEmail(email: string): Promise<object> {
+    await this.developerRepository.delete({ email: email });
+    return {message: `Developer with email ${email} has been deleted`};
+  }
+
+  async searchDeveloper(key: any): Promise<object> {
+    let developers: object[];
+    if(Number(key)) {
+      developers = await this.developerRepository.find({ where: { id: Number(key) } })
+      if(developers.length < 1)
+        developers = await this.developerRepository.find({ where: { phone: Number(key) } })
+    }
+    else
+      developers = await this.developerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) } ] });
+    
+    if(developers.length < 1) 
+      return {message: `No developer found!\nTry searching with another key`};
+    return developers;
+  }
+
+  async sortDeveloperByIDAsc(): Promise<object> {
+    return await this.developerRepository.find({ order: { id: 'ASC' } });
+  }
+  
+  async sortDeveloperByIDDesc(): Promise<object> {
+    return await this.developerRepository.find({ order: { id: 'DESC' } });
+  }
+  
+  async sortDeveloperByNameAsc(): Promise<object> {
+    return await this.developerRepository.find({ order: { username: 'ASC' } });
+  }
+  
+  async sortDeveloperByNameDesc(): Promise<object> {
+    return await this.developerRepository.find({ order: { username: 'DESC' } });
+  }
 
 //   getGames(): object {
 //     let game1: Object = {

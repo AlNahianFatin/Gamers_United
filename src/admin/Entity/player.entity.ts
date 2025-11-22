@@ -6,7 +6,7 @@ export class PlayerEntity {
     @PrimaryColumn()
     id: number;
 
-    @Column({type: "varchar", nullable: true, unique: true})
+    @Column({type: "varchar", nullable: false, unique: true})
     username: string;
 
     @Column({nullable: true})
@@ -19,7 +19,7 @@ export class PlayerEntity {
     NID: string;
 
     @Column({type: "bigint", nullable: true})
-    phone: string;
+    phone: number;
     
     @CreateDateColumn({nullable: true})
     created_at: Date;
