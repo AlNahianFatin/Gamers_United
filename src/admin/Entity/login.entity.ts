@@ -14,7 +14,7 @@ export class LoginEntity {
     @Column()
     password_hash: string;
     
-    @Column()
+    @Column({type: "varchar", default: "player"})
     role: string;
     
     @Column({type: "boolean", default: true, nullable: true})

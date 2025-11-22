@@ -102,6 +102,11 @@ export class AdminService {
     await this.adminRepository.delete({ email: email });
     return {message: `Admin with email ${email} has been deleted`};
   }
+
+  async searchAdmin(key: string): Promise<object> {
+    
+  }
+
 //   getPlayers(): object {
 //     let player1: Object = {
 //       id: 1002,

@@ -18,6 +18,8 @@ import { PlayerEntity } from './Entity/player.entity';
 import { DeveloperEntity } from './Entity/developer.entity';
 import { LoginEntity } from './Entity/login.entity';
 import { LoginDTO } from './DTO/login.dto';
+import { plainToInstance } from 'class-transformer';
+import { validateOrReject } from 'class-validator';
 
 @Controller('admin')
 export class AdminController {
@@ -63,29 +65,31 @@ export class AdminController {
     })
   }))
   @UsePipes(new ValidationPipe())
-  addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): object {
-    const admin: AdminDTO = {
+  async addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<object> {
+    const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
       email: body.email,
       NID: body.NID,
       phone: body.phone,
-      profile_image: file ? file.filename : undefined,
-    };
+      profile_image: file?.filename,
+    });
+    await validateOrReject(adminDto);
 
-    const login: LoginDTO = {
+    const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password_hash: body.password_hash,
-      role: body.role,
-      // generateID: body.id
-  };
-    if(file) 
-      admin.profile_image = file.filename;
-    return this.adminService.addAdmin(admin, login);
-  }
-  
-  @Patch('updateAdminPhoneByID/:id/:newPhone')
-  updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: string) {
-    return this.adminService.updateAdminPhoneById(id, newPhone);
+      role: body.role
+    });
+    await validateOrReject(loginDto);
+
+      if(file) 
+        adminDto.profile_image = file.filename;
+      return this.adminService.addAdmin(adminDto, loginDto);
+    }
+
+    @Patch('updateAdminPhoneByID/:id/:newPhone')
+    updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: string) {
+      return this.adminService.updateAdminPhoneById(id, newPhone);
   }
 
   // @Put('updateFullAdmin/:id')
@@ -102,6 +106,11 @@ export class AdminController {
   removeAdminByEmail(@Query('email') email: string): Promise<object> {
     return this.adminService.removeAdminByEmail(email);
   }
+
+  // @Get('searchAdmin')
+  // searchAdmin(@Query('key') key: string): Promise<object> {
+  //   return this.adminService.searchAdmin(key);
+  // }
 
   // @Get('getPlayer/:name')
   // getPlayer(@Param('name') name: string, @Res() res) {

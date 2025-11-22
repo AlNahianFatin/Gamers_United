@@ -16,13 +16,10 @@ export class LoginDTO {
     @IsNotEmpty({ message: 'Password is required' })
     password_hash: string;
 
-    @IsNotEmpty()
-    role: string;
+    role?: string;
 
-    @IsNotEmpty()
     activation?: boolean;
 
-    @IsNotEmpty()
     ban?: boolean;
 
     admin?: AdminEntity;

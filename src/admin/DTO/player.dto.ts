@@ -1,5 +1,6 @@
 import { Transform } from "class-transformer";
 import { IsEmail, IsNotEmpty, IsString, Matches } from "class-validator";
+import { LoginEntity } from "../Entity/login.entity";
 
 export class PlayerDTO {
     @IsString()
@@ -8,17 +9,17 @@ export class PlayerDTO {
         message: 'Username should only contain alphabets and spaces',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-    username?: string;
+    username: string;
 
     @IsEmail({}, { message: 'Email must be a valid email address' })
     @IsNotEmpty({ message: 'Email is required' })
-    @Matches(/@.*\.(xyz)$/i, {
-        message: 'Email must contain @ and a .xyz domain',
+    @Matches(/@.*\.(xyz|com|edu)$/i, {
+        message: 'Email must contain @ and a .xyz or .com or .edu domain',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     email: string;
 
-    profile_image: string;
+    profile_image?: string;
 
     @IsNotEmpty({ message: 'NID is required' })
     @Matches(/^\d{10}$/, {
@@ -34,5 +35,7 @@ export class PlayerDTO {
     @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
     phone: string;
 
-    created_at: Date;
+    created_at?: Date;
+
+    login?: LoginEntity;
 }

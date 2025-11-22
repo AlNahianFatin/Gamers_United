@@ -1,13 +1,13 @@
-import { BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToOne, PrimaryColumn } from "typeorm";
 import { LoginEntity } from "./login.entity";
 
 @Entity("developer")
 export class DeveloperEntity {
     @PrimaryColumn()
-    id?: number;
+    id: number;
 
-    @Column({type: "varchar", nullable: true, unique: true})
-    username?: string;
+    @Column({type: "varchar", nullable: false, unique: true})
+    username: string;
 
     @Column({nullable: true})
     email: string;
@@ -16,7 +16,7 @@ export class DeveloperEntity {
     profile_image: string;
     
     @Column({nullable: true})
-    NID: number;
+    NID: string;
     
     @Column({type: "bigint", nullable: true})
     phone: string;
@@ -24,6 +24,6 @@ export class DeveloperEntity {
     @CreateDateColumn({nullable: true})
     created_at: Date;
 
-    @OneToOne(() => LoginEntity, login => login.admin)
+    @OneToOne(() => LoginEntity, login => login.developer)
     login: LoginEntity;
 }

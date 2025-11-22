@@ -4,10 +4,10 @@ import { LoginEntity } from "./login.entity";
 @Entity("player")
 export class PlayerEntity {
     @PrimaryColumn()
-    id?: number;
+    id: number;
 
     @Column({type: "varchar", nullable: true, unique: true})
-    username?: string;
+    username: string;
 
     @Column({nullable: true})
     email: string;
@@ -16,7 +16,7 @@ export class PlayerEntity {
     profile_image: string;
     
     @Column({nullable: true})
-    NID: number;
+    NID: string;
 
     @Column({type: "bigint", nullable: true})
     phone: string;
@@ -25,11 +25,5 @@ export class PlayerEntity {
     created_at: Date;
 
     @OneToOne(() => LoginEntity, login => login.player)
-    // @JoinColumn()
     login: LoginEntity;
-
-    // @BeforeInsert() 
-    // generateID() {
-    //     this.id = Number(new Date()) + Math.floor(Math.random() * 100);
-    // }
 }
