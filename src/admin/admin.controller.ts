@@ -65,37 +65,75 @@ export class AdminController {
     })
   }))
   @UsePipes(new ValidationPipe())
-  async addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<object> {
+  async addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<AdminEntity> {
     const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
       email: body.email,
-      NID: body.NID,
-      phone: body.phone,
       profile_image: file?.filename,
+      phone: body.phone,
+      NID: body.NID
     });
     await validateOrReject(adminDto);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password_hash: body.password_hash,
-      role: body.role
+      role: body.role,
+      activation: body.activation,
+      ban: body.ban
     });
     await validateOrReject(loginDto);
 
       if(file) 
         adminDto.profile_image = file.filename;
       return this.adminService.addAdmin(adminDto, loginDto);
-    }
-
-    @Patch('updateAdminPhoneByID/:id/:newPhone')
-    updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: number) {
-      return this.adminService.updateAdminPhoneById(id, newPhone);
   }
 
-  // @Put('updateFullAdmin/:id')
-  // updateFullAdmin(@Param('id') id: number, @Body() admin: AdminDTO): string {
-  //   return this.adminService.updateFullAdmin(admin, id);
-  // }
+  @Patch('updateAdminPhoneByID/:id/:newPhone')
+  updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: number) {
+    return this.adminService.updateAdminPhoneById(id, newPhone);
+  }
+
+  @Put('updateFullAdmin/:id')
+  @UseInterceptors(FileInterceptor('profile_image', {
+    fileFilter: (req, profile_image, cb) => {
+      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+        cb(null, true);
+      else
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    },
+    limits: { fileSize: 2097152 },
+    storage: diskStorage({
+      destination: 'uploads/users/admin',
+      filename: function (req, profile_image, cb) {
+        cb(null, Date.now() + path.extname(profile_image.originalname));
+      },
+    })
+  }))
+  @UsePipes(new ValidationPipe())
+  async updateFullAdmin(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
+    const adminDto = plainToInstance(AdminDTO, {
+      username: body.username,
+      email: body.email,
+      // profile_image: file?.filename,
+      phone: body.phone,
+      NID: body.NID
+    });
+    await validateOrReject(adminDto);
+
+    const loginDto = plainToInstance(LoginDTO, {
+      username: body.username,
+      password_hash: body.password_hash,
+      role: body.role,
+      activation: body.activation,
+      ban: body.ban
+    });
+    await validateOrReject(loginDto);
+
+      if(file) 
+        adminDto.profile_image = file.filename;
+      return this.adminService.updateFullAdmin(id, adminDto, loginDto);
+  }
 
   @Delete('removeAdmin')
   removeAdmin(@Query('id') id: number): Promise<object> {

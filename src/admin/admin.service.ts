@@ -8,7 +8,7 @@ import { AdminDTO } from './DTO/admin.dto';
 import { PlayerDTO } from './DTO/player.dto';
 import { DeveloperDTO } from './DTO/developer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Like, Repository } from 'typeorm';
+import { IsNull, Like, Not, Repository } from 'typeorm';
 import { LoginEntity } from './Entity/login.entity';
 import { AdminEntity } from './Entity/admin.entity';
 import { PlayerEntity } from './Entity/player.entity';
@@ -83,9 +83,38 @@ export class AdminService {
     }
   }
 
-  // updateFullAdmin(admin: AdminDTO, id: number): string {
-  //   return `${id} has been updated successfully`;
-  // }
+  async updateFullAdmin(id: number, adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
+    const exists = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
+    if (!exists) 
+      throw new Error(`Admin with id ${id} not found!`);
+    else{ 
+      const adminExists = await this.adminRepository.findOne({ where: {username: adminDto.username, id: Not(id)} });
+      const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
+      if (adminExists || loginExists) 
+        throw new Error(`Admin with username ${adminDto.username} already exists`);
+      else {
+        await this.adminRepository.update({ id }, { username: adminDto.username || exists.username, 
+                                                    email: adminDto.email || exists.email, 
+                                                    profile_image: adminDto.profile_image || exists.profile_image, 
+                                                    phone: adminDto.phone || exists.phone, 
+                                                    NID: adminDto.NID || exists.NID});
+        
+        loginDto.ban = String(loginDto.ban) === "true";
+        loginDto.activation = String(loginDto.activation) === "true";
+        if (loginDto.ban) 
+          loginDto.activation = false;
+        if(loginDto.activation)
+          loginDto.ban = false;
+        await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
+                                                    password_hash: loginDto.password_hash || exists.login.password_hash,
+                                                    role: loginDto.role || exists.login.role,
+                                                    activation: loginDto.activation ?? exists.login.activation,
+                                                    ban: loginDto.ban ?? exists.login.ban });
+        const updatedAdmin = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
+        return updatedAdmin;
+      }
+    }
+  }
 
   async removeAdmin(id: number): Promise<object> {
     const exists = await this.adminRepository.findOneBy({ id: id });
