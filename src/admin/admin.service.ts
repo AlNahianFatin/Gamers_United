@@ -15,6 +15,8 @@ import { PlayerEntity } from './Entity/player.entity';
 import { DeveloperEntity } from './Entity/developer.entity';
 import { LoginDTO } from './DTO/login.dto';
 import { stringify } from 'querystring';
+import path from 'path';
+import { promises } from 'fs';
 
 @Injectable()
 export class AdminService {
@@ -53,8 +55,9 @@ export class AdminService {
     const adminExists = await this.adminRepository.findOneBy({ username: adminDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (adminExists || loginExists) 
-      throw new Error(`Admin with username ${adminDto.username} already exists`);
+      throw new Error(`User with username ${adminDto.username} already exists`);
     else {
+      loginDto.role = "admin";
       // Create login entity (this will auto-generate ID)
       const login = this.loginRepository.create(loginDto);
       // Save login so @BeforeInsert runs
@@ -72,14 +75,20 @@ export class AdminService {
       }
   }
 
-  async updateAdminPhoneById(id: number, newPhone: number): Promise<AdminEntity | null> {
-    const exists = await this.adminRepository.findOneBy({ id: id });
+  async updateAdminPhoneById(id: any, newPhone: any): Promise<AdminEntity | null> {
+    if(!Number(id))
+      throw new Error("Please enter a valid ID number");
+    id = Number(id)
+    const exists = await this.adminRepository.findOneBy({ id });
     if (!exists) 
       throw new Error(`Admin with id ${id} not found!`);
     else {
+      if(!Number(newPhone))
+        throw new Error("Please enter a valid Phone No.");
+      if(newPhone.length !== 11)
+        throw new Error('Phone No. must be a valid format of 11 digits');
       await this.adminRepository.update({ id }, { phone: newPhone });
-      const updatedAdmin = await this.adminRepository.findOneBy({ id: id });
-      return updatedAdmin;
+      return await this.adminRepository.findOneBy({ id: id });
     }
   }
 
@@ -91,7 +100,7 @@ export class AdminService {
       const adminExists = await this.adminRepository.findOne({ where: {username: adminDto.username, id: Not(id)} });
       const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
       if (adminExists || loginExists) 
-        throw new Error(`Admin with username ${adminDto.username} already exists`);
+        throw new Error(`User with username ${adminDto.username} already exists`);
       else {
         await this.adminRepository.update({ id }, { username: adminDto.username || exists.username, 
                                                     email: adminDto.email || exists.email, 
@@ -105,6 +114,7 @@ export class AdminService {
           loginDto.activation = false;
         if(loginDto.activation)
           loginDto.ban = false;
+        loginDto.role = "admin";
         await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
                                                     password_hash: loginDto.password_hash || exists.login.password_hash,
                                                     role: loginDto.role || exists.login.role,
@@ -117,33 +127,58 @@ export class AdminService {
   }
 
   async removeAdmin(id: number): Promise<object> {
-    const exists = await this.adminRepository.findOneBy({ id: id });
-    if (!exists) 
+    const admin = await this.adminRepository.findOneBy({ id: id });
+    if (!admin) 
       throw new Error(`Admin with id ${id} not found!`);
     else {
-      await this.adminRepository.delete(id);
+      if (admin.profile_image) {
+        const filePath = path.join('uploads/users/admin', admin.profile_image);
+        try {
+          await promises.access(filePath); 
+          await promises.unlink(filePath);
+        } 
+        catch (err) {
+          console.warn(`Profile image file not found or already deleted: ${filePath}`);
+        }
+      }
+      await this.loginRepository.delete(id);
       return {message: `Admin with id ${id} has been deleted`};
     }
   }
   
   //lab performance
   async removeAdminByEmail(email: string): Promise<object> {
-    await this.adminRepository.delete({ email: email });
-    return {message: `Admin with email ${email} has been deleted`};
+    const admins = await this.adminRepository.find({ where: { email }, relations: ['login'] });
+    if (!admins || admins.length < 1)
+      throw new Error(`No admins found with email ${email}!`);
+    for (const admin of admins) {
+      if (admin.profile_image) {
+        const filePath = path.join('uploads/users/admin', admin.profile_image);
+        try {
+          await promises.access(filePath);
+          await promises.unlink(filePath); 
+        } 
+        catch (err) {
+          console.warn(`Profile image not found or already deleted: ${filePath}`);
+        }
+      }
+    }
+    const loginIds = admins.filter(admin => admin.login).map(admin => admin.login.id);
+    if (loginIds.length > 0) 
+      await this.loginRepository.delete(loginIds);
+    return { message: `All admins with email ${email} has been deleted` };
   }
+
 
   async searchAdmin(key: any): Promise<object> {
     let admins: object[];
-    if(Number(key)) {
+    if(Number(key)) 
       admins = await this.adminRepository.find({ where: { id: Number(key) } })
-      if(admins.length < 1)
-        admins = await this.adminRepository.find({ where: { phone: Number(key) } })
-    }
     else
-      admins = await this.adminRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) } ] });
+      admins = await this.adminRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
     if(admins.length < 1) 
-      return {message: `No admin found!\nTry searching with another key`};
+      return {message: `No admin found! Try searching with another key`};
     return admins;
   }
 
@@ -193,8 +228,9 @@ export class AdminService {
     const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (playerExists || loginExists) 
-      throw new Error(`Player with username ${playerDto.username} already exists`);
+      throw new Error(`User with username ${playerDto.username} already exists`);
     else {
+      loginDto.role = "player";
       // Create login entity (this will auto-generate ID)
       const login = this.loginRepository.create(loginDto);
       // Save login so @BeforeInsert runs
@@ -206,20 +242,26 @@ export class AdminService {
         id: savedLogin.id       // share primary key
       });
       // Save admin
-      const savedPlayer = await this.adminRepository.save(player);
+      const savedPlayer = await this.playerRepository.save(player);
 
       return savedPlayer;
       }
   }
 
-  async updatePlayerPhoneByID(id: number, newPhone: number): Promise<PlayerEntity | null> {
-    const exists = await this.playerRepository.findOneBy({ id: id });
+  async updatePlayerPhoneByID(id: any, newPhone: any): Promise<PlayerEntity | null> {
+    if(!Number(id))
+      throw new Error("Please enter a valid ID number");
+    id = Number(id)
+    const exists = await this.playerRepository.findOneBy({ id });
     if (!exists) 
       throw new Error(`Player with id ${id} not found!`);
     else {
+      if(!Number(newPhone))
+        throw new Error("Please enter a valid Phone No.");
+      if(newPhone.length !== 11)
+        throw new Error('Phone No. must be a valid format of 11 digits');
       await this.playerRepository.update({ id }, { phone: newPhone });
-      const updatedPlayer = await this.playerRepository.findOneBy({ id: id });
-      return updatedPlayer;
+      return await this.playerRepository.findOneBy({ id: id });
     }
   }
 
@@ -231,7 +273,7 @@ export class AdminService {
       const playerExists = await this.playerRepository.findOne({ where: {username: playerDto.username, id: Not(id)} });
       const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
       if (playerExists || loginExists) 
-        throw new Error(`Admin with username ${playerDto.username} already exists`);
+        throw new Error(`User with username ${playerDto.username} already exists`);
       else {
         await this.playerRepository.update({ id }, { username: playerDto.username || exists.username, 
                                                     email: playerDto.email || exists.email, 
@@ -245,6 +287,7 @@ export class AdminService {
           loginDto.activation = false;
         if(loginDto.activation)
           loginDto.ban = false;
+        loginDto.role = "player";
         await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
                                                     password_hash: loginDto.password_hash || exists.login.password_hash,
                                                     role: loginDto.role || exists.login.role,
@@ -257,33 +300,57 @@ export class AdminService {
   }
 
   async removePlayer(id: number): Promise<object> {
-    const exists = await this.playerRepository.findOneBy({ id: id });
-    if (!exists) 
+    const player = await this.playerRepository.findOneBy({ id: id });
+    if (!player) 
       throw new Error(`Player with id ${id} not found!`);
     else {
-      await this.playerRepository.delete(id);
+      if (player.profile_image) {
+        const filePath = path.join('uploads/users/player', player.profile_image);
+        try {
+          await promises.access(filePath); 
+          await promises.unlink(filePath);
+        } 
+        catch (err) {
+          console.warn(`Profile image file not found or already deleted: ${filePath}`);
+        }
+      }
+      await this.loginRepository.delete(id);
       return {message: `Player with id ${id} has been deleted`};
     }
   }
   
   //lab performance
   async removePlayerByEmail(email: string): Promise<object> {
-    await this.playerRepository.delete({ email: email });
-    return {message: `Player with email ${email} has been deleted`};
+    const players = await this.playerRepository.find({ where: { email }, relations: ['login'] });
+    if (!players || players.length < 1)
+      throw new Error(`No players found with email ${email}!`);
+    for (const player of players) {
+      if (player.profile_image) {
+        const filePath = path.join('uploads/users/player', player.profile_image);
+        try {
+          await promises.access(filePath);
+          await promises.unlink(filePath); 
+        } 
+        catch (err) {
+          console.warn(`Profile image not found or already deleted: ${filePath}`);
+        }
+      }
+    }
+    const loginIds = players.filter(player => player.login).map(player => player.login.id);
+    if (loginIds.length > 0) 
+      await this.loginRepository.delete(loginIds);
+    return { message: `All players with email ${email} has been deleted` };
   }
 
   async searchPlayer(key: any): Promise<object> {
     let players: object[];
-    if(Number(key)) {
+    if(Number(key)) 
       players = await this.playerRepository.find({ where: { id: Number(key) } })
-      if(players.length < 1)
-        players = await this.playerRepository.find({ where: { phone: Number(key) } })
-    }
     else
-      players = await this.playerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) } ] });
+      players = await this.playerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
     if(players.length < 1) 
-      return {message: `No player found!\nTry searching with another key`};
+      return {message: `No player found! Try searching with another key`};
     return players;
   }
 
@@ -310,7 +377,7 @@ export class AdminService {
   async getDeveloperByID(developerID: number): Promise<DeveloperEntity> {
     const exists = await this.developerRepository.findOne({where: { id: developerID }});
     if (!exists) 
-      throw new Error(`Player with id ${developerID} does not exist`);
+      throw new Error(`Developer with id ${developerID} does not exist`);
     else 
       return exists;
   }
@@ -333,8 +400,9 @@ export class AdminService {
     const developerExists = await this.developerRepository.findOneBy({ username: developerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (developerExists || loginExists) 
-      throw new Error(`Developer with username ${developerDto.username} already exists`);
+      throw new Error(`User with username ${developerDto.username} already exists`);
     else {
+      loginDto.role = "developer";
       // Create login entity (this will auto-generate ID)
       const login = this.loginRepository.create(loginDto);
       // Save login so @BeforeInsert runs
@@ -346,20 +414,26 @@ export class AdminService {
         id: savedLogin.id       // share primary key
       });
       // Save admin
-      const savedDeveloper = await this.adminRepository.save(developer);
+      const savedDeveloper = await this.developerRepository.save(developer);
 
       return savedDeveloper;
       }
   }
 
-  async updateDeveloperPhoneByID(id: number, newPhone: number): Promise<DeveloperEntity | null> {
-    const exists = await this.developerRepository.findOneBy({ id: id });
+  async updateDeveloperPhoneByID(id: any, newPhone: any): Promise<DeveloperEntity | null> {
+    if(!Number(id))
+      throw new Error("Please enter a valid ID number");
+    id = Number(id)
+    const exists = await this.developerRepository.findOneBy({ id });
     if (!exists) 
       throw new Error(`Developer with id ${id} not found!`);
     else {
+      if(!Number(newPhone))
+        throw new Error("Please enter a valid Phone No.");
+      if(newPhone.length !== 11)
+        throw new Error('Phone No. must be a valid format of 11 digits');
       await this.developerRepository.update({ id }, { phone: newPhone });
-      const updatedDeveloper = await this.developerRepository.findOneBy({ id: id });
-      return updatedDeveloper;
+      return await this.developerRepository.findOneBy({ id: id });
     }
   }
 
@@ -371,7 +445,7 @@ export class AdminService {
       const developerExists = await this.developerRepository.findOne({ where: {username: developerDto.username, id: Not(id)} });
       const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
       if (developerExists || loginExists) 
-        throw new Error(`Admin with username ${developerDto.username} already exists`);
+        throw new Error(`User with username ${developerDto.username} already exists`);
       else {
         await this.developerRepository.update({ id }, { username: developerDto.username || exists.username, 
                                                     email: developerDto.email || exists.email, 
@@ -385,6 +459,7 @@ export class AdminService {
           loginDto.activation = false;
         if(loginDto.activation)
           loginDto.ban = false;
+        loginDto.role = "developer";
         await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
                                                     password_hash: loginDto.password_hash || exists.login.password_hash,
                                                     role: loginDto.role || exists.login.role,
@@ -397,33 +472,57 @@ export class AdminService {
   }
 
   async removeDeveloper(id: number): Promise<object> {
-    const exists = await this.developerRepository.findOneBy({ id: id });
-    if (!exists) 
+    const developer = await this.developerRepository.findOneBy({ id: id });
+    if (!developer) 
       throw new Error(`Developer with id ${id} not found!`);
     else {
-      await this.developerRepository.delete(id);
+      if (developer.profile_image) {
+        const filePath = path.join('uploads/users/developer', developer.profile_image);
+        try {
+          await promises.access(filePath); 
+          await promises.unlink(filePath);
+        } 
+        catch (err) {
+          console.warn(`Profile image file not found or already deleted: ${filePath}`);
+        }
+      }
+      await this.loginRepository.delete(id);
       return {message: `Developer with id ${id} has been deleted`};
     }
   }
   
   //lab performance
   async removeDeveloperByEmail(email: string): Promise<object> {
-    await this.developerRepository.delete({ email: email });
-    return {message: `Developer with email ${email} has been deleted`};
+    const developers = await this.developerRepository.find({ where: { email }, relations: ['login'] });
+    if (!developers || developers.length < 1)
+      throw new Error(`No developers found with email ${email}!`);
+    for (const developer of developers) {
+      if (developer.profile_image) {
+        const filePath = path.join('uploads/users/developer', developer.profile_image);
+        try {
+          await promises.access(filePath);
+          await promises.unlink(filePath); 
+        } 
+        catch (err) {
+          console.warn(`Profile image not found or already deleted: ${filePath}`);
+        }
+      }
+    }
+    const loginIds = developers.filter(developer => developer.login).map(developer => developer.login.id);
+    if (loginIds.length > 0) 
+      await this.loginRepository.delete(loginIds);
+    return { message: `All developers with email ${email} has been deleted` };
   }
 
   async searchDeveloper(key: any): Promise<object> {
     let developers: object[];
-    if(Number(key)) {
+    if(Number(key)) 
       developers = await this.developerRepository.find({ where: { id: Number(key) } })
-      if(developers.length < 1)
-        developers = await this.developerRepository.find({ where: { phone: Number(key) } })
-    }
     else
-      developers = await this.developerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) } ] });
+      developers = await this.developerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
     if(developers.length < 1) 
-      return {message: `No developer found!\nTry searching with another key`};
+      return {message: `No developer found! Try searching with another key`};
     return developers;
   }
 

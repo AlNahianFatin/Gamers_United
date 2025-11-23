@@ -69,7 +69,6 @@ export class AdminController {
     const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
       email: body.email,
-      profile_image: file?.filename,
       phone: body.phone,
       NID: body.NID
     });
@@ -89,8 +88,8 @@ export class AdminController {
       return this.adminService.addAdmin(adminDto, loginDto);
   }
 
-  @Patch('updateAdminPhoneByID/:id/:newPhone')
-  updateAdminPhoneById(@Param('id') id: number, @Param('newPhone') newPhone: number) {
+  @Patch('updateAdminPhoneByID/:id')
+  updateAdminPhoneById(@Param('id') id: string, @Query('newPhone') newPhone: string) {
     return this.adminService.updateAdminPhoneById(id, newPhone);
   }
 
@@ -199,7 +198,7 @@ export class AdminController {
     },
     limits: { fileSize: 2097152 },
     storage: diskStorage({
-      destination: 'uploads/users/admin',
+      destination: 'uploads/users/player',
       filename: function (req, profile_image, cb) {
         cb(null, Date.now() + path.extname(profile_image.originalname));
       },
@@ -210,7 +209,6 @@ export class AdminController {
     const playerDto = plainToInstance(PlayerDTO, {
       username: body.username,
       email: body.email,
-      // profile_image: file?.filename,
       phone: body.phone,
       NID: body.NID
     });
@@ -230,8 +228,8 @@ export class AdminController {
       return this.adminService.addPlayer(playerDto, loginDto);
   }
 
-  @Patch('updatePlayerPhoneByID/:id/:newPhone')
-  updatePlayerPhoneByID(@Param('id') id: number, @Param('newPhone') newPhone: number) {
+  @Patch('updatePlayerPhoneByID/:id')
+  updatePlayerPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
     return this.adminService.updatePlayerPhoneByID(id, newPhone);
   }
 
@@ -340,7 +338,7 @@ export class AdminController {
     },
     limits: { fileSize: 2097152 },
     storage: diskStorage({
-      destination: 'uploads/users/player',
+      destination: 'uploads/users/developer',
       filename: function (req, profile_image, cb) {
         cb(null, Date.now() + path.extname(profile_image.originalname));
       },
@@ -351,7 +349,6 @@ export class AdminController {
     const developerDto = plainToInstance(DeveloperDTO, {
       username: body.username,
       email: body.email,
-      // profile_image: file?.filename,
       phone: body.phone,
       NID: body.NID
     });
@@ -371,8 +368,8 @@ export class AdminController {
       return this.adminService.addDeveloper(developerDto, loginDto);
   }
 
-  @Patch('updateDeveloperPhoneByID/:id/:newPhone')
-  updateDeveloperPhoneByID(@Param('id') id: number, @Param('newPhone') newPhone: number) {
+  @Patch('updateDeveloperPhoneByID/:id')
+  updateDeveloperPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
     return this.adminService.updateDeveloperPhoneByID(id, newPhone);
   }
 

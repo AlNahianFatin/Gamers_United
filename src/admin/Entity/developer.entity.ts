@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, OneToOne, PrimaryColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
 import { LoginEntity } from "./login.entity";
 
 @Entity("developer")
@@ -18,12 +18,13 @@ export class DeveloperEntity {
     @Column({nullable: true})
     NID: string;
     
-    @Column({type: "bigint", nullable: true})
-    phone: number;
+    @Column({nullable: true})
+    phone: string;
 
     @CreateDateColumn({nullable: true})
     created_at: Date;
 
-    @OneToOne(() => LoginEntity, login => login.developer)
+    @OneToOne(() => LoginEntity, login => login.developer, {cascade: true, onDelete: 'CASCADE'})
+    @JoinColumn({ name: "id" })
     login: LoginEntity;
 }

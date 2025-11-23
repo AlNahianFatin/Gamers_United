@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, OneToOne, PrimaryColumn } from "typeorm";
 import { AdminEntity } from "./admin.entity";
 import { PlayerEntity } from "./player.entity";
 import { DeveloperEntity } from "./developer.entity";
@@ -28,15 +28,12 @@ export class LoginEntity {
         this.id = Number(String(Date.now()).slice(-8)) + Math.floor(Math.random() * 10);
     }
 
-    @OneToOne(() => AdminEntity, admin => admin.login, {cascade: true})
-    @JoinColumn()
+    @OneToOne(() => AdminEntity, admin => admin.login)
     admin: AdminEntity;
     
-    @OneToOne(() => PlayerEntity, player => player.login, {cascade: true})
-    @JoinColumn()
+    @OneToOne(() => PlayerEntity, player => player.login)
     player: PlayerEntity;
     
-    @OneToOne(() => DeveloperEntity, developer => developer.login, {cascade: true})
-    @JoinColumn()
+    @OneToOne(() => DeveloperEntity, developer => developer.login)
     developer: DeveloperEntity;
 }

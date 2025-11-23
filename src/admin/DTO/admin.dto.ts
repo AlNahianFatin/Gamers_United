@@ -28,12 +28,12 @@ export class AdminDTO {
     @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
     NID: string;
 
-    @IsNotEmpty({ message: 'NID is required' })
+    @IsNotEmpty({ message: 'Phone No. is required' })
     @Matches(/^\d{11}$/, {
         message: 'Phone No. must be a valid format of 11 digits'
     })
     @Transform(({ value }) => (value !== undefined && value !== null ? String(value).trim() : value))
-    phone: number;
+    phone: string;
 
     created_at?: Date;
 
