@@ -1,38 +1,44 @@
-import { Injectable, Res } from '@nestjs/common';
-import { GamesDTO } from './DTO/games.dto';
-import { PurchasesDTO } from './DTO/purchases.dto';
-import { ViewsDTO } from './DTO/views.dto';
-import { PlaysDTO } from './DTO/plays.dto';
-import { CategoriesDTO } from './DTO/categories.dto';
-import { AdminDTO } from './DTO/admin.dto';
-import { PlayerDTO } from './DTO/player.dto';
-import { DeveloperDTO } from './DTO/developer.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+import { HttpException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { IsNull, Like, Not, Repository } from 'typeorm';
-import { LoginEntity } from './Entity/login.entity';
-import { AdminEntity } from './Entity/admin.entity';
-import { PlayerEntity } from './Entity/player.entity';
-import { DeveloperEntity } from './Entity/developer.entity';
-import { LoginDTO } from './DTO/login.dto';
-import { stringify } from 'querystring';
+import { GamesDTO } from '../dto/games.dto';
+import { PurchasesDTO } from '../dto/purchases.dto';
+import { ViewsDTO } from '../dto/views.dto';
+import { PlaysDTO } from '../dto/plays.dto';
+import { CategoriesDTO } from '../dto/categories.dto';
+import { AdminDTO } from '../dto/admin.dto';
+import { PlayerDTO } from '../dto/player.dto';
+import { DeveloperDTO } from '../dto/developer.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { LoginEntity } from '../entities/login.entity';
+import { AdminEntity } from '../entities/admin.entity';
+import { PlayerEntity } from '../entities/player.entity';
+import { DeveloperEntity } from '../entities/developer.entity';
+import { LoginDTO } from '../dto/login.dto';
 import path from 'path';
 import { promises } from 'fs';
+import { GamesEntity } from '../entities/games.entity';
+import { CategoriesEntity } from '../entities/categories.entity';
 
 @Injectable()
 export class AdminService {
   constructor(@InjectRepository(LoginEntity) private loginRepository: Repository<LoginEntity>,
               @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
               @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
-              @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>) {}
-
+              @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>,
+              @InjectRepository(GamesEntity) private gamesRepository: Repository<GamesEntity>,
+              @InjectRepository(CategoriesEntity) private categoriesRepository: Repository<CategoriesEntity>) {}
+  
   async getAdmins(): Promise<AdminEntity[]> {
-    return this.adminRepository.find({ relations: ['login'] });
+    const admins = await this.adminRepository.find({ relations: ['login'] });
+    if(!admins || admins.length === 0)
+      throw new HttpException('No admin found', HttpStatus.NOT_FOUND);
+    return admins;
   }
 
   async getAdminByID(adminID: number): Promise<AdminEntity> {
     const exists = await this.adminRepository.findOne({where: { id: adminID }});
     if (!exists) 
-      throw new Error(`Admin with id ${adminID} does not exist`);
+      throw new HttpException(`Admin with id ${adminID} does not exist`, HttpStatus.NOT_FOUND);
     else 
       return exists;
   }
@@ -40,14 +46,14 @@ export class AdminService {
   async getAdminPicByID(adminID: number, @Res() res): Promise<any> {
     const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { profile_image: true }});
     if(!admin || !admin.profile_image)
-      return { message: 'Admin image not found' };
+      throw new HttpException('Admin image not found', HttpStatus.NOT_FOUND);
     return res.sendFile(admin.profile_image, {root:'./uploads/users/admin'})
   }
   
   async getAdminsByNullName(): Promise<object | AdminEntity[]> {
     const admins = await this.adminRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
     if (admins.length === 0) 
-      return {message: "No admin with null username has been found"};
+      throw new HttpException('No admin with null username has been found', HttpStatus.NOT_FOUND);
     return admins;
   }
 
@@ -55,38 +61,34 @@ export class AdminService {
     const adminExists = await this.adminRepository.findOneBy({ username: adminDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (adminExists || loginExists) 
-      throw new Error(`User with username ${adminDto.username} already exists`);
+      throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "admin";
-      // Create login entity (this will auto-generate ID)
       const login = this.loginRepository.create(loginDto);
-      // Save login so @BeforeInsert runs
       const savedLogin = await this.loginRepository.save(login);
 
-      // Create admin entity but DO NOT assign id
       const admin = this.adminRepository.create({...adminDto,
         login: savedLogin,
-        id: savedLogin.id       // share primary key
+        id: savedLogin.id       
       });
-      // Save admin
       const savedAdmin = await this.adminRepository.save(admin);
-
       return savedAdmin;
-      }
+    }
   }
 
   async updateAdminPhoneById(id: any, newPhone: any): Promise<AdminEntity | null> {
     if(!Number(id))
-      throw new Error("Please enter a valid ID number");
+      throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
+
     const exists = await this.adminRepository.findOneBy({ id });
     if (!exists) 
-      throw new Error(`Admin with id ${id} not found!`);
+      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if(!Number(newPhone))
-        throw new Error("Please enter a valid Phone No.");
+        throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
       if(newPhone.length !== 11)
-        throw new Error('Phone No. must be a valid format of 11 digits');
+        throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
       await this.adminRepository.update({ id }, { phone: newPhone });
       return await this.adminRepository.findOneBy({ id: id });
     }
@@ -95,12 +97,12 @@ export class AdminService {
   async updateFullAdmin(id: number, adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
     const exists = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
     if (!exists) 
-      throw new Error(`Admin with id ${id} not found!`);
+      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else{ 
       const adminExists = await this.adminRepository.findOne({ where: {username: adminDto.username, id: Not(id)} });
       const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
       if (adminExists || loginExists) 
-        throw new Error(`User with username ${adminDto.username} already exists`);
+        throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
         await this.adminRepository.update({ id }, { username: adminDto.username || exists.username, 
                                                     email: adminDto.email || exists.email, 
@@ -129,7 +131,7 @@ export class AdminService {
   async removeAdmin(id: number): Promise<object> {
     const admin = await this.adminRepository.findOneBy({ id: id });
     if (!admin) 
-      throw new Error(`Admin with id ${id} not found!`);
+      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if (admin.profile_image) {
         const filePath = path.join('uploads/users/admin', admin.profile_image);
@@ -138,7 +140,7 @@ export class AdminService {
           await promises.unlink(filePath);
         } 
         catch (err) {
-          console.warn(`Profile image file not found or already deleted: ${filePath}`);
+          throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
@@ -150,7 +152,7 @@ export class AdminService {
   async removeAdminByEmail(email: string): Promise<object> {
     const admins = await this.adminRepository.find({ where: { email }, relations: ['login'] });
     if (!admins || admins.length < 1)
-      throw new Error(`No admins found with email ${email}!`);
+      throw new HttpException(`No admins found with email ${email}!`, HttpStatus.NOT_FOUND);
     for (const admin of admins) {
       if (admin.profile_image) {
         const filePath = path.join('uploads/users/admin', admin.profile_image);
@@ -159,7 +161,7 @@ export class AdminService {
           await promises.unlink(filePath); 
         } 
         catch (err) {
-          console.warn(`Profile image not found or already deleted: ${filePath}`);
+          throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
     }
@@ -169,7 +171,6 @@ export class AdminService {
     return { message: `All admins with email ${email} has been deleted` };
   }
 
-
   async searchAdmin(key: any): Promise<object> {
     let admins: object[];
     if(Number(key)) 
@@ -178,34 +179,49 @@ export class AdminService {
       admins = await this.adminRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
     if(admins.length < 1) 
-      return {message: `No admin found! Try searching with another key`};
+      throw new HttpException(`No admin found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async sortAdminByIDAsc(): Promise<object> {
-    return await this.adminRepository.find({ order: { id: 'ASC' } });
+    const admins =  await this.adminRepository.find({ order: { id: 'ASC' } });
+    if(!admins || admins.length < 0)
+      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+    return admins;
   }
   
   async sortAdminByIDDesc(): Promise<object> {
-    return await this.adminRepository.find({ order: { id: 'DESC' } });
+    const admins =  await this.adminRepository.find({ order: { id: 'DESC' } });
+    if(!admins || admins.length < 0)
+      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+    return admins;
   }
   
   async sortAdminByNameAsc(): Promise<object> {
-    return await this.adminRepository.find({ order: { username: 'ASC' } });
+    const admins =  await this.adminRepository.find({ order: { username: 'ASC' } });
+    if(!admins || admins.length < 0)
+      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+    return admins;
   }
   
   async sortAdminByNameDesc(): Promise<object> {
-    return await this.adminRepository.find({ order: { username: 'DESC' } });
+    const admins =  await this.adminRepository.find({ order: { username: 'DESC' } });
+    if(!admins || admins.length < 0)
+      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+    return admins;
   }
   
   async getPlayers(): Promise<PlayerEntity[]> {
-    return this.playerRepository.find({ relations: ['login'] });
+    const players = await this.playerRepository.find({ relations: ['login'] });
+    if(!players || players.length < 0)
+      throw new HttpException(`No player found`, HttpStatus.NOT_FOUND);
+    return players;
   }
 
   async getPlayerByID(playerID: number): Promise<PlayerEntity> {
     const exists = await this.playerRepository.findOne({where: { id: playerID }});
     if (!exists) 
-      throw new Error(`Player with id ${playerID} does not exist`);
+      throw new HttpException(`Player with id ${playerID} does not exist`, HttpStatus.NOT_FOUND);
     else 
       return exists;
   }
@@ -213,14 +229,14 @@ export class AdminService {
   async getPlayerPicByID(playerID: number, @Res() res): Promise<any> {
     const player = await this.playerRepository.findOne({ where: { id: playerID }, select: { profile_image: true }});
     if(!player || !player.profile_image)
-      return { message: 'Player image not found' };
+      throw new HttpException(`Player image not found`, HttpStatus.NOT_FOUND);
     return res.sendFile(player.profile_image, {root:'./uploads/users/player'})
   }
   
   async getPlayersByNullName(): Promise<object | PlayerEntity[]> {
     const players = await this.playerRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
     if (players.length === 0) 
-      return {message: "No player with null username has been found"};
+      throw new HttpException(`No player with null username has been found`, HttpStatus.NOT_FOUND);
     return players;
   }
 
@@ -228,38 +244,35 @@ export class AdminService {
     const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (playerExists || loginExists) 
-      throw new Error(`User with username ${playerDto.username} already exists`);
+      throw new HttpException(`User with username ${playerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "player";
-      // Create login entity (this will auto-generate ID)
       const login = this.loginRepository.create(loginDto);
-      // Save login so @BeforeInsert runs
       const savedLogin = await this.loginRepository.save(login);
 
-      // Create admin entity but DO NOT assign id
       const player = this.playerRepository.create({...playerDto,
         login: savedLogin,
-        id: savedLogin.id       // share primary key
+        id: savedLogin.id      
       });
-      // Save admin
       const savedPlayer = await this.playerRepository.save(player);
-
       return savedPlayer;
-      }
+    }
   }
 
   async updatePlayerPhoneByID(id: any, newPhone: any): Promise<PlayerEntity | null> {
     if(!Number(id))
-      throw new Error("Please enter a valid ID number");
+      throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
+
     const exists = await this.playerRepository.findOneBy({ id });
     if (!exists) 
-      throw new Error(`Player with id ${id} not found!`);
+      throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if(!Number(newPhone))
-        throw new Error("Please enter a valid Phone No.");
+        throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
       if(newPhone.length !== 11)
-        throw new Error('Phone No. must be a valid format of 11 digits');
+        throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
+
       await this.playerRepository.update({ id }, { phone: newPhone });
       return await this.playerRepository.findOneBy({ id: id });
     }
@@ -268,18 +281,39 @@ export class AdminService {
   async updateFullPlayer(id: number, playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity | null> {
     const exists = await this.playerRepository.findOne({ where: { id }, relations: ['login'] });
     if (!exists) 
-      throw new Error(`Player with id ${id} not found!`);
+      throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else{ 
       const playerExists = await this.playerRepository.findOne({ where: {username: playerDto.username, id: Not(id)} });
       const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
       if (playerExists || loginExists) 
-        throw new Error(`User with username ${playerDto.username} already exists`);
+        throw new HttpException(`User with username ${playerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
         await this.playerRepository.update({ id }, { username: playerDto.username || exists.username, 
                                                     email: playerDto.email || exists.email, 
                                                     profile_image: playerDto.profile_image || exists.profile_image, 
                                                     phone: playerDto.phone || exists.phone, 
                                                     NID: playerDto.NID || exists.NID});
+        const newGameIds = playerDto.game_ids ?? [];
+        const oldGameIds = exists.game_ids ?? [];
+              
+        exists.game_ids = newGameIds;
+        await this.playerRepository.save(exists);
+
+        const removedGames = oldGameIds.filter(id => !newGameIds.includes(id));
+        for (const gameId of removedGames) {
+          const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+          if (!game) 
+            continue;
+          await this.gamesRepository.save(game);
+        }
+
+        const addedGames = newGameIds.filter(id => !oldGameIds.includes(id));
+        for (const gameId of addedGames) {
+          const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+          if (!game) 
+            continue;
+          await this.gamesRepository.save(game);
+        }
         
         loginDto.ban = String(loginDto.ban) === "true";
         loginDto.activation = String(loginDto.activation) === "true";
@@ -302,7 +336,7 @@ export class AdminService {
   async removePlayer(id: number): Promise<object> {
     const player = await this.playerRepository.findOneBy({ id: id });
     if (!player) 
-      throw new Error(`Player with id ${id} not found!`);
+      throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if (player.profile_image) {
         const filePath = path.join('uploads/users/player', player.profile_image);
@@ -311,7 +345,7 @@ export class AdminService {
           await promises.unlink(filePath);
         } 
         catch (err) {
-          console.warn(`Profile image file not found or already deleted: ${filePath}`);
+          throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
@@ -323,7 +357,7 @@ export class AdminService {
   async removePlayerByEmail(email: string): Promise<object> {
     const players = await this.playerRepository.find({ where: { email }, relations: ['login'] });
     if (!players || players.length < 1)
-      throw new Error(`No players found with email ${email}!`);
+      throw new HttpException(`No player found with email ${email}!`, HttpStatus.NOT_FOUND);
     for (const player of players) {
       if (player.profile_image) {
         const filePath = path.join('uploads/users/player', player.profile_image);
@@ -332,7 +366,7 @@ export class AdminService {
           await promises.unlink(filePath); 
         } 
         catch (err) {
-          console.warn(`Profile image not found or already deleted: ${filePath}`);
+          throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
     }
@@ -350,34 +384,49 @@ export class AdminService {
       players = await this.playerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
     if(players.length < 1) 
-      return {message: `No player found! Try searching with another key`};
+      throw new HttpException(`No player found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return players;
   }
 
   async sortPlayerByIDAsc(): Promise<object> {
-    return await this.playerRepository.find({ order: { id: 'ASC' } });
+    const players = await this.playerRepository.find({ order: { id: 'ASC' } });
+    if(!players || players.length < 1) 
+      throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
+    return players;
   }
   
   async sortPlayerByIDDesc(): Promise<object> {
-    return await this.playerRepository.find({ order: { id: 'DESC' } });
+    const players = await this.playerRepository.find({ order: { id: 'DESC' } });
+    if(!players || players.length < 1) 
+      throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
+    return players;
   }
   
   async sortPlayerByNameAsc(): Promise<object> {
-    return await this.playerRepository.find({ order: { username: 'ASC' } });
+    const players = await this.playerRepository.find({ order: { username: 'ASC' } });
+    if(!players || players.length < 1) 
+      throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
+    return players;
   }
   
   async sortPlayerByNameDesc(): Promise<object> {
-    return await this.playerRepository.find({ order: { username: 'DESC' } });
+    const players = await this.playerRepository.find({ order: { username: 'DESC' } });
+    if(!players || players.length < 1) 
+      throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
+    return players;
   }
   
   async getDevelopers(): Promise<DeveloperEntity[]> {
-    return this.developerRepository.find({ relations: ['login'] });
+    const developers = await this.developerRepository.find({ relations: ['login'] });
+    if(!developers || developers.length < 1) 
+      throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
+    return developers;
   }
 
   async getDeveloperByID(developerID: number): Promise<DeveloperEntity> {
     const exists = await this.developerRepository.findOne({where: { id: developerID }});
     if (!exists) 
-      throw new Error(`Developer with id ${developerID} does not exist`);
+      throw new HttpException(`Developer with id ${developerID} does not exist`, HttpStatus.NOT_FOUND);
     else 
       return exists;
   }
@@ -385,14 +434,14 @@ export class AdminService {
   async getDeveloperPicByID(developerID: number, @Res() res): Promise<any> {
     const developer = await this.developerRepository.findOne({ where: { id: developerID }, select: { profile_image: true }});
     if(!developer || !developer.profile_image)
-      return { message: 'Developer image not found' };
+      throw new HttpException('Developer image not found', HttpStatus.NOT_FOUND);
     return res.sendFile(developer.profile_image, {root:'./uploads/users/developer'})
   }
   
   async getDevelopersByNullName(): Promise<object | DeveloperEntity[]> {
     const developers = await this.developerRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
     if (developers.length === 0) 
-      return {message: "No developer with null username has been found"};
+      throw new HttpException(`No developer with null username has been found`, HttpStatus.NOT_FOUND);
     return developers;
   }
 
@@ -400,7 +449,7 @@ export class AdminService {
     const developerExists = await this.developerRepository.findOneBy({ username: developerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (developerExists || loginExists) 
-      throw new Error(`User with username ${developerDto.username} already exists`);
+      throw new HttpException(`User with username ${developerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "developer";
       // Create login entity (this will auto-generate ID)
@@ -415,23 +464,24 @@ export class AdminService {
       });
       // Save admin
       const savedDeveloper = await this.developerRepository.save(developer);
-
       return savedDeveloper;
-      }
+    }
   }
 
   async updateDeveloperPhoneByID(id: any, newPhone: any): Promise<DeveloperEntity | null> {
     if(!Number(id))
-      throw new Error("Please enter a valid ID number");
+      throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
+
     const exists = await this.developerRepository.findOneBy({ id });
     if (!exists) 
-      throw new Error(`Developer with id ${id} not found!`);
+      throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if(!Number(newPhone))
-        throw new Error("Please enter a valid Phone No.");
+        throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
       if(newPhone.length !== 11)
-        throw new Error('Phone No. must be a valid format of 11 digits');
+        throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
+
       await this.developerRepository.update({ id }, { phone: newPhone });
       return await this.developerRepository.findOneBy({ id: id });
     }
@@ -440,12 +490,12 @@ export class AdminService {
   async updateFullDeveloper(id: number, developerDto: DeveloperDTO, loginDto: LoginDTO): Promise<DeveloperEntity | null> {
     const exists = await this.developerRepository.findOne({ where: { id }, relations: ['login'] });
     if (!exists) 
-      throw new Error(`Developer with id ${id} not found!`);
+      throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else{ 
       const developerExists = await this.developerRepository.findOne({ where: {username: developerDto.username, id: Not(id)} });
       const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
       if (developerExists || loginExists) 
-        throw new Error(`User with username ${developerDto.username} already exists`);
+        throw new HttpException(`User with username ${developerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
         await this.developerRepository.update({ id }, { username: developerDto.username || exists.username, 
                                                     email: developerDto.email || exists.email, 
@@ -474,7 +524,7 @@ export class AdminService {
   async removeDeveloper(id: number): Promise<object> {
     const developer = await this.developerRepository.findOneBy({ id: id });
     if (!developer) 
-      throw new Error(`Developer with id ${id} not found!`);
+      throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if (developer.profile_image) {
         const filePath = path.join('uploads/users/developer', developer.profile_image);
@@ -483,7 +533,7 @@ export class AdminService {
           await promises.unlink(filePath);
         } 
         catch (err) {
-          console.warn(`Profile image file not found or already deleted: ${filePath}`);
+          throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
@@ -495,7 +545,7 @@ export class AdminService {
   async removeDeveloperByEmail(email: string): Promise<object> {
     const developers = await this.developerRepository.find({ where: { email }, relations: ['login'] });
     if (!developers || developers.length < 1)
-      throw new Error(`No developers found with email ${email}!`);
+      throw new HttpException(`No developers found with email ${email}!`, HttpStatus.NOT_FOUND);
     for (const developer of developers) {
       if (developer.profile_image) {
         const filePath = path.join('uploads/users/developer', developer.profile_image);
@@ -504,7 +554,7 @@ export class AdminService {
           await promises.unlink(filePath); 
         } 
         catch (err) {
-          console.warn(`Profile image not found or already deleted: ${filePath}`);
+          throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
     }
@@ -522,61 +572,215 @@ export class AdminService {
       developers = await this.developerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
     if(developers.length < 1) 
-      return {message: `No developer found! Try searching with another key`};
+      throw new HttpException(`No developer found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return developers;
   }
 
   async sortDeveloperByIDAsc(): Promise<object> {
-    return await this.developerRepository.find({ order: { id: 'ASC' } });
+    const developers =  await this.developerRepository.find({ order: { id: 'ASC' } });
+    if(!developers || developers.length < 1) 
+      throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
+    return developers;
   }
   
   async sortDeveloperByIDDesc(): Promise<object> {
-    return await this.developerRepository.find({ order: { id: 'DESC' } });
+    const developers =  await this.developerRepository.find({ order: { id: 'DESC' } });
+    if(!developers || developers.length < 1) 
+      throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
+    return developers;
   }
   
   async sortDeveloperByNameAsc(): Promise<object> {
-    return await this.developerRepository.find({ order: { username: 'ASC' } });
+    const developers =  await this.developerRepository.find({ order: { username: 'ASC' } });
+    if(!developers || developers.length < 1) 
+      throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
+    return developers;
   }
   
   async sortDeveloperByNameDesc(): Promise<object> {
-    return await this.developerRepository.find({ order: { username: 'DESC' } });
+    const developers =  await this.developerRepository.find({ order: { username: 'DESC' } });
+    if(!developers || developers.length < 1) 
+      throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
+    return developers;
   }
 
-//   getGames(): object {
-//     let game1: Object = {
-//       id: 101,
-//       title: "Hollow Knight: Silskong",
-//       description: "A souls-like game developed by Team Cherry to test your patience & skills!",
-//       price: 2000,
-//       category: ["2D", "Metroidvania game"],
-//       image_url: "https://static.wikia.nocookie.net/hollowknight/images/1/13/Silksong_cover.jpg/revision/latest?cb=20190214093718",
-//       trailer_url: "https://www.youtube.com/watch?v=6XGeJwsUP9c",
-//       view_count: 12,
-//       purchase_count: 2,
-//       play_count: 55,
-//       published_at: "2025-11-03T18:21:00.000Z"
-//     };
-//     return game1;
+
+  async getGamesWithCategories(): Promise<GamesEntity[] | object> {
+    const games = await this.gamesRepository.find({ relations: ['categories', 'developer'] });
+    if (!games || games.length === 0)
+      throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
+    return games;
+  }
+
+  async getGamePicByID(gameID: number, @Res() res): Promise<any> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { image: true }});
+    if(!game || !game.image)
+      throw new HttpException(`Game image not found`, HttpStatus.NOT_FOUND);
+    return res.sendFile(game.image, {root:'./uploads/games/images'})
+  }
+  
+  async getGameTrailerByID(gameID: number, @Res() res): Promise<any> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { trailer: true }});
+    if(!game || !game.trailer)
+      throw new HttpException(`Game trailer not found`, HttpStatus.NOT_FOUND);
+    return res.sendFile(game.trailer, {root:'./uploads/games/trailers'})
+  }
+  
+  async getGameByID(gameID: number, @Res() res): Promise<any> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { game: true }});
+    if(!game || !game.game)
+      throw new HttpException(`Game not found`, HttpStatus.NOT_FOUND);
+    return res.sendFile(game.game, {root:'./uploads/games/game'})
+  }
+  
+  //mid project defence
+  async getGamesByDeveloperID(developerId: number): Promise<GamesEntity[]> {
+    if (isNaN(Number(developerId)))
+      throw new HttpException(`Please enter a valid developer ID`, HttpStatus.NOT_ACCEPTABLE);
+
+    developerId = Number(developerId);
+    const games = await this.gamesRepository.find({ where: { developer: { id: developerId } }, relations: ['categories', 'developer'] });
+    if (!games || games.length === 0)
+      throw new HttpException(`No games found for developer with id ${developerId}`, HttpStatus.NOT_FOUND);
+
+    return games;
+  }
+
+  async addGame(gameDto: GamesDTO): Promise<GamesEntity> {
+    const gameExists = await this.gamesRepository.findOneBy({ title: gameDto.title });
+    if (gameExists) 
+      throw new HttpException(`Game with title ${gameDto.title} already exists`, HttpStatus.NOT_ACCEPTABLE);
+
+    const developer = await this.developerRepository.findOne({ where: {username: gameDto.developed_by} })
+    if(!developer)
+      throw new HttpException(`Developer ${gameDto.developed_by} not found`, HttpStatus.NOT_FOUND);
+    let game = this.gamesRepository.create({
+      title: gameDto.title,
+      description: gameDto.description,
+      price: gameDto.price,
+      image: gameDto.image,
+      trailer: gameDto.trailer,
+      game: gameDto.game,
+      developer   
+    });
+    return await this.gamesRepository.save(game);
+  }
+
+  async addCategoryToGame(gameTitle: string, categoryName: string): Promise<GamesEntity> {
+    const game = await this.gamesRepository.findOne({ where: { title: gameTitle }, relations: ['categories', 'developer'] });
+    if (!game) 
+      throw new HttpException(`Game ${gameTitle} not found`, HttpStatus.NOT_FOUND);
+
+    const category = await this.categoriesRepository.findOne({where: {name: categoryName}});
+    if (!category) 
+      throw new HttpException(`Category ${categoryName} not found`, HttpStatus.NOT_FOUND);
+
+    game.categories = [...game.categories, category];
+    return await this.gamesRepository.save(game);
+  }
+
+  async removeCategoryFromGame(gameTitle: string, categoryName: string): Promise<GamesEntity> {
+    const game = await this.gamesRepository.findOne({ where: { title: gameTitle }, relations: ['categories', 'developer'] });
+    if (!game) 
+      throw new HttpException(`Game ${gameTitle} not found`, HttpStatus.NOT_FOUND);
+
+    const category = await this.categoriesRepository.findOne({where: {name: categoryName}});
+    if (!category) 
+      throw new HttpException(`Category ${categoryName} not found`, HttpStatus.NOT_FOUND);
+
+    game.categories = game.categories.filter((c) => c.id !== category.id);
+    return await this.gamesRepository.save(game);
+  }
+
+// //   updateGame(game: GamesDTO, oldTitle: string, newTitle: string): string {
+// //     return `${game.id} has been updated from '${oldTitle}' to '${newTitle}' successfully`;
+// //   }
+
+// //   updateFullGame(game: GamesDTO, id: number): string {
+// //     return `${id} has been updated successfully`;
+// //   }
+
+//   async removeGame(id: number): Promise<object> {
+//     const game = await this.gamesRepository.findOne({ where: { id } });
+//     if (!game) 
+//       throw new Error("Game not found");
+
+//     const categories = await this.categoriesRepository.find();
+//     for (const category of categories) {
+//       if (category.game_ids?.includes(id)) {
+//         category.game_ids = category.game_ids.filter(x => x !== id);
+//         await this.categoriesRepository.save(category);
+//       }
+//     }
+//     await this.gamesRepository.delete(id);
+//     return { message: `Game ${game.title} deleted successfully` };
 //   }
 
-//   addGame(game: GamesDTO): string {
-//     return game.title + " has been added successfully";
+//   async getCategories(): Promise<CategoriesEntity[] | object> {
+//     const categories = await this.categoriesRepository.find();
+//     if (!categories || categories.length === 0)
+//       return { message: "No category found!" }
+
+//     const allIds = Array.from(new Set(
+//       categories.flatMap(cat => (cat.game_ids ?? []).map((id: any) => Number(id)).filter(Number.isFinite))));
+//     let gamesMap = new Map<number, string>();
+//     if (allIds.length > 0) {
+//       const games = await this.gamesRepository.find({ where: { id: In(allIds) } });
+//       for (const g of games) 
+//         gamesMap.set(g.id, g.title);
+//     }
+//     const result = categories.map(cat => {
+//       const ids = cat.game_ids ?? [];
+//       const game_titles = ids.map((id: any) => {
+//         const numId = Number(id);
+//         return gamesMap.get(numId) ?? null; 
+//       });
+//       //to get game titles as well as game ids
+//       // return {...cat, games: game_titles};
+//       const { game_ids, ...catWithoutIds } = cat;
+//       return {...catWithoutIds, games: game_titles};
+//     });
+//     return result;
 //   }
 
-//   updateGame(game: GamesDTO, oldTitle: string, newTitle: string): string {
-//     return `${game.id} has been updated from '${oldTitle}' to '${newTitle}' successfully`;
-//   }
+  async addCategory(categoryDto: CategoriesDTO): Promise<CategoriesEntity> {
+    const categoryExists = await this.categoriesRepository.findOneBy({ name: categoryDto.name });
+    if (categoryExists) 
+      throw new HttpException(`Category ${categoryExists.name} already exists`, HttpStatus.NOT_ACCEPTABLE);
 
-//   updateFullGame(game: GamesDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+    const category = this.categoriesRepository.create({
+      name: categoryDto.name,
+      description: categoryDto.description,
+    });
+    const savedCategory = await this.categoriesRepository.save(category);
+    return savedCategory;
+  }
 
-//   removeGame(id: number): string {
-//     return `Game with ID ${id} has been removed successfully`;
-//   }
+  async addGameToCategory(catName: string, gameId: number): Promise<void> {
+    const category = await this.categoriesRepository.findOne({ where: { name: catName } });
+    const game = await this.gamesRepository.findOne({where: {id: gameId}});
+    if (!category) 
+      throw new HttpException(`Category ${catName} not found`, HttpStatus.NOT_FOUND);
+    if(game && category) {
+      category.games = [...category.games, game];
+      await this.categoriesRepository.save(game);
+    } 
+  }
 
-//   getPurchases(): object {
-//     let purchase1: Object = {
+// //   updateCategory(category: CategoriesDTO, id: number): string {
+// //     return `${id} has been updated successfully`;
+// //   }
+
+// //   updateFullCategory(category: CategoriesDTO, id: number): string {
+// //     return `${id} has been updated successfully`;
+// //   }
+
+// //   removeCategory(id: number): string {
+// //     return `Play record with ID ${id} has been deleted successfully`;
+// //   }  
+
+  // getPurchases(): object {
+  //   let purchase1: Object = {
 //       id: 453146,
 //       user_id: 4523,
 //       game_id: 235,
@@ -654,29 +858,51 @@ export class AdminService {
 //     return `Play record with ID ${id} has been deleted successfully`;
 //   }
 
-//   getCategories(): object {
-//     let category1: Object = {
-//       id: 1345,
-//       name: "Action",
-//       game_ids: [12, 3454],
-//       description: "Any type of action games, such as fighting, shooting, etc."
-//     };
-//     return category1;
-//   }
+  async userActivation(id: any, activation: boolean): Promise<LoginEntity | null> {
+    if (isNaN(Number(id)))
+      throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
 
-//   addCategory(category: CategoriesDTO): string {
-//     return category.id + " has been added successfully";
-//   }
+    id = Number(id)
+    const exists = await this.loginRepository.findOneBy({ id });
+    if (!exists) 
+      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
+    else {
+      activation = String(activation).toLowerCase() === "true" || Number(activation) === 1;
+      if(activation === exists.activation) {
+        if(activation === true)
+          throw new HttpException(`User '${exists.username}' account is already active`, HttpStatus.NOT_ACCEPTABLE);
+        if(activation === false)
+          throw new HttpException(`User '${exists.username}' account is already deactive`, HttpStatus.NOT_ACCEPTABLE);
+      }
+      if(activation)
+        await this.loginRepository.update({ id }, { activation: activation, ban: false });
+      else
+        await this.loginRepository.update({ id }, { activation: activation });
+      return await this.loginRepository.findOneBy({ id: id });
+    }
+  }
+  
+  async userBan(id: any, ban: boolean): Promise<LoginEntity | null> {
+    if (isNaN(Number(id)))
+      throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
 
-//   updateCategory(category: CategoriesDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
-
-//   updateFullCategory(category: CategoriesDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
-
-//   removeCategory(id: number): string {
-//     return `Play record with ID ${id} has been deleted successfully`;
-//   }
+    id = Number(id)
+    const exists = await this.loginRepository.findOneBy({ id });
+    if (!exists) 
+      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
+    else {
+      ban = String(ban).toLowerCase() === "true" || Number(ban) === 1;
+      if(ban === exists.ban) {
+        if(ban === true)
+          throw new HttpException(`User '${exists.username}' account is already banned`, HttpStatus.NOT_ACCEPTABLE);
+        if(ban === false)
+          throw new HttpException(`User '${exists.username}' account is already unbanned`, HttpStatus.NOT_ACCEPTABLE);
+      }
+      if(ban)
+        await this.loginRepository.update({ id }, { ban: ban, activation: false });
+      if(!ban)
+        await this.loginRepository.update({ id }, { ban: ban, activation: true });
+      return await this.loginRepository.findOneBy({ id: id });
+    }
+  }
 }

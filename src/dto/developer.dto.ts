@@ -1,12 +1,13 @@
-import { Transform } from 'class-transformer';
-import { IsString, IsEmail, IsNotEmpty, Matches } from 'class-validator';
-import { LoginEntity } from '../Entity/login.entity';
+import { Transform } from "class-transformer";
+import { IsEmail, IsNotEmpty, IsString, Matches } from "class-validator";
+import { LoginEntity } from "../entities/login.entity";
+import { GamesEntity } from "../entities/games.entity";
 
-export class AdminDTO {
+export class DeveloperDTO {
     @IsString()
     @IsNotEmpty({ message: 'Username is required' })
-    @Matches(/^[a-zA-Z\s]*$/, {
-        message: 'Username should only contain alphabets and spaces',
+    @Matches(/^[a-zA-Z0-9\s\-\_\.]*$/, {
+        message: 'Username should only contain alphabets, digits, hyphens, underscores, dots and spaces',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     username: string;
@@ -38,4 +39,6 @@ export class AdminDTO {
     created_at?: Date;
 
     login?: LoginEntity;
+
+    games?: GamesEntity[];
 }

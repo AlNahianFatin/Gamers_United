@@ -1,25 +1,29 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Res, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Patch, Post, Put, Query, Request, Res, Session, UploadedFile, UploadedFiles, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { MulterError, diskStorage } from 'multer';
+import * as bcrypt from 'bcrypt';
+import { SessionGuard } from 'src/session.guard';
 import { AdminService } from './admin.service';
-import { GamesDTO } from './DTO/games.dto';
-import { PurchasesDTO } from './DTO/purchases.dto';
-import { ViewsDTO } from './DTO/views.dto';
-import { PlaysDTO } from './DTO/plays.dto';
-import { CategoriesDTO } from './DTO/categories.dto';
-import { AdminDTO } from './DTO/admin.dto';
-import { PlayerDTO } from './DTO/player.dto';
-import { DeveloperDTO } from './DTO/developer.dto';
+import { GamesDTO } from '../dto/games.dto';
+import { PurchasesDTO } from '../dto/purchases.dto';
+import { ViewsDTO } from '../dto/views.dto';
+import { PlaysDTO } from '../dto/plays.dto';
+import { CategoriesDTO } from '../dto/categories.dto';
+import { AdminDTO } from '../dto/admin.dto';
+import { PlayerDTO } from '../dto/player.dto';
+import { DeveloperDTO } from '../dto/developer.dto';
 import path from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AdminEntity } from './Entity/admin.entity';
-import { Any, Repository } from 'typeorm';
-import { PlayerEntity } from './Entity/player.entity';
-import { DeveloperEntity } from './Entity/developer.entity';
-import { LoginEntity } from './Entity/login.entity';
-import { LoginDTO } from './DTO/login.dto';
+import { Repository } from 'typeorm';
+import { AdminEntity } from '../entities/admin.entity';
+import { PlayerEntity } from '../entities/player.entity';
+import { DeveloperEntity } from '../entities/developer.entity';
+import { LoginDTO } from '../dto/login.dto';
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
+import { GamesEntity } from '../entities/games.entity';
+import { CategoriesEntity } from '../entities/categories.entity';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('admin')
 export class AdminController {
@@ -28,24 +32,45 @@ export class AdminController {
               @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
               @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>) { }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('dashboard')
+  dashboard() {
+    return "Admin dashboard protected by JWT";
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard)
   @Get('getAdmins')
-  getAdmins() {
-    return this.adminService.getAdmins()
+  async getAdmins() {
+    try{return await this.adminService.getAdmins();}
+    catch(error) {throw error};
   }
   
+  @UseGuards(SessionGuard)
   @Get('getAdminByID/:adminID')
-  getAdminByID(@Param('adminID') adminID: number) {
-    return this.adminService.getAdminByID(adminID);
+  async getAdminByID(@Param('adminID') adminID: number) {
+    try{return this.adminService.getAdminByID(adminID);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getAdminPicByID/:adminID')
-  getAdminPicByID(@Param('adminID') adminID: number, @Res() res) {
-    return this.adminService.getAdminPicByID(adminID, res);
+  async getAdminPicByID(@Param('adminID') adminID: number, @Res() res) {
+    try{return await this.adminService.getAdminPicByID(adminID, res);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getAdminsByNullName')
-  getAdminsByNullName(): Promise<object | AdminEntity[] | null> {
-   return this.adminService.getAdminsByNullName();
+  async getAdminsByNullName(): Promise<object | AdminEntity[] | null> {
+   try {return await this.adminService.getAdminsByNullName();}
+   catch(error) {throw error;}
   }
 
   @Post('addAdmin')
@@ -64,8 +89,9 @@ export class AdminController {
       },
     })
   }))
+  @UseGuards(SessionGuard)
   @UsePipes(new ValidationPipe())
-  async addAdmin(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<AdminEntity> {
+  async addAdmin(@Session() session, @UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<AdminEntity> {
     const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
       email: body.email,
@@ -74,23 +100,29 @@ export class AdminController {
     });
     await validateOrReject(adminDto);
 
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: body.password_hash,
+      password_hash: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
     });
     await validateOrReject(loginDto);
 
-      if(file) 
-        adminDto.profile_image = file.filename;
-      return this.adminService.addAdmin(adminDto, loginDto);
+    if(file) 
+      adminDto.profile_image = file.filename;
+    try {return await this.adminService.addAdmin(adminDto, loginDto);}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Patch('updateAdminPhoneByID/:id')
-  updateAdminPhoneById(@Param('id') id: string, @Query('newPhone') newPhone: string) {
-    return this.adminService.updateAdminPhoneById(id, newPhone);
+  async updateAdminPhoneById(@Param('id') id: string, @Query('newPhone') newPhone: string) {
+    try {return await this.adminService.updateAdminPhoneById(id, newPhone);}
+    catch(error) {throw error;}
   }
 
   @Put('updateFullAdmin/:id')
@@ -109,6 +141,7 @@ export class AdminController {
       },
     })
   }))
+  @UseGuards(SessionGuard)
   @UsePipes(new ValidationPipe())
   async updateFullAdmin(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const adminDto = plainToInstance(AdminDTO, {
@@ -119,73 +152,98 @@ export class AdminController {
     });
     await validateOrReject(adminDto);
 
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: body.password_hash,
+      password_hash: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
     });
     await validateOrReject(loginDto);
 
-      if(file) 
-        adminDto.profile_image = file.filename;
-      return this.adminService.updateFullAdmin(id, adminDto, loginDto);
+    if(file) 
+      adminDto.profile_image = file.filename;
+    return this.adminService.updateFullAdmin(id, adminDto, loginDto);
   }
 
+  @UseGuards(SessionGuard)
   @Delete('removeAdmin')
-  removeAdmin(@Query('id') id: number): Promise<object> {
-    return this.adminService.removeAdmin(id);
+  async removeAdmin(@Query('id') id: number): Promise<object> {
+    try{return await this.adminService.removeAdmin(id);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Delete('removeAdminByEmail')
-  removeAdminByEmail(@Query('email') email: string): Promise<object> {
-    return this.adminService.removeAdminByEmail(email);
+  async removeAdminByEmail(@Query('email') email: string): Promise<object> {
+    try{return await this.adminService.removeAdminByEmail(email);}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Get('searchAdmin/:key')
-  searchAdmin(@Param('key') key: any): Promise<object> {
-    return this.adminService.searchAdmin(key);
+  async searchAdmin(@Param('key') key: any): Promise<object> {
+    try{return await this.adminService.searchAdmin(key);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortAdminByIDAsc')
-  sortAdminByIDAsc(): Promise<object> {
-    return this.adminService.sortAdminByIDAsc();
+  async sortAdminByIDAsc(): Promise<object> {
+    try{return await this.adminService.sortAdminByIDAsc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortAdminByIDDesc')
-  sortAdminByIDDesc(): Promise<object> {
-    return this.adminService.sortAdminByIDDesc();
+  async sortAdminByIDDesc(): Promise<object> {
+    try{return await this.adminService.sortAdminByIDDesc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortAdminByNameAsc')
-  sortAdminByNameAsc(): Promise<object> {
-    return this.adminService.sortAdminByNameAsc();
+  async sortAdminByNameAsc(): Promise<object> {
+    try{return await this.adminService.sortAdminByNameAsc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortAdminByNameDesc')
-  sortAdminByNameDesc(): Promise<object> {
-    return this.adminService.sortAdminByNameDesc();
+  async sortAdminByNameDesc(): Promise<object> {
+    try{return await this.adminService.sortAdminByNameDesc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getPlayers')
-  getPlayers() {
-    return this.adminService.getPlayers()
+  async getPlayers() {
+    try{return await this.adminService.getPlayers();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getPlayerByID/:playerID')
-  getPlayerByID(@Param('playerID') playerID: number) {
-    return this.adminService.getPlayerByID(playerID);
+  async getPlayerByID(@Param('playerID') playerID: number) {
+    try{return await this.adminService.getPlayerByID(playerID);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getPlayerPicByID/:playerID')
-  getPlayerPicByID(@Param('playerID') playerID: number, @Res() res) {
-    return this.adminService.getPlayerPicByID(playerID, res);
+  async getPlayerPicByID(@Param('playerID') playerID: number, @Res() res) {
+    try{return await this.adminService.getPlayerPicByID(playerID, res);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getPlayersByNullName')
-  getPlayersByNullName(): Promise<object | PlayerEntity[] | null> {
-   return this.adminService.getPlayersByNullName();
+  async getPlayersByNullName(): Promise<object | PlayerEntity[] | null> {
+    try{return await this.adminService.getPlayersByNullName();}
+    catch(error) {throw error;}
   }
 
   @Post('addPlayer')
@@ -204,6 +262,7 @@ export class AdminController {
       },
     })
   }))
+  @UseGuards(SessionGuard)
   @UsePipes(new ValidationPipe())
   async addPlayer(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<PlayerEntity> {
     const playerDto = plainToInstance(PlayerDTO, {
@@ -214,23 +273,29 @@ export class AdminController {
     });
     await validateOrReject(playerDto);
 
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: body.password_hash,
+      password_hash: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
     });
     await validateOrReject(loginDto);
 
-      if(file) 
-        playerDto.profile_image = file.filename;
-      return this.adminService.addPlayer(playerDto, loginDto);
-  }
+    if(file) 
+      playerDto.profile_image = file.filename;
+    try{return await this.adminService.addPlayer(playerDto, loginDto);}
+    catch(error) {throw error;}
+    }
 
+  @UseGuards(SessionGuard)
   @Patch('updatePlayerPhoneByID/:id')
-  updatePlayerPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
-    return this.adminService.updatePlayerPhoneByID(id, newPhone);
+  async updatePlayerPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
+    try{return await this.adminService.updatePlayerPhoneByID(id, newPhone);}
+    catch(error) {throw error;}
   }
 
   @Put('updateFullPlayer/:id')
@@ -249,6 +314,7 @@ export class AdminController {
       },
     })
   }))
+  @UseGuards(SessionGuard)
   @UsePipes(new ValidationPipe())
   async updateFullPlayer(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const playerDto = plainToInstance(PlayerDTO, {
@@ -259,73 +325,99 @@ export class AdminController {
     });
     await validateOrReject(playerDto);
 
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: body.password_hash,
+      password_hash: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
     });
     await validateOrReject(loginDto);
 
-      if(file) 
-        playerDto.profile_image = file.filename;
-      return this.adminService.updateFullPlayer(id, playerDto, loginDto);
-  }
+    if(file) 
+      playerDto.profile_image = file.filename;
+    try{return await this.adminService.updateFullPlayer(id, playerDto, loginDto);}
+    catch(error) {throw error;}
+    }
 
+  @UseGuards(SessionGuard)
   @Delete('removePlayer')
-  removePlayer(@Query('id') id: number): Promise<object> {
-    return this.adminService.removePlayer(id);
+  async removePlayer(@Query('id') id: number): Promise<object> {
+    try{return await this.adminService.removePlayer(id);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Delete('removePlayerByEmail')
-  removePlayerByEmail(@Query('email') email: string): Promise<object> {
-    return this.adminService.removePlayerByEmail(email);
+  async removePlayerByEmail(@Query('email') email: string): Promise<object> {
+    try{return await this.adminService.removePlayerByEmail(email);}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Get('searchPlayer/:key')
-  searchPlayer(@Param('key') key: any): Promise<object> {
-    return this.adminService.searchPlayer(key);
+  async searchPlayer(@Param('key') key: any): Promise<object> {
+    try{return await this.adminService.searchPlayer(key);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortPlayerByIDAsc')
-  sortPlayerByIDAsc(): Promise<object> {
-    return this.adminService.sortPlayerByIDAsc();
+  async sortPlayerByIDAsc(): Promise<object> {
+    try{return await this.adminService.sortPlayerByIDAsc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortPlayerByIDDesc')
-  sortPlayerByIDDesc(): Promise<object> {
-    return this.adminService.sortPlayerByIDDesc();
+  async sortPlayerByIDDesc(): Promise<object> {
+    try{return await this.adminService.sortPlayerByIDDesc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortPlayerByNameAsc')
-  sortPlayerByNameAsc(): Promise<object> {
-    return this.adminService.sortPlayerByNameAsc();
+  async sortPlayerByNameAsc(): Promise<object> {
+    try{return await this.adminService.sortPlayerByNameAsc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortPlayerByNameDesc')
-  sortPlayerByNameDesc(): Promise<object> {
-    return this.adminService.sortPlayerByNameDesc();
+  async sortPlayerByNameDesc(): Promise<object> {
+    try{return await this.adminService.sortPlayerByNameDesc();}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Get('getDevelopers')
-  getDevelopers() {
-    return this.adminService.getDevelopers()
+  async getDevelopers() {
+    try{return await this.adminService.getDevelopers();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getDeveloperByID/:developerID')
-  getDeveloperByID(@Param('playerID') developerID: number) {
-    return this.adminService.getDeveloperByID(developerID);
+  async getDeveloperByID(@Param('playerID') developerID: number) {
+    try{return await this.adminService.getDeveloperByID(developerID);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getDeveloperPicByID/:developerID')
-  getDeveloperPicByID(@Param('developerID') developerID: number, @Res() res) {
-    return this.adminService.getDeveloperPicByID(developerID, res);
+  async getDeveloperPicByID(@Param('developerID') developerID: number, @Res() res) {
+    try{return await this.adminService.getDeveloperPicByID(developerID, res);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('getDevelopersByNullName')
-  getDevelopersByNullName(): Promise<object | DeveloperEntity[] | null> {
-   return this.adminService.getDevelopersByNullName();
+  async getDevelopersByNullName(): Promise<object | DeveloperEntity[] | null> {
+    try{return await this.adminService.getDevelopersByNullName();}
+    catch(error) {throw error;}
   }
 
   @Post('addDeveloper')
@@ -344,6 +436,7 @@ export class AdminController {
       },
     })
   }))
+  @UseGuards(SessionGuard)
   @UsePipes(new ValidationPipe())
   async addDeveloper(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<DeveloperEntity> {
     const developerDto = plainToInstance(DeveloperDTO, {
@@ -354,23 +447,29 @@ export class AdminController {
     });
     await validateOrReject(developerDto);
 
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: body.password_hash,
+      password_hash: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
     });
     await validateOrReject(loginDto);
 
-      if(file) 
-        developerDto.profile_image = file.filename;
-      return this.adminService.addDeveloper(developerDto, loginDto);
+    if(file) 
+      developerDto.profile_image = file.filename;
+    try{return await this.adminService.addDeveloper(developerDto, loginDto);}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Patch('updateDeveloperPhoneByID/:id')
-  updateDeveloperPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
-    return this.adminService.updateDeveloperPhoneByID(id, newPhone);
+  async updateDeveloperPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
+    try{return await this.adminService.updateDeveloperPhoneByID(id, newPhone);}
+    catch(error) {throw error;}
   }
 
   @Put('updateFullDeveloper/:id')
@@ -389,6 +488,7 @@ export class AdminController {
       },
     })
   }))
+  @UseGuards(SessionGuard)
   @UsePipes(new ValidationPipe())
   async updateFullDeveloper(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const developerDto = plainToInstance(DeveloperDTO, {
@@ -399,79 +499,229 @@ export class AdminController {
     });
     await validateOrReject(developerDto);
 
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: body.password_hash,
+      password_hash: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
     });
     await validateOrReject(loginDto);
 
-      if(file) 
-        developerDto.profile_image = file.filename;
-      return this.adminService.updateFullDeveloper(id, developerDto, loginDto);
+    if(file) 
+      developerDto.profile_image = file.filename;
+    try{return await this.adminService.updateFullDeveloper(id, developerDto, loginDto);}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Delete('removeDeveloper')
-  removeDeveloper(@Query('id') id: number): Promise<object> {
-    return this.adminService.removeDeveloper(id);
+  async removeDeveloper(@Query('id') id: number): Promise<object> {
+    try{return await this.adminService.removeDeveloper(id);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Delete('removeDeveloperByEmail')
-  removeDeveloperByEmail(@Query('email') email: string): Promise<object> {
-    return this.adminService.removeDeveloperByEmail(email);
+  async removeDeveloperByEmail(@Query('email') email: string): Promise<object> {
+    try{return await this.adminService.removeDeveloperByEmail(email);}
+    catch(error) {throw error;}
   }
 
+  @UseGuards(SessionGuard)
   @Get('searchDeveloper/:key')
-  searchDeveloper(@Param('key') key: any): Promise<object> {
-    return this.adminService.searchDeveloper(key);
+  async searchDeveloper(@Param('key') key: any): Promise<object> {
+    try{return await this.adminService.searchDeveloper(key);}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortDeveloperByIDAsc')
-  sortDeveloperByIDAsc(): Promise<object> {
-    return this.adminService.sortDeveloperByIDAsc();
+  async sortDeveloperByIDAsc(): Promise<object> {
+    try{return await this.adminService.sortDeveloperByIDAsc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortDeveloperByIDDesc')
-  sortDeveloperByIDDesc(): Promise<object> {
-    return this.adminService.sortDeveloperByIDDesc();
+  async sortDeveloperByIDDesc(): Promise<object> {
+    try{return await this.adminService.sortDeveloperByIDDesc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortDeveloperByNameAsc')
-  sortDeveloperByNameAsc(): Promise<object> {
-    return this.adminService.sortDeveloperByNameAsc();
+  async sortDeveloperByNameAsc(): Promise<object> {
+    try{return await this.adminService.sortDeveloperByNameAsc();}
+    catch(error) {throw error;}
   }
   
+  @UseGuards(SessionGuard)
   @Get('sortDeveloperByNameDesc')
-  sortDeveloperByNameDesc(): Promise<object> {
-    return this.adminService.sortDeveloperByNameDesc();
+  async sortDeveloperByNameDesc(): Promise<object> {
+    try{return await this.adminService.sortDeveloperByNameDesc();}
+    catch(error) {throw error;}
   }
 
-  // @Get('games')
-  // getGames(): object {
-  //   return this.adminService.getGames();
+  @UseGuards(SessionGuard)
+  @Get('getGamesWithCategories')
+  async getGamesWithCategories() {
+    try{return await this.adminService.getGamesWithCategories();}
+    catch(error) {throw error;}
+  }
+
+  @UseGuards(SessionGuard)
+  @Get('getGamePicByID/:gameID')
+  async getGamePicByID(@Param('gameID') gameID: number, @Res() res) {
+    try{return await this.adminService.getGamePicByID(gameID, res);}
+    catch(error) {throw error;}
+  }
+  
+  @UseGuards(SessionGuard)
+  @Get('getGameTrailerByID/:gameID')
+  async getGameTrailerByID(@Param('gameID') gameID: number, @Res() res) {
+    try{return await this.adminService.getGameTrailerByID(gameID, res);}
+    catch(error) {throw error;}
+  }
+  
+  @UseGuards(SessionGuard)
+  @Get('getGameByID/:gameID')
+  async getGameByID(@Param('gameID') gameID: number, @Res() res) {
+    try{return await this.adminService.getGameByID(gameID, res);}
+    catch(error) {throw error;}
+  }
+  
+  @UseGuards(SessionGuard)
+  @Get('getGamesByDeveloperID/:developerId')
+  async getGamesByDeveloperID(@Param('developerId') developerId: number): Promise<GamesEntity[]> {
+    try {return await this.adminService.getGamesByDeveloperID(developerId);} 
+    catch(error) {throw error;}
+  }
+  
+  @Post('addGame')
+  @UseInterceptors(FileFieldsInterceptor([ { name: 'image', maxCount: 1 }, { name: 'trailer', maxCount: 1 }, { name: 'game', maxCount: 1 }], {
+    storage: diskStorage({
+      destination: (req, file, cb) => {
+        if (file.fieldname === 'image') 
+          cb(null, 'uploads/games/images');
+        else if (file.fieldname === 'trailer') 
+          cb(null, 'uploads/games/trailers');
+        else if (file.fieldname === 'game') 
+          cb(null, 'uploads/games/game');
+      },
+      filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+      }
+    }),
+    fileFilter: (req, file, cb) => {
+      if (file.fieldname === 'image') {
+        if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/))
+          cb(null, true);
+        else
+          cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+      } 
+      else if (file.fieldname === 'trailer') {
+        if (file.originalname.match(/\.(mp4|mkv)$/))
+          cb(null, true);
+        else
+          cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'trailer'), false);
+      }
+      else if (file.fieldname === 'game') {
+        if (file.originalname.match(/\.(pdf)$/))
+          cb(null, true);
+        else
+          cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'game'), false);
+      }
+    },
+    limits: { fileSize: 30 * 1024 * 1024 }
+  }))
+  @UseGuards(SessionGuard)
+  @UsePipes(new ValidationPipe())
+  async addGame(@UploadedFiles() files: { image: Express.Multer.File[], trailer: Express.Multer.File[], game: Express.Multer.File[] }, @Body(new ValidationPipe({ transform: true })) body: any): Promise<GamesEntity> {
+    const gameDto = plainToInstance(GamesDTO, {
+      title: body.title,
+      developed_by: body.developed_by,
+      description: body.description,
+      price: body.price,
+      view_count: body.view_count,
+      play_count: body.play_count,
+      purchase_count: body.purchase_count,
+    });
+    await validateOrReject(gameDto);
+
+    if (files.image && files.image.length > 0) 
+      gameDto.image = files.image[0].filename;
+    if (files.trailer && files.trailer.length > 0) 
+      gameDto.trailer = files.trailer[0].filename;
+    if (files.game && files.game.length > 0) 
+      gameDto.game = files.game[0].filename;
+    try{return await this.adminService.addGame(gameDto);}
+    catch(error) {throw error;}
+  }
+
+  @UseGuards(SessionGuard)
+  @Post('addCategoryToGame')
+  async addCategoryToGame(@Query('gameTitle') gameTitle: string, @Query('categoryName') categoryName: string) {
+    try{return await this.adminService.addCategoryToGame(gameTitle, categoryName);}
+    catch(error) {throw error;}
+  }
+
+  @UseGuards(SessionGuard)
+  @Delete('removeCategoryFromGame')
+  async removeCategoryFromGame(@Query('gameTitle') gameTitle: string, @Query('categoryName') categoryName: string) {
+    try{return await this.adminService.removeCategoryFromGame(gameTitle, categoryName);}
+    catch(error) {throw error;}
+  }
+
+  // // @Patch('games/update/:newTitle')
+  // // updateGame(@Param('newTitle') newTitle: string, @Body() game: GamesDTO): string {
+  // //   return this.adminService.updateGame(game, game.title, newTitle);
+  // // }
+
+  // // @Put('games/update/:id')
+  // // updateFullGame(@Param('id') id: number, @Body() game: GamesDTO): string {
+  // //   return this.adminService.updateFullGame(game, id);
+  // // }
+
+  // // @Delete('games/remove')
+  // // removeGame(@Query('id') id: number): string {
+  // //   return this.adminService.removeGame(id);
+  // // }
+
+  // @Get('getCategories')
+  // getCategories() {
+  //   return this.adminService.getCategories()
   // }
 
-  // @Post('games/add')
-  // addGame(@Body() game: GamesDTO): string {
-  //   return this.adminService.addGame(game);
-  // }
+  
+  @Post('addCategory')
+  async addCategory(@Body() category: CategoriesDTO): Promise<CategoriesEntity> {
+    const categoryDto = plainToInstance(CategoriesDTO, {
+      name: category.name,
+      description: category.description
+    });
+    await validateOrReject(categoryDto);
+    try{return await this.adminService.addCategory(categoryDto);}
+    catch(error) {throw error;}
+  }
 
-  // @Patch('games/update/:newTitle')
-  // updateGame(@Param('newTitle') newTitle: string, @Body() game: GamesDTO): string {
-  //   return this.adminService.updateGame(game, game.title, newTitle);
-  // }
+  // // @Patch('categories/update/:id')
+  // // updateCategory(@Param('id') id: number, @Body() category: CategoriesDTO): string {
+  // //   return this.adminService.updateCategory(category, id);
+  // // }
 
-  // @Put('games/update/:id')
-  // updateFullGame(@Param('id') id: number, @Body() game: GamesDTO): string {
-  //   return this.adminService.updateFullGame(game, id);
-  // }
+  // // @Put('categories/update/:id')
+  // // updateFullCategory(@Param('id') id: number, @Body() category: CategoriesDTO): string {
+  // //   return this.adminService.updateFullCategory(category, id);
+  // // }
 
-  // @Delete('games/remove')
-  // removeGame(@Query('id') id: number): string {
-  //   return this.adminService.removeGame(id);
-  // }
+  // // @Delete('categories/remove')
+  // // removeCategory(@Query('id') id: number): string {
+  // //   return this.adminService.removeCategory(id);
+  // // }
 
   // @Get('purchases')
   // getPurchases(): object {
@@ -548,28 +798,17 @@ export class AdminController {
   //   return this.adminService.deletePlay(id);
   // }
 
-  // @Get('categories')
-  // getCategories(): object {
-  //   return this.adminService.getCategories();
-  // }
+  @UseGuards(SessionGuard)
+  @Patch('userActivation/:id')
+  async userActivation(@Param('id') id: string, @Query('activation') activation: boolean) {
+    try {return await this.adminService.userActivation(id, activation);}
+    catch(error) {throw error;}
+  }
 
-  // @Post('categories/add')
-  // addCategory(@Body() category: CategoriesDTO): string {
-  //   return this.adminService.addCategory(category);
-  // }
-
-  // @Patch('categories/update/:id')
-  // updateCategory(@Param('id') id: number, @Body() category: CategoriesDTO): string {
-  //   return this.adminService.updateCategory(category, id);
-  // }
-
-  // @Put('categories/update/:id')
-  // updateFullCategory(@Param('id') id: number, @Body() category: CategoriesDTO): string {
-  //   return this.adminService.updateFullCategory(category, id);
-  // }
-
-  // @Delete('categories/remove')
-  // removeCategory(@Query('id') id: number): string {
-  //   return this.adminService.removeCategory(id);
-  // }
+  @UseGuards(SessionGuard)
+  @Patch('userBan/:id')
+  async userBan(@Param('id') id: string, @Query('ban') ban: boolean) {
+    try {return await this.adminService.userBan(id, ban);}
+    catch(error) {throw error;}
+  }
 }

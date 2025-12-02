@@ -1,12 +1,12 @@
-import { Transform } from "class-transformer";
-import { IsEmail, IsNotEmpty, IsNumber, IsString, Matches } from "class-validator";
-import { LoginEntity } from "../Entity/login.entity";
+import { Transform } from 'class-transformer';
+import { IsString, IsEmail, IsNotEmpty, Matches } from 'class-validator';
+import { LoginEntity } from '../entities/login.entity';
 
-export class PlayerDTO {
+export class AdminDTO {
     @IsString()
     @IsNotEmpty({ message: 'Username is required' })
-    @Matches(/^[a-zA-Z\s]*$/, {
-        message: 'Username should only contain alphabets and spaces',
+    @Matches(/^[a-zA-Z0-9\s\-\_\.]*$/, {
+        message: 'Username should only contain alphabets, digits, hyphens, underscores, dots and spaces',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     username: string;
