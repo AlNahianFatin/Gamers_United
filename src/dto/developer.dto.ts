@@ -20,7 +20,7 @@ export class DeveloperDTO {
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     email: string;
 
-    profile_image?: string;
+    image?: string;
 
     @IsNotEmpty({ message: 'NID is required' })
     @Matches(/^\d{10}$/, {

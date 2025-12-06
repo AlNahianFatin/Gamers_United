@@ -44,10 +44,10 @@ export class AdminService {
   }
 
   async getAdminPicByID(adminID: number, @Res() res): Promise<any> {
-    const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { profile_image: true }});
-    if(!admin || !admin.profile_image)
+    const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { image: true }});
+    if(!admin || !admin.image)
       throw new HttpException('Admin image not found', HttpStatus.NOT_FOUND);
-    return res.sendFile(admin.profile_image, {root:'./uploads/users/admin'})
+    return res.sendFile(admin.image, {root:'./uploads/users/admin'})
   }
   
   async getAdminsByNullName(): Promise<object | AdminEntity[]> {
@@ -106,7 +106,7 @@ export class AdminService {
       else {
         await this.adminRepository.update({ id }, { username: adminDto.username || exists.username, 
                                                     email: adminDto.email || exists.email, 
-                                                    profile_image: adminDto.profile_image || exists.profile_image, 
+                                                    image: adminDto.image || exists.image, 
                                                     phone: adminDto.phone || exists.phone, 
                                                     NID: adminDto.NID || exists.NID});
         
@@ -118,7 +118,7 @@ export class AdminService {
           loginDto.ban = false;
         loginDto.role = "admin";
         await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
-                                                    password_hash: loginDto.password_hash || exists.login.password_hash,
+                                                    password: loginDto.password || exists.login.password,
                                                     role: loginDto.role || exists.login.role,
                                                     activation: loginDto.activation ?? exists.login.activation,
                                                     ban: loginDto.ban ?? exists.login.ban });
@@ -133,8 +133,8 @@ export class AdminService {
     if (!admin) 
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if (admin.profile_image) {
-        const filePath = path.join('uploads/users/admin', admin.profile_image);
+      if (admin.image) {
+        const filePath = path.join('uploads/users/admin', admin.image);
         try {
           await promises.access(filePath); 
           await promises.unlink(filePath);
@@ -154,8 +154,8 @@ export class AdminService {
     if (!admins || admins.length < 1)
       throw new HttpException(`No admins found with email ${email}!`, HttpStatus.NOT_FOUND);
     for (const admin of admins) {
-      if (admin.profile_image) {
-        const filePath = path.join('uploads/users/admin', admin.profile_image);
+      if (admin.image) {
+        const filePath = path.join('uploads/users/admin', admin.image);
         try {
           await promises.access(filePath);
           await promises.unlink(filePath); 
@@ -172,13 +172,13 @@ export class AdminService {
   }
 
   async searchAdmin(key: any): Promise<object> {
-    let admins: object[];
-    if(Number(key)) 
+    let admins: object[] = [];
+    if(!isNaN(Number(key))) 
       admins = await this.adminRepository.find({ where: { id: Number(key) } })
-    else
+    if(admins.length === 0) 
       admins = await this.adminRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
-    if(admins.length < 1) 
+    if(admins.length === 0) 
       throw new HttpException(`No admin found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return admins;
   }
@@ -211,6 +211,7 @@ export class AdminService {
     return admins;
   }
   
+
   async getPlayers(): Promise<PlayerEntity[]> {
     const players = await this.playerRepository.find({ relations: ['login'] });
     if(!players || players.length < 0)
@@ -227,10 +228,10 @@ export class AdminService {
   }
 
   async getPlayerPicByID(playerID: number, @Res() res): Promise<any> {
-    const player = await this.playerRepository.findOne({ where: { id: playerID }, select: { profile_image: true }});
-    if(!player || !player.profile_image)
+    const player = await this.playerRepository.findOne({ where: { id: playerID }, select: { image: true }});
+    if(!player || !player.image)
       throw new HttpException(`Player image not found`, HttpStatus.NOT_FOUND);
-    return res.sendFile(player.profile_image, {root:'./uploads/users/player'})
+    return res.sendFile(player.image, {root:'./uploads/users/player'})
   }
   
   async getPlayersByNullName(): Promise<object | PlayerEntity[]> {
@@ -290,7 +291,7 @@ export class AdminService {
       else {
         await this.playerRepository.update({ id }, { username: playerDto.username || exists.username, 
                                                     email: playerDto.email || exists.email, 
-                                                    profile_image: playerDto.profile_image || exists.profile_image, 
+                                                    image: playerDto.image || exists.image, 
                                                     phone: playerDto.phone || exists.phone, 
                                                     NID: playerDto.NID || exists.NID});
         const newGameIds = playerDto.game_ids ?? [];
@@ -323,7 +324,7 @@ export class AdminService {
           loginDto.ban = false;
         loginDto.role = "player";
         await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
-                                                    password_hash: loginDto.password_hash || exists.login.password_hash,
+                                                    password: loginDto.password || exists.login.password,
                                                     role: loginDto.role || exists.login.role,
                                                     activation: loginDto.activation ?? exists.login.activation,
                                                     ban: loginDto.ban ?? exists.login.ban });
@@ -338,8 +339,8 @@ export class AdminService {
     if (!player) 
       throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if (player.profile_image) {
-        const filePath = path.join('uploads/users/player', player.profile_image);
+      if (player.image) {
+        const filePath = path.join('uploads/users/player', player.image);
         try {
           await promises.access(filePath); 
           await promises.unlink(filePath);
@@ -359,8 +360,8 @@ export class AdminService {
     if (!players || players.length < 1)
       throw new HttpException(`No player found with email ${email}!`, HttpStatus.NOT_FOUND);
     for (const player of players) {
-      if (player.profile_image) {
-        const filePath = path.join('uploads/users/player', player.profile_image);
+      if (player.image) {
+        const filePath = path.join('uploads/users/player', player.image);
         try {
           await promises.access(filePath);
           await promises.unlink(filePath); 
@@ -377,13 +378,13 @@ export class AdminService {
   }
 
   async searchPlayer(key: any): Promise<object> {
-    let players: object[];
-    if(Number(key)) 
+    let players: object[] = [];
+    if(!isNaN(Number(key))) 
       players = await this.playerRepository.find({ where: { id: Number(key) } })
-    else
+    if(players.length === 0) 
       players = await this.playerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
-    if(players.length < 1) 
+    if(players.length === 0) 
       throw new HttpException(`No player found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return players;
   }
@@ -416,6 +417,7 @@ export class AdminService {
     return players;
   }
   
+
   async getDevelopers(): Promise<DeveloperEntity[]> {
     const developers = await this.developerRepository.find({ relations: ['login'] });
     if(!developers || developers.length < 1) 
@@ -432,10 +434,10 @@ export class AdminService {
   }
 
   async getDeveloperPicByID(developerID: number, @Res() res): Promise<any> {
-    const developer = await this.developerRepository.findOne({ where: { id: developerID }, select: { profile_image: true }});
-    if(!developer || !developer.profile_image)
+    const developer = await this.developerRepository.findOne({ where: { id: developerID }, select: { image: true }});
+    if(!developer || !developer.image)
       throw new HttpException('Developer image not found', HttpStatus.NOT_FOUND);
-    return res.sendFile(developer.profile_image, {root:'./uploads/users/developer'})
+    return res.sendFile(developer.image, {root:'./uploads/users/developer'})
   }
   
   async getDevelopersByNullName(): Promise<object | DeveloperEntity[]> {
@@ -499,7 +501,7 @@ export class AdminService {
       else {
         await this.developerRepository.update({ id }, { username: developerDto.username || exists.username, 
                                                     email: developerDto.email || exists.email, 
-                                                    profile_image: developerDto.profile_image || exists.profile_image, 
+                                                    image: developerDto.image || exists.image, 
                                                     phone: developerDto.phone || exists.phone, 
                                                     NID: developerDto.NID || exists.NID});
         
@@ -511,7 +513,7 @@ export class AdminService {
           loginDto.ban = false;
         loginDto.role = "developer";
         await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
-                                                    password_hash: loginDto.password_hash || exists.login.password_hash,
+                                                    password: loginDto.password || exists.login.password,
                                                     role: loginDto.role || exists.login.role,
                                                     activation: loginDto.activation ?? exists.login.activation,
                                                     ban: loginDto.ban ?? exists.login.ban });
@@ -526,8 +528,8 @@ export class AdminService {
     if (!developer) 
       throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if (developer.profile_image) {
-        const filePath = path.join('uploads/users/developer', developer.profile_image);
+      if (developer.image) {
+        const filePath = path.join('uploads/users/developer', developer.image);
         try {
           await promises.access(filePath); 
           await promises.unlink(filePath);
@@ -547,8 +549,8 @@ export class AdminService {
     if (!developers || developers.length < 1)
       throw new HttpException(`No developers found with email ${email}!`, HttpStatus.NOT_FOUND);
     for (const developer of developers) {
-      if (developer.profile_image) {
-        const filePath = path.join('uploads/users/developer', developer.profile_image);
+      if (developer.image) {
+        const filePath = path.join('uploads/users/developer', developer.image);
         try {
           await promises.access(filePath);
           await promises.unlink(filePath); 
@@ -565,13 +567,13 @@ export class AdminService {
   }
 
   async searchDeveloper(key: any): Promise<object> {
-    let developers: object[];
-    if(Number(key)) 
+    var developers: object[] = [];
+    if(!isNaN(Number(key))) 
       developers = await this.developerRepository.find({ where: { id: Number(key) } })
-    else
+    if (developers.length === 0)
       developers = await this.developerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
     
-    if(developers.length < 1) 
+    if(developers.length === 0) 
       throw new HttpException(`No developer found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return developers;
   }
@@ -716,32 +718,12 @@ export class AdminService {
 //     return { message: `Game ${game.title} deleted successfully` };
 //   }
 
-//   async getCategories(): Promise<CategoriesEntity[] | object> {
-//     const categories = await this.categoriesRepository.find();
-//     if (!categories || categories.length === 0)
-//       return { message: "No category found!" }
-
-//     const allIds = Array.from(new Set(
-//       categories.flatMap(cat => (cat.game_ids ?? []).map((id: any) => Number(id)).filter(Number.isFinite))));
-//     let gamesMap = new Map<number, string>();
-//     if (allIds.length > 0) {
-//       const games = await this.gamesRepository.find({ where: { id: In(allIds) } });
-//       for (const g of games) 
-//         gamesMap.set(g.id, g.title);
-//     }
-//     const result = categories.map(cat => {
-//       const ids = cat.game_ids ?? [];
-//       const game_titles = ids.map((id: any) => {
-//         const numId = Number(id);
-//         return gamesMap.get(numId) ?? null; 
-//       });
-//       //to get game titles as well as game ids
-//       // return {...cat, games: game_titles};
-//       const { game_ids, ...catWithoutIds } = cat;
-//       return {...catWithoutIds, games: game_titles};
-//     });
-//     return result;
-//   }
+  async getCategories(): Promise<CategoriesEntity[] | object> {
+    const categories = await this.categoriesRepository.find({ relations: ['games', 'games.developer'] });
+    if (!categories || categories.length === 0)
+      throw new HttpException(`No category found!`, HttpStatus.NOT_FOUND);
+    return categories;
+  }
 
   async addCategory(categoryDto: CategoriesDTO): Promise<CategoriesEntity> {
     const categoryExists = await this.categoriesRepository.findOneBy({ name: categoryDto.name });
@@ -775,9 +757,13 @@ export class AdminService {
 // //     return `${id} has been updated successfully`;
 // //   }
 
-// //   removeCategory(id: number): string {
-// //     return `Play record with ID ${id} has been deleted successfully`;
-// //   }  
+  async removeCategory(id: number): Promise<object> {
+    const category = await this.categoriesRepository.findOneBy({ id: id });
+    if (!category) 
+      throw new HttpException(`Category with id ${id} not found!`, HttpStatus.NOT_FOUND);
+    await this.categoriesRepository.delete(id);
+    return {message: `Category with id ${id} has been deleted`};
+  }  
 
   // getPurchases(): object {
   //   let purchase1: Object = {

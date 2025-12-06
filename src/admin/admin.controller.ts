@@ -32,17 +32,17 @@ export class AdminController {
               @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
               @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>) { }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('dashboard')
-  dashboard() {
-    return "Admin dashboard protected by JWT";
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('dashboard')
+  // dashboard() {
+  //   return "Admin dashboard protected by JWT";
+  // }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('profile')
+  // getProfile(@Request() req) {
+  //   return req.user;
+  // }
   
   @UseGuards(JwtAuthGuard)
   @UseGuards(SessionGuard)
@@ -74,9 +74,9 @@ export class AdminController {
   }
 
   @Post('addAdmin')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -84,8 +84,8 @@ export class AdminController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/admin',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -101,11 +101,11 @@ export class AdminController {
     await validateOrReject(adminDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -113,7 +113,7 @@ export class AdminController {
     await validateOrReject(loginDto);
 
     if(file) 
-      adminDto.profile_image = file.filename;
+      adminDto.image = file.filename;
     try {return await this.adminService.addAdmin(adminDto, loginDto);}
     catch(error) {throw error;}
   }
@@ -126,9 +126,9 @@ export class AdminController {
   }
 
   @Put('updateFullAdmin/:id')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -136,8 +136,8 @@ export class AdminController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/admin',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -153,11 +153,11 @@ export class AdminController {
     await validateOrReject(adminDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -165,7 +165,7 @@ export class AdminController {
     await validateOrReject(loginDto);
 
     if(file) 
-      adminDto.profile_image = file.filename;
+      adminDto.image = file.filename;
     return this.adminService.updateFullAdmin(id, adminDto, loginDto);
   }
 
@@ -247,9 +247,9 @@ export class AdminController {
   }
 
   @Post('addPlayer')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -257,8 +257,8 @@ export class AdminController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/player',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -274,11 +274,11 @@ export class AdminController {
     await validateOrReject(playerDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -286,7 +286,7 @@ export class AdminController {
     await validateOrReject(loginDto);
 
     if(file) 
-      playerDto.profile_image = file.filename;
+      playerDto.image = file.filename;
     try{return await this.adminService.addPlayer(playerDto, loginDto);}
     catch(error) {throw error;}
     }
@@ -299,9 +299,9 @@ export class AdminController {
   }
 
   @Put('updateFullPlayer/:id')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -309,8 +309,8 @@ export class AdminController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/player',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -326,11 +326,11 @@ export class AdminController {
     await validateOrReject(playerDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -338,7 +338,7 @@ export class AdminController {
     await validateOrReject(loginDto);
 
     if(file) 
-      playerDto.profile_image = file.filename;
+      playerDto.image = file.filename;
     try{return await this.adminService.updateFullPlayer(id, playerDto, loginDto);}
     catch(error) {throw error;}
     }
@@ -421,9 +421,9 @@ export class AdminController {
   }
 
   @Post('addDeveloper')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -431,8 +431,8 @@ export class AdminController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/developer',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -448,11 +448,11 @@ export class AdminController {
     await validateOrReject(developerDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -460,7 +460,7 @@ export class AdminController {
     await validateOrReject(loginDto);
 
     if(file) 
-      developerDto.profile_image = file.filename;
+      developerDto.image = file.filename;
     try{return await this.adminService.addDeveloper(developerDto, loginDto);}
     catch(error) {throw error;}
   }
@@ -473,9 +473,9 @@ export class AdminController {
   }
 
   @Put('updateFullDeveloper/:id')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -483,8 +483,8 @@ export class AdminController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/developer',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -500,11 +500,11 @@ export class AdminController {
     await validateOrReject(developerDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -512,7 +512,7 @@ export class AdminController {
     await validateOrReject(loginDto);
 
     if(file) 
-      developerDto.profile_image = file.filename;
+      developerDto.image = file.filename;
     try{return await this.adminService.updateFullDeveloper(id, developerDto, loginDto);}
     catch(error) {throw error;}
   }
@@ -691,12 +691,13 @@ export class AdminController {
   // //   return this.adminService.removeGame(id);
   // // }
 
-  // @Get('getCategories')
-  // getCategories() {
-  //   return this.adminService.getCategories()
-  // }
 
-  
+  @Get('getCategories')
+  getCategories() {
+    return this.adminService.getCategories()
+  }
+
+  @UseGuards(SessionGuard)  
   @Post('addCategory')
   async addCategory(@Body() category: CategoriesDTO): Promise<CategoriesEntity> {
     const categoryDto = plainToInstance(CategoriesDTO, {
@@ -718,10 +719,12 @@ export class AdminController {
   // //   return this.adminService.updateFullCategory(category, id);
   // // }
 
-  // // @Delete('categories/remove')
-  // // removeCategory(@Query('id') id: number): string {
-  // //   return this.adminService.removeCategory(id);
-  // // }
+  @UseGuards(SessionGuard)
+  @Delete('removeCategory')
+  async removeCategory(@Query('id') id: number): Promise<object> {
+    try{return await this.adminService.removeCategory(id);}
+    catch(error) {throw error;}
+  }
 
   // @Get('purchases')
   // getPurchases(): object {

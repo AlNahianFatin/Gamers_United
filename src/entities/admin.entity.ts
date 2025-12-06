@@ -13,7 +13,7 @@ export class AdminEntity {
     email: string;
     
     @Column({nullable: true})
-    profile_image: string;
+    image: string;
     
     @Column({nullable: true})
     NID: string;

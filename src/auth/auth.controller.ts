@@ -38,9 +38,9 @@ export class AuthController {
   // }
 
   @Post('signup')
-  @UseInterceptors(FileInterceptor('profile_image', {
-    fileFilter: (req, profile_image, cb) => {
-      if (profile_image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, image, cb) => {
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -48,8 +48,8 @@ export class AuthController {
     limits: { fileSize: 2097152 },
     storage: diskStorage({
       destination: 'uploads/users/player',
-      filename: function (req, profile_image, cb) {
-        cb(null, Date.now() + path.extname(profile_image.originalname));
+      filename: function (req, image, cb) {
+        cb(null, Date.now() + path.extname(image.originalname));
       },
     })
   }))
@@ -64,11 +64,11 @@ export class AuthController {
     await validateOrReject(playerDto);
 
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password_hash, salt);
+    const hashedpass = await bcrypt.hash(body.password, salt);
 
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
-      password_hash: hashedpass,
+      password: hashedpass,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -76,7 +76,7 @@ export class AuthController {
     await validateOrReject(loginDto);
 
     if(file) 
-      playerDto.profile_image = file.filename;
+      playerDto.image = file.filename;
     try{return await this.authService.signup(playerDto, loginDto);}
     catch(error) {throw error;}
   }

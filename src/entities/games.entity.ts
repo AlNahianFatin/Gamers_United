@@ -16,9 +16,6 @@ export class GamesEntity {
     @Column({ type: "decimal", nullable: false, default: 0 })
     price: number;
 
-    // @Column("simple-array", { nullable: true })
-    // category_ids: number[];
-
     @Column({ nullable: true })
     image: string;
 
@@ -43,6 +40,6 @@ export class GamesEntity {
     @ManyToMany(() => CategoriesEntity, category => category.games)
     categories: CategoriesEntity[];
     
-    @ManyToOne(() => DeveloperEntity, developer => developer.games)
+    @ManyToOne(() => DeveloperEntity, developer => developer.games, {onDelete: 'CASCADE', nullable: false})
     developer: DeveloperEntity;
 }

@@ -12,7 +12,7 @@ export class LoginEntity {
     username: string;
     
     @Column()
-    password_hash: string;
+    password: string;
     
     @Column({type: "varchar", default: "player"})
     role: string;

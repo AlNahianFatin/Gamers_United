@@ -8,9 +8,6 @@ export class CategoriesEntity {
 
     @Column({type: "varchar", nullable: false, unique: true})
     name: string;
-
-    // @Column("simple-array", {nullable: true})
-    // game_ids?: number[];
     
     @Column({nullable: true, length: 200})
     description: string;

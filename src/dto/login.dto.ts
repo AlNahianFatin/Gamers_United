@@ -14,7 +14,7 @@ export class LoginDTO {
     username: string;
 
     @IsNotEmpty({ message: 'Password is required' })
-    password_hash: string;
+    password: string;
 
     role?: string;
 
