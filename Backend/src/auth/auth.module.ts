@@ -16,7 +16,7 @@ import { ConfigModule } from '@nestjs/config';
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: 'fawk124*&$%AS{[]//{$79bD',  
+      secret: String(process.env.JWT_SECRET),  
       signOptions: { expiresIn: '1d' },
     }),
     TypeOrmModule.forFeature([LoginEntity]),
