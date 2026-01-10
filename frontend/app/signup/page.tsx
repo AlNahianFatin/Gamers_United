@@ -29,35 +29,33 @@ export default function RegisterPage() {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (username === "") {
+    if (username === "")
       newErrors.username = "Please enter username first!";
-    }
-    if (email === "") {
-      newErrors.email = "Please enter email first!";
-    }
-    if (!image || image === null) {
-      newErrors.image = "Please select a profile image first!";
-    }
-    if (NID === "") {
-      newErrors.NID = "Please enter NID No. first!";
-    }
-    if (phone === "") {
-      newErrors.phone = "Please enter phone no. first!";
-    }
-    if (password === "") {
-      newErrors.password = "Please enter password first!";
-    }
-    if (rpassword === "") {
-      newErrors.rpassword = "Please reenter your password for confirmation!";
-    }
-    if (password && rpassword && password !== rpassword) {
-      newErrors.rpassword = "Password does not match. Recheck your password";
-    }
-    setErrors(newErrors);
 
-    if (Object.keys(newErrors).length > 0) {
+    if (email === "")
+      newErrors.email = "Please enter email first!";
+
+    if (!image || image === null)
+      newErrors.image = "Please select a profile image first!";
+
+    if (NID === "")
+      newErrors.NID = "Please enter NID No. first!";
+
+    if (phone === "")
+      newErrors.phone = "Please enter phone no. first!";
+
+    if (password === "")
+      newErrors.password = "Please enter password first!";
+
+    if (rpassword === "")
+      newErrors.rpassword = "Please reenter your password for confirmation!";
+
+    if (password && rpassword && password !== rpassword)
+      newErrors.rpassword = "Password does not match. Recheck your password";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) 
       return;
-    }
 
     try {
       const userData = new FormData();

@@ -28,12 +28,12 @@ export class AuthService {
 
     const userExists = await this.loginRepository.findOne({ where: { username: login.username } });
     if (!userExists)
-      throw new HttpException({ message: [{ field: 'username', messages: [`User '${login.username}' does not exist`] }] }, HttpStatus.NOT_FOUND);
+      throw new HttpException(`User '${login.username}' does not exist`, HttpStatus.NOT_FOUND);
 
     const isMatch = await bcrypt.compare(login.password, userExists.password);
     if (!isMatch)
-      throw new HttpException( { message: [{ field: 'password', messages: ['Password does not match'] }] }, HttpStatus.BAD_REQUEST );
-    
+      throw new HttpException('Password does not match', HttpStatus.BAD_REQUEST);
+
     if (!userExists.activation) {
       const id = userExists.id;
       await this.loginRepository.update({ id }, { activation: true });
@@ -100,15 +100,82 @@ export class AuthService {
     return { message: 'Logged out successfully' };
   }
 
+  private otpStore = new Map<string, { otp: string, expires: number }>();
+  async forgotpass(email: string): Promise<object> {
+    var keys = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let randomKey;
+    let pass = "";
+
+    for (let i = 0; i < 6; i++) {
+      randomKey = Math.floor(0 + Math.random() * keys.length);
+      pass += keys[randomKey];
+    }
+
+    const expires = Date.now() + 5 * 60 * 1000;
+    this.otpStore.set(email.trim().toLowerCase(), { otp: pass, expires });
+
+    const mailed = await this.mailerService.sendMail({
+      to: email,
+      subject: 'OTP',
+      text: `Your OTP for Gamers United password reset is ${pass}. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
+    });
+    if (!mailed)
+      throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
+
+    return { message: "OTP sent to email" };
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    email = decodeURIComponent(email).trim().toLowerCase();
+    const record = this.otpStore.get(email);
+
+    if (!record)
+      throw new HttpException("OTP not found", HttpStatus.BAD_REQUEST);
+
+    if (Date.now() > record.expires)
+      throw new HttpException("OTP expired", HttpStatus.BAD_REQUEST);
+
+    if (record.otp !== otp)
+      throw new HttpException("Invalid OTP", HttpStatus.BAD_REQUEST);
+
+    this.otpStore.delete(email);
+    return { message: "OTP verified" };
+  }
+
+  async resetPass(email: string, newPassword: string) {
+    const admin = await this.adminRepository.findOneBy({ email: email });
+    const developer = await this.developerRepository.findOneBy({ email: email });
+    const player = await this.playerRepository.findOneBy({ email: email });
+
+    if (!admin && !developer && !player)
+      throw new HttpException(`User with email ${email} not found!`, HttpStatus.NOT_FOUND);
+    else {
+      if (admin)
+        await this.loginRepository.update({ id: admin.id }, { password: newPassword });
+      if (developer)
+        await this.loginRepository.update({ id: developer.id }, { password: newPassword });
+      if (player)
+        await this.loginRepository.update({ id: player.id }, { password: newPassword });
+      return { message: "Password reset successful" };
+    }
+  }
+
   async signup(playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity> {
     const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
+    const emailExists = await this.playerRepository.findOneBy({ email: playerDto.email });
     if (playerExists || loginExists) {
       throw new HttpException(
         { message: [{ field: 'username', messages: [`User with username '${playerDto.username}' already exists`] }] },
         HttpStatus.NOT_ACCEPTABLE
       );
+    }
 
+    if (emailExists) {
+      throw new HttpException(
+        { message: [{ field: 'email', messages: [`User with email '${playerDto.email}' already exists`] }] },
+        HttpStatus.NOT_ACCEPTABLE
+      );
     }
     loginDto.role = "player";
     const login = this.loginRepository.create(loginDto);

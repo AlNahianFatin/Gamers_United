@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches } from "class-validator";
+import { IsEmail, IsNotEmpty, IsString, Matches } from "class-validator";
 import { Transform } from "class-transformer";
 import { AdminEntity } from "../entities/admin.entity";
 import { PlayerEntity } from "../entities/player.entity";

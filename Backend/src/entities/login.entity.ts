@@ -8,7 +8,7 @@ export class LoginEntity {
     @PrimaryColumn()
     id: number;
 
-    @Column({type: "varchar", unique: true})
+    @Column({type: "varchar", nullable: false, unique: true})
     username: string;
     
     @Column()

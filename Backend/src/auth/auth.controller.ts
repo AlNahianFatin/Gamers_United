@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from '../dto/login.dto';
@@ -19,10 +19,8 @@ export class AuthController {
   @Post('login')
   @UsePipes(new ValidationPipe())
   async login(@Session() session, @Body(new ValidationPipe({ transform: true, whitelist: true })) Login: LoginDTO): Promise<Object> {
-    try {
-      return await this.authService.login(session, Login);
-    }
-    catch (error) { console.error("LOGIN ERROR:", error.response || error.message || error); throw error };
+    try { return await this.authService.login(session, Login); }
+    catch (error) { throw error };
   }
 
   @Post('logout')
@@ -30,6 +28,26 @@ export class AuthController {
     const authHeader = req.headers?.authorization ?? '';
     const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
     try { return await res.json(await this.authService.logout(session, token, res)); }
+    catch (error) { throw error; }
+  }
+
+  @Post('forgotpass')
+  async forgotpass(@Body() body: { email: string }): Promise<any> {
+    try { return await this.authService.forgotpass(body.email); }
+    catch (error) { throw error; }
+  }
+
+  @Post('verifyotp')
+  async verifyOtp(@Body() body: { email: string; otp: string }): Promise<any> {
+    try { return this.authService.verifyOtp(body.email, body.otp); }
+    catch (error) { throw error; }
+  }
+
+  @Patch('resetpass')
+  async resetPass(@Body() body: { email: string; newPass: string }): Promise<any> {
+    const salt = await bcrypt.genSalt();
+    const hashedpass = await bcrypt.hash(body.newPass, salt);
+    try { return this.authService.resetPass(body.email, hashedpass); }
     catch (error) { throw error; }
   }
 

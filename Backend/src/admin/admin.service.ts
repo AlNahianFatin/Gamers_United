@@ -22,54 +22,58 @@ import { CategoriesEntity } from '../entities/categories.entity';
 @Injectable()
 export class AdminService {
   constructor(@InjectRepository(LoginEntity) private loginRepository: Repository<LoginEntity>,
-              @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
-              @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
-              @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>,
-              @InjectRepository(GamesEntity) private gamesRepository: Repository<GamesEntity>,
-              @InjectRepository(CategoriesEntity) private categoriesRepository: Repository<CategoriesEntity>) {}
-  
+    @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
+    @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
+    @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>,
+    @InjectRepository(GamesEntity) private gamesRepository: Repository<GamesEntity>,
+    @InjectRepository(CategoriesEntity) private categoriesRepository: Repository<CategoriesEntity>) { }
+
   async getAdmins(): Promise<AdminEntity[]> {
     const admins = await this.adminRepository.find({ relations: ['login'] });
-    if(!admins || admins.length === 0)
+    if (!admins || admins.length === 0)
       throw new HttpException('No admin found', HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async getAdminByID(adminID: number): Promise<AdminEntity> {
-    const exists = await this.adminRepository.findOne({where: { id: adminID }});
-    if (!exists) 
+    const exists = await this.adminRepository.findOne({ where: { id: adminID } });
+    if (!exists)
       throw new HttpException(`Admin with id ${adminID} does not exist`, HttpStatus.NOT_FOUND);
-    else 
+    else
       return exists;
   }
 
   async getAdminPicByID(adminID: number, @Res() res): Promise<any> {
-    const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { image: true }});
-    if(!admin || !admin.image)
+    const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { image: true } });
+    if (!admin || !admin.image)
       throw new HttpException('Admin image not found', HttpStatus.NOT_FOUND);
-    return res.sendFile(admin.image, {root:'./uploads/users/admin'})
+    return res.sendFile(admin.image, { root: './uploads/users/admin' })
   }
-  
+
   async getAdminsByNullName(): Promise<object | AdminEntity[]> {
     const admins = await this.adminRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
-    if (admins.length === 0) 
+    if (admins.length === 0)
       throw new HttpException('No admin with null username has been found', HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async addAdmin(adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity> {
     const adminExists = await this.adminRepository.findOneBy({ username: adminDto.username });
+    const emailExists = await this.adminRepository.findOneBy({ email: adminDto.email });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
-    if (adminExists || loginExists) 
+    if (adminExists || loginExists)
       throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
+    else if (emailExists)
+      throw new HttpException(`User with email ${adminDto.email} already exists`, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "admin";
       const login = this.loginRepository.create(loginDto);
       const savedLogin = await this.loginRepository.save(login);
 
-      const admin = this.adminRepository.create({...adminDto,
+      const admin = this.adminRepository.create({
+        ...adminDto,
         login: savedLogin,
-        id: savedLogin.id       
+        id: savedLogin.id
       });
       const savedAdmin = await this.adminRepository.save(admin);
       return savedAdmin;
@@ -77,17 +81,17 @@ export class AdminService {
   }
 
   async updateAdminPhoneById(id: any, newPhone: any): Promise<AdminEntity | null> {
-    if(!Number(id))
+    if (!Number(id))
       throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
 
     const exists = await this.adminRepository.findOneBy({ id });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if(!Number(newPhone))
+      if (!Number(newPhone))
         throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
-      if(newPhone.length !== 11)
+      if (newPhone.length !== 11)
         throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
       await this.adminRepository.update({ id }, { phone: newPhone });
       return await this.adminRepository.findOneBy({ id: id });
@@ -96,32 +100,36 @@ export class AdminService {
 
   async updateFullAdmin(id: number, adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
     const exists = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
-    else{ 
-      const adminExists = await this.adminRepository.findOne({ where: {username: adminDto.username, id: Not(id)} });
-      const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
-      if (adminExists || loginExists) 
+    else {
+      const adminExists = await this.adminRepository.findOne({ where: { username: adminDto.username, id: Not(id) } });
+      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(id) } });
+      if (adminExists || loginExists)
         throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
-        await this.adminRepository.update({ id }, { username: adminDto.username || exists.username, 
-                                                    email: adminDto.email || exists.email, 
-                                                    image: adminDto.image || exists.image, 
-                                                    phone: adminDto.phone || exists.phone, 
-                                                    NID: adminDto.NID || exists.NID});
-        
+        await this.adminRepository.update({ id }, {
+          username: adminDto.username || exists.username,
+          email: adminDto.email || exists.email,
+          image: adminDto.image || exists.image,
+          phone: adminDto.phone || exists.phone,
+          NID: adminDto.NID || exists.NID
+        });
+
         loginDto.ban = String(loginDto.ban) === "true";
         loginDto.activation = String(loginDto.activation) === "true";
-        if (loginDto.ban) 
+        if (loginDto.ban)
           loginDto.activation = false;
-        if(loginDto.activation)
+        if (loginDto.activation)
           loginDto.ban = false;
         loginDto.role = "admin";
-        await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
-                                                    password: loginDto.password || exists.login.password,
-                                                    role: loginDto.role || exists.login.role,
-                                                    activation: loginDto.activation ?? exists.login.activation,
-                                                    ban: loginDto.ban ?? exists.login.ban });
+        await this.loginRepository.update({ id }, {
+          username: loginDto.username || exists.login.username,
+          password: loginDto.password || exists.login.password,
+          role: loginDto.role || exists.login.role,
+          activation: loginDto.activation ?? exists.login.activation,
+          ban: loginDto.ban ?? exists.login.ban
+        });
         const updatedAdmin = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
         return updatedAdmin;
       }
@@ -130,24 +138,24 @@ export class AdminService {
 
   async removeAdmin(id: number): Promise<object> {
     const admin = await this.adminRepository.findOneBy({ id: id });
-    if (!admin) 
+    if (!admin)
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if (admin.image) {
         const filePath = path.join('uploads/users/admin', admin.image);
         try {
-          await promises.access(filePath); 
+          await promises.access(filePath);
           await promises.unlink(filePath);
-        } 
+        }
         catch (err) {
           throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
-      return {message: `Admin with id ${id} has been deleted`};
+      return { message: `Admin with id ${id} has been deleted` };
     }
   }
-  
+
   //lab performance
   async removeAdminByEmail(email: string): Promise<object> {
     const admins = await this.adminRepository.find({ where: { email }, relations: ['login'] });
@@ -158,85 +166,85 @@ export class AdminService {
         const filePath = path.join('uploads/users/admin', admin.image);
         try {
           await promises.access(filePath);
-          await promises.unlink(filePath); 
-        } 
+          await promises.unlink(filePath);
+        }
         catch (err) {
           throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
     }
     const loginIds = admins.filter(admin => admin.login).map(admin => admin.login.id);
-    if (loginIds.length > 0) 
+    if (loginIds.length > 0)
       await this.loginRepository.delete(loginIds);
-    return { message: `All admins with email ${email} has been deleted` };
+    return { message: `Admin with email ${email} has been deleted` };
   }
 
   async searchAdmin(key: any): Promise<object> {
     let admins: object[] = [];
-    if(!isNaN(Number(key))) 
+    if (!isNaN(Number(key)))
       admins = await this.adminRepository.find({ where: { id: Number(key) } })
-    if(admins.length === 0) 
-      admins = await this.adminRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
-    
-    if(admins.length === 0) 
+    if (admins.length === 0)
+      admins = await this.adminRepository.find({ where: [{ username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) }] });
+
+    if (admins.length === 0)
       throw new HttpException(`No admin found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async sortAdminByIDAsc(): Promise<object> {
-    const admins =  await this.adminRepository.find({ order: { id: 'ASC' } });
-    if(!admins || admins.length < 0)
+    const admins = await this.adminRepository.find({ order: { id: 'ASC' } });
+    if (!admins || admins.length < 0)
       throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
     return admins;
   }
-  
+
   async sortAdminByIDDesc(): Promise<object> {
-    const admins =  await this.adminRepository.find({ order: { id: 'DESC' } });
-    if(!admins || admins.length < 0)
+    const admins = await this.adminRepository.find({ order: { id: 'DESC' } });
+    if (!admins || admins.length < 0)
       throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
     return admins;
   }
-  
+
   async sortAdminByNameAsc(): Promise<object> {
-    const admins =  await this.adminRepository.find({ order: { username: 'ASC' } });
-    if(!admins || admins.length < 0)
+    const admins = await this.adminRepository.find({ order: { username: 'ASC' } });
+    if (!admins || admins.length < 0)
       throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
     return admins;
   }
-  
+
   async sortAdminByNameDesc(): Promise<object> {
-    const admins =  await this.adminRepository.find({ order: { username: 'DESC' } });
-    if(!admins || admins.length < 0)
+    const admins = await this.adminRepository.find({ order: { username: 'DESC' } });
+    if (!admins || admins.length < 0)
       throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
     return admins;
   }
-  
+
 
   async getPlayers(): Promise<PlayerEntity[]> {
     const players = await this.playerRepository.find({ relations: ['login'] });
-    if(!players || players.length < 0)
+    if (!players || players.length < 0)
       throw new HttpException(`No player found`, HttpStatus.NOT_FOUND);
     return players;
   }
 
   async getPlayerByID(playerID: number): Promise<PlayerEntity> {
-    const exists = await this.playerRepository.findOne({where: { id: playerID }});
-    if (!exists) 
+    const exists = await this.playerRepository.findOne({ where: { id: playerID } });
+    if (!exists)
       throw new HttpException(`Player with id ${playerID} does not exist`, HttpStatus.NOT_FOUND);
-    else 
+    else
       return exists;
   }
 
   async getPlayerPicByID(playerID: number, @Res() res): Promise<any> {
-    const player = await this.playerRepository.findOne({ where: { id: playerID }, select: { image: true }});
-    if(!player || !player.image)
+    const player = await this.playerRepository.findOne({ where: { id: playerID }, select: { image: true } });
+    if (!player || !player.image)
       throw new HttpException(`Player image not found`, HttpStatus.NOT_FOUND);
-    return res.sendFile(player.image, {root:'./uploads/users/player'})
+    return res.sendFile(player.image, { root: './uploads/users/player' })
   }
-  
+
   async getPlayersByNullName(): Promise<object | PlayerEntity[]> {
     const players = await this.playerRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
-    if (players.length === 0) 
+    if (players.length === 0)
       throw new HttpException(`No player with null username has been found`, HttpStatus.NOT_FOUND);
     return players;
   }
@@ -244,16 +252,17 @@ export class AdminService {
   async addPlayer(playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity> {
     const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
-    if (playerExists || loginExists) 
+    if (playerExists || loginExists)
       throw new HttpException(`User with username ${playerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "player";
       const login = this.loginRepository.create(loginDto);
       const savedLogin = await this.loginRepository.save(login);
 
-      const player = this.playerRepository.create({...playerDto,
+      const player = this.playerRepository.create({
+        ...playerDto,
         login: savedLogin,
-        id: savedLogin.id      
+        id: savedLogin.id
       });
       const savedPlayer = await this.playerRepository.save(player);
       return savedPlayer;
@@ -261,17 +270,17 @@ export class AdminService {
   }
 
   async updatePlayerPhoneByID(id: any, newPhone: any): Promise<PlayerEntity | null> {
-    if(!Number(id))
+    if (!Number(id))
       throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
 
     const exists = await this.playerRepository.findOneBy({ id });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if(!Number(newPhone))
+      if (!Number(newPhone))
         throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
-      if(newPhone.length !== 11)
+      if (newPhone.length !== 11)
         throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
 
       await this.playerRepository.update({ id }, { phone: newPhone });
@@ -281,29 +290,31 @@ export class AdminService {
 
   async updateFullPlayer(id: number, playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity | null> {
     const exists = await this.playerRepository.findOne({ where: { id }, relations: ['login'] });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
-    else{ 
-      const playerExists = await this.playerRepository.findOne({ where: {username: playerDto.username, id: Not(id)} });
-      const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
-      if (playerExists || loginExists) 
+    else {
+      const playerExists = await this.playerRepository.findOne({ where: { username: playerDto.username, id: Not(id) } });
+      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(id) } });
+      if (playerExists || loginExists)
         throw new HttpException(`User with username ${playerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
-        await this.playerRepository.update({ id }, { username: playerDto.username || exists.username, 
-                                                    email: playerDto.email || exists.email, 
-                                                    image: playerDto.image || exists.image, 
-                                                    phone: playerDto.phone || exists.phone, 
-                                                    NID: playerDto.NID || exists.NID});
+        await this.playerRepository.update({ id }, {
+          username: playerDto.username || exists.username,
+          email: playerDto.email || exists.email,
+          image: playerDto.image || exists.image,
+          phone: playerDto.phone || exists.phone,
+          NID: playerDto.NID || exists.NID
+        });
         const newGameIds = playerDto.game_ids ?? [];
         const oldGameIds = exists.game_ids ?? [];
-              
+
         exists.game_ids = newGameIds;
         await this.playerRepository.save(exists);
 
         const removedGames = oldGameIds.filter(id => !newGameIds.includes(id));
         for (const gameId of removedGames) {
           const game = await this.gamesRepository.findOne({ where: { id: gameId } });
-          if (!game) 
+          if (!game)
             continue;
           await this.gamesRepository.save(game);
         }
@@ -311,23 +322,25 @@ export class AdminService {
         const addedGames = newGameIds.filter(id => !oldGameIds.includes(id));
         for (const gameId of addedGames) {
           const game = await this.gamesRepository.findOne({ where: { id: gameId } });
-          if (!game) 
+          if (!game)
             continue;
           await this.gamesRepository.save(game);
         }
-        
+
         loginDto.ban = String(loginDto.ban) === "true";
         loginDto.activation = String(loginDto.activation) === "true";
-        if (loginDto.ban) 
+        if (loginDto.ban)
           loginDto.activation = false;
-        if(loginDto.activation)
+        if (loginDto.activation)
           loginDto.ban = false;
         loginDto.role = "player";
-        await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
-                                                    password: loginDto.password || exists.login.password,
-                                                    role: loginDto.role || exists.login.role,
-                                                    activation: loginDto.activation ?? exists.login.activation,
-                                                    ban: loginDto.ban ?? exists.login.ban });
+        await this.loginRepository.update({ id }, {
+          username: loginDto.username || exists.login.username,
+          password: loginDto.password || exists.login.password,
+          role: loginDto.role || exists.login.role,
+          activation: loginDto.activation ?? exists.login.activation,
+          ban: loginDto.ban ?? exists.login.ban
+        });
         const updatedPlayer = await this.playerRepository.findOne({ where: { id }, relations: ['login'] });
         return updatedPlayer;
       }
@@ -336,24 +349,24 @@ export class AdminService {
 
   async removePlayer(id: number): Promise<object> {
     const player = await this.playerRepository.findOneBy({ id: id });
-    if (!player) 
+    if (!player)
       throw new HttpException(`Player with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if (player.image) {
         const filePath = path.join('uploads/users/player', player.image);
         try {
-          await promises.access(filePath); 
+          await promises.access(filePath);
           await promises.unlink(filePath);
-        } 
+        }
         catch (err) {
           throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
-      return {message: `Player with id ${id} has been deleted`};
+      return { message: `Player with id ${id} has been deleted` };
     }
   }
-  
+
   //lab performance
   async removePlayerByEmail(email: string): Promise<object> {
     const players = await this.playerRepository.find({ where: { email }, relations: ['login'] });
@@ -364,85 +377,85 @@ export class AdminService {
         const filePath = path.join('uploads/users/player', player.image);
         try {
           await promises.access(filePath);
-          await promises.unlink(filePath); 
-        } 
+          await promises.unlink(filePath);
+        }
         catch (err) {
           throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
     }
     const loginIds = players.filter(player => player.login).map(player => player.login.id);
-    if (loginIds.length > 0) 
+    if (loginIds.length > 0)
       await this.loginRepository.delete(loginIds);
-    return { message: `All players with email ${email} has been deleted` };
+    return { message: `Player with email ${email} has been deleted` };
   }
 
   async searchPlayer(key: any): Promise<object> {
     let players: object[] = [];
-    if(!isNaN(Number(key))) 
+    if (!isNaN(Number(key)))
       players = await this.playerRepository.find({ where: { id: Number(key) } })
-    if(players.length === 0) 
-      players = await this.playerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
-    
-    if(players.length === 0) 
+    if (players.length === 0)
+      players = await this.playerRepository.find({ where: [{ username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) }] });
+
+    if (players.length === 0)
       throw new HttpException(`No player found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return players;
   }
 
   async sortPlayerByIDAsc(): Promise<object> {
     const players = await this.playerRepository.find({ order: { id: 'ASC' } });
-    if(!players || players.length < 1) 
+    if (!players || players.length < 1)
       throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
     return players;
   }
-  
+
   async sortPlayerByIDDesc(): Promise<object> {
     const players = await this.playerRepository.find({ order: { id: 'DESC' } });
-    if(!players || players.length < 1) 
+    if (!players || players.length < 1)
       throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
     return players;
   }
-  
+
   async sortPlayerByNameAsc(): Promise<object> {
     const players = await this.playerRepository.find({ order: { username: 'ASC' } });
-    if(!players || players.length < 1) 
+    if (!players || players.length < 1)
       throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
     return players;
   }
-  
+
   async sortPlayerByNameDesc(): Promise<object> {
     const players = await this.playerRepository.find({ order: { username: 'DESC' } });
-    if(!players || players.length < 1) 
+    if (!players || players.length < 1)
       throw new HttpException(`No player found!`, HttpStatus.NOT_FOUND);
     return players;
   }
-  
+
 
   async getDevelopers(): Promise<DeveloperEntity[]> {
     const developers = await this.developerRepository.find({ relations: ['login'] });
-    if(!developers || developers.length < 1) 
+    if (!developers || developers.length < 1)
       throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
     return developers;
   }
 
   async getDeveloperByID(developerID: number): Promise<DeveloperEntity> {
-    const exists = await this.developerRepository.findOne({where: { id: developerID }});
-    if (!exists) 
+    const exists = await this.developerRepository.findOne({ where: { id: developerID } });
+    if (!exists)
       throw new HttpException(`Developer with id ${developerID} does not exist`, HttpStatus.NOT_FOUND);
-    else 
+    else
       return exists;
   }
 
   async getDeveloperPicByID(developerID: number, @Res() res): Promise<any> {
-    const developer = await this.developerRepository.findOne({ where: { id: developerID }, select: { image: true }});
-    if(!developer || !developer.image)
+    const developer = await this.developerRepository.findOne({ where: { id: developerID }, select: { image: true } });
+    if (!developer || !developer.image)
       throw new HttpException('Developer image not found', HttpStatus.NOT_FOUND);
-    return res.sendFile(developer.image, {root:'./uploads/users/developer'})
+    return res.sendFile(developer.image, { root: './uploads/users/developer' })
   }
-  
+
   async getDevelopersByNullName(): Promise<object | DeveloperEntity[]> {
     const developers = await this.developerRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
-    if (developers.length === 0) 
+    if (developers.length === 0)
       throw new HttpException(`No developer with null username has been found`, HttpStatus.NOT_FOUND);
     return developers;
   }
@@ -450,7 +463,7 @@ export class AdminService {
   async addDeveloper(developerDto: DeveloperDTO, loginDto: LoginDTO): Promise<DeveloperEntity> {
     const developerExists = await this.developerRepository.findOneBy({ username: developerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
-    if (developerExists || loginExists) 
+    if (developerExists || loginExists)
       throw new HttpException(`User with username ${developerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "developer";
@@ -460,7 +473,8 @@ export class AdminService {
       const savedLogin = await this.loginRepository.save(login);
 
       // Create admin entity but DO NOT assign id
-      const developer = this.developerRepository.create({...developerDto,
+      const developer = this.developerRepository.create({
+        ...developerDto,
         login: savedLogin,
         id: savedLogin.id       // share primary key
       });
@@ -471,17 +485,17 @@ export class AdminService {
   }
 
   async updateDeveloperPhoneByID(id: any, newPhone: any): Promise<DeveloperEntity | null> {
-    if(!Number(id))
+    if (!Number(id))
       throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
 
     const exists = await this.developerRepository.findOneBy({ id });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if(!Number(newPhone))
+      if (!Number(newPhone))
         throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
-      if(newPhone.length !== 11)
+      if (newPhone.length !== 11)
         throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
 
       await this.developerRepository.update({ id }, { phone: newPhone });
@@ -491,32 +505,36 @@ export class AdminService {
 
   async updateFullDeveloper(id: number, developerDto: DeveloperDTO, loginDto: LoginDTO): Promise<DeveloperEntity | null> {
     const exists = await this.developerRepository.findOne({ where: { id }, relations: ['login'] });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
-    else{ 
-      const developerExists = await this.developerRepository.findOne({ where: {username: developerDto.username, id: Not(id)} });
-      const loginExists = await this.loginRepository.findOne({ where: {username: loginDto.username, id: Not(id)} });
-      if (developerExists || loginExists) 
+    else {
+      const developerExists = await this.developerRepository.findOne({ where: { username: developerDto.username, id: Not(id) } });
+      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(id) } });
+      if (developerExists || loginExists)
         throw new HttpException(`User with username ${developerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
-        await this.developerRepository.update({ id }, { username: developerDto.username || exists.username, 
-                                                    email: developerDto.email || exists.email, 
-                                                    image: developerDto.image || exists.image, 
-                                                    phone: developerDto.phone || exists.phone, 
-                                                    NID: developerDto.NID || exists.NID});
-        
+        await this.developerRepository.update({ id }, {
+          username: developerDto.username || exists.username,
+          email: developerDto.email || exists.email,
+          image: developerDto.image || exists.image,
+          phone: developerDto.phone || exists.phone,
+          NID: developerDto.NID || exists.NID
+        });
+
         loginDto.ban = String(loginDto.ban) === "true";
         loginDto.activation = String(loginDto.activation) === "true";
-        if (loginDto.ban) 
+        if (loginDto.ban)
           loginDto.activation = false;
-        if(loginDto.activation)
+        if (loginDto.activation)
           loginDto.ban = false;
         loginDto.role = "developer";
-        await this.loginRepository.update({ id }, { username: loginDto.username || exists.login.username,
-                                                    password: loginDto.password || exists.login.password,
-                                                    role: loginDto.role || exists.login.role,
-                                                    activation: loginDto.activation ?? exists.login.activation,
-                                                    ban: loginDto.ban ?? exists.login.ban });
+        await this.loginRepository.update({ id }, {
+          username: loginDto.username || exists.login.username,
+          password: loginDto.password || exists.login.password,
+          role: loginDto.role || exists.login.role,
+          activation: loginDto.activation ?? exists.login.activation,
+          ban: loginDto.ban ?? exists.login.ban
+        });
         const updatedDeveloper = await this.developerRepository.findOne({ where: { id }, relations: ['login'] });
         return updatedDeveloper;
       }
@@ -525,24 +543,24 @@ export class AdminService {
 
   async removeDeveloper(id: number): Promise<object> {
     const developer = await this.developerRepository.findOneBy({ id: id });
-    if (!developer) 
+    if (!developer)
       throw new HttpException(`Developer with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       if (developer.image) {
         const filePath = path.join('uploads/users/developer', developer.image);
         try {
-          await promises.access(filePath); 
+          await promises.access(filePath);
           await promises.unlink(filePath);
-        } 
+        }
         catch (err) {
           throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
-      return {message: `Developer with id ${id} has been deleted`};
+      return { message: `Developer with id ${id} has been deleted` };
     }
   }
-  
+
   //lab performance
   async removeDeveloperByEmail(email: string): Promise<object> {
     const developers = await this.developerRepository.find({ where: { email }, relations: ['login'] });
@@ -553,55 +571,55 @@ export class AdminService {
         const filePath = path.join('uploads/users/developer', developer.image);
         try {
           await promises.access(filePath);
-          await promises.unlink(filePath); 
-        } 
+          await promises.unlink(filePath);
+        }
         catch (err) {
           throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
         }
       }
     }
     const loginIds = developers.filter(developer => developer.login).map(developer => developer.login.id);
-    if (loginIds.length > 0) 
+    if (loginIds.length > 0)
       await this.loginRepository.delete(loginIds);
-    return { message: `All developers with email ${email} has been deleted` };
+    return { message: `Developer with email ${email} has been deleted` };
   }
 
   async searchDeveloper(key: any): Promise<object> {
     var developers: object[] = [];
-    if(!isNaN(Number(key))) 
+    if (!isNaN(Number(key)))
       developers = await this.developerRepository.find({ where: { id: Number(key) } })
     if (developers.length === 0)
-      developers = await this.developerRepository.find({ where: [ { username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) } ] });
-    
-    if(developers.length === 0) 
+      developers = await this.developerRepository.find({ where: [{ username: Like(`%${key}%`) }, { email: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) }] });
+
+    if (developers.length === 0)
       throw new HttpException(`No developer found! Try searching with another key`, HttpStatus.NOT_FOUND);
     return developers;
   }
 
   async sortDeveloperByIDAsc(): Promise<object> {
-    const developers =  await this.developerRepository.find({ order: { id: 'ASC' } });
-    if(!developers || developers.length < 1) 
+    const developers = await this.developerRepository.find({ order: { id: 'ASC' } });
+    if (!developers || developers.length < 1)
       throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
     return developers;
   }
-  
+
   async sortDeveloperByIDDesc(): Promise<object> {
-    const developers =  await this.developerRepository.find({ order: { id: 'DESC' } });
-    if(!developers || developers.length < 1) 
+    const developers = await this.developerRepository.find({ order: { id: 'DESC' } });
+    if (!developers || developers.length < 1)
       throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
     return developers;
   }
-  
+
   async sortDeveloperByNameAsc(): Promise<object> {
-    const developers =  await this.developerRepository.find({ order: { username: 'ASC' } });
-    if(!developers || developers.length < 1) 
+    const developers = await this.developerRepository.find({ order: { username: 'ASC' } });
+    if (!developers || developers.length < 1)
       throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
     return developers;
   }
-  
+
   async sortDeveloperByNameDesc(): Promise<object> {
-    const developers =  await this.developerRepository.find({ order: { username: 'DESC' } });
-    if(!developers || developers.length < 1) 
+    const developers = await this.developerRepository.find({ order: { username: 'DESC' } });
+    if (!developers || developers.length < 1)
       throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
     return developers;
   }
@@ -615,26 +633,26 @@ export class AdminService {
   }
 
   async getGamePicByID(gameID: number, @Res() res): Promise<any> {
-    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { image: true }});
-    if(!game || !game.image)
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { image: true } });
+    if (!game || !game.image)
       throw new HttpException(`Game image not found`, HttpStatus.NOT_FOUND);
-    return res.sendFile(game.image, {root:'./uploads/games/images'})
+    return res.sendFile(game.image, { root: './uploads/games/images' })
   }
-  
+
   async getGameTrailerByID(gameID: number, @Res() res): Promise<any> {
-    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { trailer: true }});
-    if(!game || !game.trailer)
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { trailer: true } });
+    if (!game || !game.trailer)
       throw new HttpException(`Game trailer not found`, HttpStatus.NOT_FOUND);
-    return res.sendFile(game.trailer, {root:'./uploads/games/trailers'})
+    return res.sendFile(game.trailer, { root: './uploads/games/trailers' })
   }
-  
+
   async getGameByID(gameID: number, @Res() res): Promise<any> {
-    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { game: true }});
-    if(!game || !game.game)
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { game: true } });
+    if (!game || !game.game)
       throw new HttpException(`Game not found`, HttpStatus.NOT_FOUND);
-    return res.sendFile(game.game, {root:'./uploads/games/game'})
+    return res.sendFile(game.game, { root: './uploads/games/game' })
   }
-  
+
   //mid project defence
   async getGamesByDeveloperID(developerId: number): Promise<GamesEntity[]> {
     if (isNaN(Number(developerId)))
@@ -650,11 +668,11 @@ export class AdminService {
 
   async addGame(gameDto: GamesDTO): Promise<GamesEntity> {
     const gameExists = await this.gamesRepository.findOneBy({ title: gameDto.title });
-    if (gameExists) 
+    if (gameExists)
       throw new HttpException(`Game with title ${gameDto.title} already exists`, HttpStatus.NOT_ACCEPTABLE);
 
-    const developer = await this.developerRepository.findOne({ where: {username: gameDto.developed_by} })
-    if(!developer)
+    const developer = await this.developerRepository.findOne({ where: { username: gameDto.developed_by } })
+    if (!developer)
       throw new HttpException(`Developer ${gameDto.developed_by} not found`, HttpStatus.NOT_FOUND);
     let game = this.gamesRepository.create({
       title: gameDto.title,
@@ -663,18 +681,18 @@ export class AdminService {
       image: gameDto.image,
       trailer: gameDto.trailer,
       game: gameDto.game,
-      developer   
+      developer
     });
     return await this.gamesRepository.save(game);
   }
 
   async addCategoryToGame(gameTitle: string, categoryName: string): Promise<GamesEntity> {
     const game = await this.gamesRepository.findOne({ where: { title: gameTitle }, relations: ['categories', 'developer'] });
-    if (!game) 
+    if (!game)
       throw new HttpException(`Game ${gameTitle} not found`, HttpStatus.NOT_FOUND);
 
-    const category = await this.categoriesRepository.findOne({where: {name: categoryName}});
-    if (!category) 
+    const category = await this.categoriesRepository.findOne({ where: { name: categoryName } });
+    if (!category)
       throw new HttpException(`Category ${categoryName} not found`, HttpStatus.NOT_FOUND);
 
     game.categories = [...game.categories, category];
@@ -683,40 +701,40 @@ export class AdminService {
 
   async removeCategoryFromGame(gameTitle: string, categoryName: string): Promise<GamesEntity> {
     const game = await this.gamesRepository.findOne({ where: { title: gameTitle }, relations: ['categories', 'developer'] });
-    if (!game) 
+    if (!game)
       throw new HttpException(`Game ${gameTitle} not found`, HttpStatus.NOT_FOUND);
 
-    const category = await this.categoriesRepository.findOne({where: {name: categoryName}});
-    if (!category) 
+    const category = await this.categoriesRepository.findOne({ where: { name: categoryName } });
+    if (!category)
       throw new HttpException(`Category ${categoryName} not found`, HttpStatus.NOT_FOUND);
 
     game.categories = game.categories.filter((c) => c.id !== category.id);
     return await this.gamesRepository.save(game);
   }
 
-// //   updateGame(game: GamesDTO, oldTitle: string, newTitle: string): string {
-// //     return `${game.id} has been updated from '${oldTitle}' to '${newTitle}' successfully`;
-// //   }
+  // //   updateGame(game: GamesDTO, oldTitle: string, newTitle: string): string {
+  // //     return `${game.id} has been updated from '${oldTitle}' to '${newTitle}' successfully`;
+  // //   }
 
-// //   updateFullGame(game: GamesDTO, id: number): string {
-// //     return `${id} has been updated successfully`;
-// //   }
+  // //   updateFullGame(game: GamesDTO, id: number): string {
+  // //     return `${id} has been updated successfully`;
+  // //   }
 
-//   async removeGame(id: number): Promise<object> {
-//     const game = await this.gamesRepository.findOne({ where: { id } });
-//     if (!game) 
-//       throw new Error("Game not found");
+  //   async removeGame(id: number): Promise<object> {
+  //     const game = await this.gamesRepository.findOne({ where: { id } });
+  //     if (!game) 
+  //       throw new Error("Game not found");
 
-//     const categories = await this.categoriesRepository.find();
-//     for (const category of categories) {
-//       if (category.game_ids?.includes(id)) {
-//         category.game_ids = category.game_ids.filter(x => x !== id);
-//         await this.categoriesRepository.save(category);
-//       }
-//     }
-//     await this.gamesRepository.delete(id);
-//     return { message: `Game ${game.title} deleted successfully` };
-//   }
+  //     const categories = await this.categoriesRepository.find();
+  //     for (const category of categories) {
+  //       if (category.game_ids?.includes(id)) {
+  //         category.game_ids = category.game_ids.filter(x => x !== id);
+  //         await this.categoriesRepository.save(category);
+  //       }
+  //     }
+  //     await this.gamesRepository.delete(id);
+  //     return { message: `Game ${game.title} deleted successfully` };
+  //   }
 
   async getCategories(): Promise<CategoriesEntity[] | object> {
     const categories = await this.categoriesRepository.find({ relations: ['games', 'games.developer'] });
@@ -727,7 +745,7 @@ export class AdminService {
 
   async addCategory(categoryDto: CategoriesDTO): Promise<CategoriesEntity> {
     const categoryExists = await this.categoriesRepository.findOneBy({ name: categoryDto.name });
-    if (categoryExists) 
+    if (categoryExists)
       throw new HttpException(`Category ${categoryExists.name} already exists`, HttpStatus.NOT_ACCEPTABLE);
 
     const category = this.categoriesRepository.create({
@@ -740,109 +758,109 @@ export class AdminService {
 
   async addGameToCategory(catName: string, gameId: number): Promise<void> {
     const category = await this.categoriesRepository.findOne({ where: { name: catName } });
-    const game = await this.gamesRepository.findOne({where: {id: gameId}});
-    if (!category) 
+    const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+    if (!category)
       throw new HttpException(`Category ${catName} not found`, HttpStatus.NOT_FOUND);
-    if(game && category) {
+    if (game && category) {
       category.games = [...category.games, game];
       await this.categoriesRepository.save(game);
-    } 
+    }
   }
 
-// //   updateCategory(category: CategoriesDTO, id: number): string {
-// //     return `${id} has been updated successfully`;
-// //   }
+  // //   updateCategory(category: CategoriesDTO, id: number): string {
+  // //     return `${id} has been updated successfully`;
+  // //   }
 
-// //   updateFullCategory(category: CategoriesDTO, id: number): string {
-// //     return `${id} has been updated successfully`;
-// //   }
+  // //   updateFullCategory(category: CategoriesDTO, id: number): string {
+  // //     return `${id} has been updated successfully`;
+  // //   }
 
   async removeCategory(id: number): Promise<object> {
     const category = await this.categoriesRepository.findOneBy({ id: id });
-    if (!category) 
+    if (!category)
       throw new HttpException(`Category with id ${id} not found!`, HttpStatus.NOT_FOUND);
     await this.categoriesRepository.delete(id);
-    return {message: `Category with id ${id} has been deleted`};
-  }  
+    return { message: `Category with id ${id} has been deleted` };
+  }
 
   // getPurchases(): object {
   //   let purchase1: Object = {
-//       id: 453146,
-//       user_id: 4523,
-//       game_id: 235,
-//       purchase_date: "2025-11-03T18:21:00.000Z",
-//       amount: 60
-//     };
-//     return purchase1;
-//   }
+  //       id: 453146,
+  //       user_id: 4523,
+  //       game_id: 235,
+  //       purchase_date: "2025-11-03T18:21:00.000Z",
+  //       amount: 60
+  //     };
+  //     return purchase1;
+  //   }
 
-//   addPurchase(purchase: PurchasesDTO): string {
-//     return purchase.id + " has been added successfully";
-//   }
+  //   addPurchase(purchase: PurchasesDTO): string {
+  //     return purchase.id + " has been added successfully";
+  //   }
 
-//   updatePurchase(purchase: PurchasesDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  //   updatePurchase(purchase: PurchasesDTO, id: number): string {
+  //     return `${id} has been updated successfully`;
+  //   }
 
-//   updateFullPurchase(purchase: PurchasesDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  //   updateFullPurchase(purchase: PurchasesDTO, id: number): string {
+  //     return `${id} has been updated successfully`;
+  //   }
 
-//   deletePurchase(id: number): string {
-//     return `Purchase record with ID ${id} has been deleted successfully`;
-//   }
+  //   deletePurchase(id: number): string {
+  //     return `Purchase record with ID ${id} has been deleted successfully`;
+  //   }
 
-//   getViews(): object {
-//     let view1: Object = {
-//       id: 132,
-//       user_id: 14,
-//       game_id: 5436,
-//       view_count: 12
-//     };
-//     return view1;
-//   }
+  //   getViews(): object {
+  //     let view1: Object = {
+  //       id: 132,
+  //       user_id: 14,
+  //       game_id: 5436,
+  //       view_count: 12
+  //     };
+  //     return view1;
+  //   }
 
-//   addView(view: ViewsDTO): string {
-//     return view.id + " has been added successfully";
-//   }
+  //   addView(view: ViewsDTO): string {
+  //     return view.id + " has been added successfully";
+  //   }
 
-//   updateView(view: ViewsDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  //   updateView(view: ViewsDTO, id: number): string {
+  //     return `${id} has been updated successfully`;
+  //   }
 
-//   updateFullView(view: ViewsDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  //   updateFullView(view: ViewsDTO, id: number): string {
+  //     return `${id} has been updated successfully`;
+  //   }
 
-//   deleteView(id: number): string {
-//     return `View record with ID ${id} has been deleted successfully`;
-//   }
+  //   deleteView(id: number): string {
+  //     return `View record with ID ${id} has been deleted successfully`;
+  //   }
 
-//   getPlays(): object {
-//     let play1: Object = {
-//       id: 132,
-//       user_id: 14,
-//       game_id: 5436,
-//       duration: 12
-//     };
-//     return play1;
-//   }
+  //   getPlays(): object {
+  //     let play1: Object = {
+  //       id: 132,
+  //       user_id: 14,
+  //       game_id: 5436,
+  //       duration: 12
+  //     };
+  //     return play1;
+  //   }
 
-//   addPlay(play: PlaysDTO): string {
-//     return play.id + " has been added successfully";
-//   }
+  //   addPlay(play: PlaysDTO): string {
+  //     return play.id + " has been added successfully";
+  //   }
 
-//   updatePlay(play: PlaysDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  //   updatePlay(play: PlaysDTO, id: number): string {
+  //     return `${id} has been updated successfully`;
+  //   }
 
-//   updateFullPlay(play: PlaysDTO, id: number): string {
-//     return `${id} has been updated successfully`;
-//   }
+  //   updateFullPlay(play: PlaysDTO, id: number): string {
+  //     return `${id} has been updated successfully`;
+  //   }
 
-//   deletePlay(id: number): string {
-//     return `Play record with ID ${id} has been deleted successfully`;
-//   }
+  //   deletePlay(id: number): string {
+  //     return `Play record with ID ${id} has been deleted successfully`;
+  //   }
 
   async userActivation(id: any, activation: boolean): Promise<LoginEntity | null> {
     if (isNaN(Number(id)))
@@ -850,43 +868,43 @@ export class AdminService {
 
     id = Number(id)
     const exists = await this.loginRepository.findOneBy({ id });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       activation = String(activation).toLowerCase() === "true" || Number(activation) === 1;
-      if(activation === exists.activation) {
-        if(activation === true)
+      if (activation === exists.activation) {
+        if (activation === true)
           throw new HttpException(`User '${exists.username}' account is already active`, HttpStatus.NOT_ACCEPTABLE);
-        if(activation === false)
+        if (activation === false)
           throw new HttpException(`User '${exists.username}' account is already deactive`, HttpStatus.NOT_ACCEPTABLE);
       }
-      if(activation)
+      if (activation)
         await this.loginRepository.update({ id }, { activation: activation, ban: false });
       else
         await this.loginRepository.update({ id }, { activation: activation });
       return await this.loginRepository.findOneBy({ id: id });
     }
   }
-  
+
   async userBan(id: any, ban: boolean): Promise<LoginEntity | null> {
     if (isNaN(Number(id)))
       throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
 
     id = Number(id)
     const exists = await this.loginRepository.findOneBy({ id });
-    if (!exists) 
+    if (!exists)
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       ban = String(ban).toLowerCase() === "true" || Number(ban) === 1;
-      if(ban === exists.ban) {
-        if(ban === true)
+      if (ban === exists.ban) {
+        if (ban === true)
           throw new HttpException(`User '${exists.username}' account is already banned`, HttpStatus.NOT_ACCEPTABLE);
-        if(ban === false)
+        if (ban === false)
           throw new HttpException(`User '${exists.username}' account is already unbanned`, HttpStatus.NOT_ACCEPTABLE);
       }
-      if(ban)
+      if (ban)
         await this.loginRepository.update({ id }, { ban: ban, activation: false });
-      if(!ban)
+      if (!ban)
         await this.loginRepository.update({ id }, { ban: ban, activation: true });
       return await this.loginRepository.findOneBy({ id: id });
     }

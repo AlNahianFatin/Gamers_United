@@ -76,53 +76,18 @@ export default function LoginPage() {
         const status = error.response.status;
         const message = error.response.data?.message || "Login failed";
 
-        if (status === 404) 
+        if (status === 404)
           setUNameError(message);
-        else if (status === 400) 
+        else if (status === 400)
           setPassError(message);
-        else if (status === 401) 
+        else if (status === 401)
           alert(message);
-        else 
+        else
           alert("Something went wrong. Please try again later.");
       }
       else
         alert("Server not reachable. Check your internet connection.");
     }
-
-    
-    // catch (error: any) {
-    //   console.log("FULL ERROR:", error);
-    //   console.log("MESSAGE:", error.message);
-    //   console.log("CODE:", error.code);
-    //   if (error.response) {
-    //     const status = error.response.status;
-    //     const data = error.response.data;
-
-    //     if (Array.isArray(data.message)) {
-    //       const firstError = data.message[0];
-
-    //       if (firstError.field === "username")
-    //         setUNameError(firstError.messages[0]);
-    //       else if (firstError.field === "password")
-    //         setPassError(firstError.messages[0]);
-
-    //       return;
-    //     }
-
-    //     const message = data?.message || "Login failed";
-
-    //     if (status === 404)
-    //       setUNameError(message);
-    //     else if (status === 400)
-    //       setPassError(message);
-    //     else if (status === 401)
-    //       alert(message);
-    //     else
-    //       alert("Something went wrong. Please try again later.");
-    //   }
-    //   else
-    //     alert("Server not reachable. Check your internet connection.");
-    // }
   };
 
   return (
@@ -135,7 +100,9 @@ export default function LoginPage() {
         <input type="text" placeholder="Username" value={username} onChange={e => { setUsername(e.target.value); setUNameError(""); }} /> <p style={{ color: "red" }}> {uNameError} </p> <br></br>
 
         <label>Password: </label>
-        <input type="password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setPassError(""); }} /> <p style={{ color: "red" }}> {passError} </p> <br></br>
+        <input type="password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setPassError(""); }} /> <p style={{ color: "red" }}> {passError} </p>
+
+        <Link href="/forgotpass" style={{ textAlign: "right" }}>Forgot Password</Link><br></br>
 
         <button type="submit">Login</button> <br></br>
       </form>

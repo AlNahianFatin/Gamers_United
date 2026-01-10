@@ -10,7 +10,7 @@ export class DeveloperEntity {
     @Column({type: "varchar", nullable: false, unique: true})
     username: string;
 
-    @Column({nullable: true})
+    @Column({nullable: false, unique: true})
     email: string;
     
     @Column({nullable: true})
