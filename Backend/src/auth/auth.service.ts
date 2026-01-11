@@ -163,7 +163,7 @@ export class AuthService {
   async signup(playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity> {
     const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
-    const emailExists = await this.playerRepository.findOneBy({ email: playerDto.email });
+    const emailExists = await this.adminRepository.findOneBy({ email: playerDto.email }) || await this.developerRepository.findOneBy({ email: playerDto.email }) || await this.playerRepository.findOneBy({ email: playerDto.email });
     if (playerExists || loginExists) {
       throw new HttpException(
         { message: [{ field: 'username', messages: [`User with username '${playerDto.username}' already exists`] }] },
