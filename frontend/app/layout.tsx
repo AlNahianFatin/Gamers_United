@@ -1,11 +1,19 @@
 import { ReactNode } from 'react';
+import { Jaro, Itim, Inika, Inter } from 'next/font/google';
 import "./globals.css"
+
+const jaro = Jaro({ subsets: ['latin'], weight: '400'});
+const itim = Itim({ subsets: ['latin'], weight: '400'});
+const inika = Inika({ subsets: ['latin'], weight: '400'});
+const inter = Inter({ subsets: ['latin'] });
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html>
       <body>
-        <header>
-          <h1 className="bg-red-500" style={{ textAlign: "center" }}>Gamers United</h1>
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "30px"}} className='bg-red-500'>
+          <img src='logo.png' style={{ height: "100px" }}/>
+          <h1 className="bg-red-500" style={{ textAlign: "center", fontFamily: "Jaro", color: "black"}}>Gamers United</h1>
         </header>
         <main>{children}</main>
       </body>

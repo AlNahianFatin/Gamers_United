@@ -68,11 +68,15 @@ export default function VerifyOTPPage() {
                 <Link href="/" style={{ textAlign: "right" }}>Home</Link>
             </div>
             <form onSubmit={handleSubmit}>
-                <label>Password:</label>
-                <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red" }}> {errors.password} </p> <br></br>
+                <div className="field">
+                    <label>Password:</label>
+                    <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red", paddingLeft: "90px" }}> {errors.password} </p> <br></br>
+                </div>
 
-                <label>Retype Password:</label>
-                <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red" }}> {errors.rpassword} </p> <br></br>
+                <div className="field">
+                    <label>Retype Password:</label>
+                    <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {errors.rpassword} </p> <br></br>
+                </div>
 
                 <button type="submit">Reset</button><br></br>
             </form>

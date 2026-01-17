@@ -1,4 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Inika&family=Inknut+Antiqua&family=Inter:ital,opsz@0,14..32;1,14..32&family=Itim&family=Jaro:opsz@6..72&display=swap');
 @import "tailwindcss";
+@plugin "daisyui";
 
 :root {
   --background: #ffffff;
@@ -19,50 +21,105 @@
   }
 }
 
+html, body {
+  @apply bg-black text-white;
+}
+
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, sans-serif;
+  padding: 0;
 }
 
 h1 {
-    font-family: Jaro;
-    font-size: 50px;
-    color: #3E2522;
-    text-align: center;
+  font-family: "Jaro";
+  font-size: 50px;
+  color: #3E2522;
+  text-align: center;
 }
+
+h1 {
+  font-family: "Itim";
+  font-size: 50px;
+  color: #3E2522;
+  text-align: center;
+}
+
+.container {
+  width: 100vw;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  background: transparent;
+}
+
+.type {
+  text-align: center;
+  font-size: 50px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 3px solid #000;
+  color: black;
+  width: 0;
+  animation: typing 8s steps(28, end) infinite,
+  blink 0.7s step-end infinite;
+}
+
+@keyframes typing {
+  0% { width: 0; }
+  40% { width: 29ch; }
+  60% { width: 29ch; }
+  100% { width: 0; }
+}
+
+@keyframes blink {
+  40% { border-color: transparent; }
+}
+
+form {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;     
+  justify-content: center;    
+  align-items: center;     
+  background: black;
+}
+
 
 button[type="submit"] {
   background-color: red;
 }
 
 input {
-    font-family: Inika;
-    margin: 10px 10px;
-    background-color: #3E2522;
-    color: white;
-    border: 2px solid transparent;
-    border-radius: 7px;
-    padding: 0px 10px;
-    /* font-size: 15px; */
+  font-family: Inika;
+  margin: 10px 10px;
+  background-color: #3E2522;
+  color: white;
+  border: 2px solid transparent;
+  border-radius: 7px;
+  padding: 0px 10px;
+  /* font-size: 15px; */
 }
 
 input:focus {
-    outline: none;
-    border: 2px solid #3E2522;
-    background-color: #A07C70;
-    color: white;
-    box-shadow: 0 0 8px #3E2522;
+  outline: none;
+  border: 2px solid #3E2522;
+  background-color: #A07C70;
+  color: white;
+  box-shadow: 0 0 8px #3E2522;
 }
 
 input:hover {
-    transform: scale(1.1);
-    background-color: #6E473B;
-    opacity: 0.8;
-    font-weight: bold;
-    box-shadow: 2px 6px 12px black;
-    border-color: black;
-    transition: transform 0.1s ease, background-color 0.1s ease;
+  transform: scale(1.1);
+  background-color: #6E473B;
+  opacity: 0.8;
+  font-weight: bold;
+  box-shadow: 2px 6px 12px black;
+  border-color: black;
+  transition: transform 0.1s ease, background-color 0.1s ease;
 }
 
 input::placeholder {

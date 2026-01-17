@@ -29,7 +29,7 @@ export default function ForgotPass() {
             setEmailError("")
 
         try {
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/forgotpass`, { email: email});
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/forgotpass`, { email: email });
             router.push(`/verifyotp/${email}`);
         }
         catch (error: any) {
@@ -53,8 +53,10 @@ export default function ForgotPass() {
                 <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/login" style={{ textAlign: "right" }}>Login</Link> | <Link href="/signup" style={{ textAlign: "right" }}>Signup</Link>
             </div>
             <form onSubmit={handleSubmit}>
-                <label>Enter your email: </label>
-                <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} /> <p style={{ color: "red" }}> {emailError} </p> <br></br>
+                <div className="field">
+                    <label>Enter your email: </label>
+                    <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {emailError} </p> <br></br>
+                </div>
                 <button type="submit">Send OTP</button> <br></br>
             </form >
         </>

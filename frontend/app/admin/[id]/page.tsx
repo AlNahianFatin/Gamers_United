@@ -1,8 +1,9 @@
 "use client";
+
 import Greeting from "@/app/components/Greeting";
 import axios from "axios";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -25,10 +26,6 @@ export default function AdminPage() {
     if (!params.id)
       return;
 
-    // if (typeof window !== "undefined") {
-    //   setToken(storedToken);
-    // }
-
     const fetchUser = async () => {
       try {
         const storedToken = localStorage.getItem("accessToken");
@@ -49,8 +46,6 @@ export default function AdminPage() {
 
           if (status === 400 || status === 403 || status === 404 || status === 401)
             router.replace(`/admin/${params.id}/not-found`);
-          // else if (status === 401)
-          //   alert(message);
           else
             router.replace(`/admin/${params.id}/not-found`);
         }
@@ -72,7 +67,9 @@ export default function AdminPage() {
         <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/" style={{ textAlign: "right" }} onClick={logout}>Logout</Link>
       </div>
       <Greeting name={userData?.username || "Unknown"} />
-      <img src={imageUrl} alt="Admin Profile" width={150} height={150} style={{ borderRadius: "50%", marginTop: "10px" }} />
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <img src={imageUrl} alt="Admin Profile" width={"10%"} height={"10%"} style={{ minWidth: "100px", minHeight: "100px", margin: "10px 1em" }} />
+      </div>
     </>
   );
 }

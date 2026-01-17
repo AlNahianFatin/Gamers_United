@@ -57,10 +57,12 @@ export default function VerifyOTPPage() {
         <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/login" style={{ textAlign: "right" }}>Login</Link> | <Link href="/signup" style={{ textAlign: "right" }}>Signup</Link>
       </div>
       <form onSubmit={handleSubmit}>
-        <label>Enter OTP: </label>
-        <input type="text" placeholder="OTP" name="otp" value={otp} onChange={(e) => setOtp(e.target.value)} /> <br />
-        {otpError && <p style={{ color: "red" }}>{otpError}</p>}
-        <button type="submit">Validate OTP</button>
+        <div className="field">
+          <label>Enter OTP: </label>
+          <input type="text" placeholder="OTP" name="otp" value={otp} onChange={(e) => setOtp(e.target.value)} /> <br />
+        </div>
+        {otpError && <p style={{ color: "red", paddingLeft: "80px" }}>{otpError}</p>}
+        <button type="submit">Verify</button>
         <br />
       </form>
     </>

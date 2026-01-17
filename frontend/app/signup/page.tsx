@@ -1,125 +1,20 @@
 "use client";
+import SignupForm from "./SignupForm";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import "../globals.css"
-import { useRouter } from "next/navigation";
-import axios from "axios";
 
-export default function RegisterPage() {
-  const [clientReady, setClientReady] = useState(false);
-
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [NID, setNid] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [rpassword, setRPassword] = useState("");
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const router = useRouter();
-
-  useEffect(() => { setClientReady(true); }, []);
-  if (!clientReady)
-    return null;
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const newErrors: Record<string, string> = {};
-
-    if (username === "")
-      newErrors.username = "Please enter username first!";
-
-    if (email === "")
-      newErrors.email = "Please enter email first!";
-
-    if (!image || image === null)
-      newErrors.image = "Please select a profile image first!";
-
-    if (NID === "")
-      newErrors.NID = "Please enter NID No. first!";
-
-    if (phone === "")
-      newErrors.phone = "Please enter phone no. first!";
-
-    if (password === "")
-      newErrors.password = "Please enter password first!";
-
-    if (rpassword === "")
-      newErrors.rpassword = "Please reenter your password for confirmation!";
-
-    if (password && rpassword && password !== rpassword)
-      newErrors.rpassword = "Password does not match. Recheck your password";
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) 
-      return;
-
-    try {
-      const userData = new FormData();
-      userData.append('username', username);
-      userData.append('email', email);
-      if (image && image !== null)
-        userData.append("image", image);
-      userData.append('NID', NID);
-      userData.append('phone', phone);
-      userData.append('password', password);
-
-      const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/signup', userData, { headers: { 'Content-Type': 'multipart/form-data' } });
-
-      if (response.status === 201)
-        router.push(`./login`);
-    }
-    catch (error: any) {
-      // console.log("FULL ERROR:", error);
-      // console.log("MESSAGE:", error.message);
-      // console.log("CODE:", error.code);
-
-      if (Array.isArray(error.response.data.message)) {
-        const backendErrors: Record<string, string> = {};
-        error.response.data.message.forEach((err: any) => {
-          backendErrors[err.field] = err.messages.join(', ');
-        });
-        setErrors(backendErrors);
-      }
-      else
-        alert("Something went wrong. Please try again later.");
-    }
-  };
-
+export default function SignupPage() {
   return (
     <>
       <div className="bg-red-500">
         <Link href="/" style={{ textAlign: "right" }}>Home</Link>
       </div>
-      <form onSubmit={handleSubmit}>
-        <label>Username:</label>
-        <input type="text" placeholder="Username" name="username" value={username} onChange={e => { setUsername(e.target.value); setErrors(prev => ({ ...prev, username: "" })); }} /> <p style={{ color: "red" }}> {errors.username} </p> <br></br>
-
-        <label>Email:</label>
-        <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }} /> <p style={{ color: "red" }}> {errors.email} </p> <br></br>
-
-        <label>Profile Image:</label>
-        <input type="file" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red" }}> {errors.image} </p> <br></br>
-
-        <label>NID:</label>
-        <input type="text" placeholder="NID" name="NID" value={NID} onChange={e => { setNid(e.target.value); setErrors(prev => ({ ...prev, NID: "" })); }} /> <p style={{ color: "red" }}> {errors.NID} </p> <br></br>
-
-        <label>Phone No.:</label>
-        <input type="tel" placeholder="Phone No." name="phone" value={phone} onChange={e => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: "" })); }} /> <p style={{ color: "red" }}> {errors.phone} </p> <br></br>
-
-        <label>Password:</label>
-        <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red" }}> {errors.password} </p> <br></br>
-
-        <label>Retype Password:</label>
-        <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red" }}> {errors.rpassword} </p> <br></br>
-
-        <button type="submit">Register</button><br></br>
-      </form>
-      <label>Already have an account?</label> <br></br>
-      <Link href="/login" style={{ textAlign: "right" }}> Login</Link>
+      <SignupForm />
+      <div style={{ background: "black", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <label>Already have an account?</label>
+        <Link href="/login" style={{ paddingLeft: "10px" }}>Login</Link>
+      </div>
     </>
   );
 }

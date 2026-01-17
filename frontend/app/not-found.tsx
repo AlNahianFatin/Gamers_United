@@ -10,6 +10,7 @@ export default function NotFound() {
       </div>
         <h2 style={{ textAlign: "center", color: "white" }}>Page not found</h2>
         <p style={{ textAlign: "center", color: "white" }}>Could not find requested resource</p>
+        <p>Go back to the <Link href="/">Home</Link></p>
     </>
   );
 }
