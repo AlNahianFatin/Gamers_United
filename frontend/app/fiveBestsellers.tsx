@@ -1,5 +1,7 @@
 "use client";
 
+import LoadingPage from "./loading"
+
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -55,7 +57,16 @@ export default function FiveBestsellers() {
         }
     }
 
-    if (loading) return <p className="text-center mt-10">Loading...</p>;
+    if (loading) {
+        return (
+            <>
+                {/* <p className="text-center mt-10">Loading...</p>; */}
+                <div className="flex items-center justify-center h-screen">
+                    <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
+                </div>
+            </>
+        )
+    }
 
     return (
         <div className="flex flex-wrap gap-10 justify-center p-6">
@@ -76,7 +87,7 @@ export default function FiveBestsellers() {
                             <img src="/developer.png" alt="Developer" style={{ width: "30px", height: "auto" }} />
                             <span> <strong> {item.developer.username} </strong> </span>
                         </div>
-                        
+
                         <p className="text-sm"> ${item.price} </p>
 
                         {/* <p className="text-sm"> <strong>Purchases:</strong> {item.purchase_count} </p> */}
