@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import session from 'express-session';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { MulterExceptionFilter } from './MulterExceptionFilter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,6 +26,8 @@ async function bootstrap() {
     // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     // allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  app.useGlobalFilters(new MulterExceptionFilter()); 
 
   //   app.useGlobalPipes(
   //   new ValidationPipe({

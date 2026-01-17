@@ -11,6 +11,7 @@ import { AdminEntity } from 'src/entities/admin.entity';
 import { DeveloperEntity } from 'src/entities/developer.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule } from '@nestjs/config';
+import { GamesEntity } from 'src/entities/games.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ConfigModule } from '@nestjs/config';
     TypeOrmModule.forFeature([AdminEntity]),
     TypeOrmModule.forFeature([DeveloperEntity]),
     TypeOrmModule.forFeature([PlayerEntity]),
+    TypeOrmModule.forFeature([GamesEntity]),
     ConfigModule.forRoot({
         isGlobal: true,
       }),

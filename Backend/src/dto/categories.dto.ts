@@ -5,8 +5,8 @@ import { GamesEntity } from '../entities/games.entity';
 export class CategoriesDTO {
     @IsString()
     @IsNotEmpty({ message: 'Category name is required' })
-    @Matches(/^[a-zA-Z\s\-\_]*$/, {
-        message: 'Category name should only contain alphabets, hyphens, underscores and spaces',
+    @Matches(/^[a-zA-Z0-9\s\-\_]*$/, {
+        message: 'Category name should only contain alphabets, numbers, hyphens, underscores and spaces',
     })
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     name: string;
@@ -15,6 +15,6 @@ export class CategoriesDTO {
     description: string;
 
     // game?: string[];
- 
+
     games?: GamesEntity[];
 }

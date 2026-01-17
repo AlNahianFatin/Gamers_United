@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from '../dto/login.dto';
@@ -10,6 +10,8 @@ import { PlayerEntity } from 'src/entities/player.entity';
 import { AdminEntity } from 'src/entities/admin.entity';
 import { DeveloperEntity } from 'src/entities/developer.entity';
 import { MailerService } from '@nestjs-modules/mailer';
+import { LoginRequestDTO } from 'src/dto/loginRequest.dto';
+import { GamesEntity } from 'src/entities/games.entity';
 
 @Injectable()
 export class AuthService {
@@ -18,11 +20,12 @@ export class AuthService {
     @InjectRepository(LoginEntity) private loginRepository: Repository<LoginEntity>,
     @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
     @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>,
-    @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>) { }
+    @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
+    @InjectRepository(GamesEntity) private gamesRepository: Repository<GamesEntity>,) { }
 
   private revokedTokens = new Set<string>();
 
-  async login(session, login: LoginDTO): Promise<object> {
+  async login(session, login: LoginRequestDTO): Promise<object> {
     login.username = login.username?.trim();
     login.password = login.password?.trim();
 
@@ -45,27 +48,13 @@ export class AuthService {
 
     const payload = { id: userExists.id, role: userExists.role };
 
-    var email;
-    if (userExists.role === "admin") {
-      const admin = await this.adminRepository.findOne({ where: { id: userExists.id } });
-      email = admin?.email;
-    }
-    if (userExists.role === "developer") {
-      const developer = await this.developerRepository.findOne({ where: { id: userExists.id } });
-      email = developer?.email;
-    }
-    if (userExists.role === "player") {
-      const player = await this.playerRepository.findOne({ where: { id: userExists.id } });
-      email = player?.email;
-    }
-
-    const mailed = await this.mailerService.sendMail({
-      to: email,
-      subject: 'Account logged in',
-      text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
-    });
-    if (!mailed)
-      throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
+    // const mailed = await this.mailerService.sendMail({
+    //   to: userExists.email,
+    //   subject: 'Account logged in',
+    //   text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
+    // });
+    // if (!mailed)
+    //   throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
 
     return { message: "Login Successful!", accessToken: this.jwtService.sign(payload), userExists };
   }
@@ -102,6 +91,10 @@ export class AuthService {
 
   private otpStore = new Map<string, { otp: string, expires: number }>();
   async forgotpass(email: string): Promise<object> {
+    const emailExists = await this.loginRepository.findOne({ where: { email: email } });
+    if (!emailExists)
+      throw new HttpException(`User with email '${email}' does not exist`, HttpStatus.NOT_FOUND);
+
     var keys = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let randomKey;
     let pass = "";
@@ -143,19 +136,22 @@ export class AuthService {
   }
 
   async resetPass(email: string, newPassword: string) {
-    const admin = await this.adminRepository.findOneBy({ email: email });
-    const developer = await this.developerRepository.findOneBy({ email: email });
-    const player = await this.playerRepository.findOneBy({ email: email });
+    // const admin = await this.adminRepository.findOneBy({ email: email });
+    // const developer = await this.developerRepository.findOneBy({ email: email });
+    // const player = await this.playerRepository.findOneBy({ email: email });
+    const user = await this.loginRepository.findOneBy({ email: email });
 
-    if (!admin && !developer && !player)
+    if (!user)
       throw new HttpException(`User with email ${email} not found!`, HttpStatus.NOT_FOUND);
     else {
-      if (admin)
-        await this.loginRepository.update({ id: admin.id }, { password: newPassword });
-      if (developer)
-        await this.loginRepository.update({ id: developer.id }, { password: newPassword });
-      if (player)
-        await this.loginRepository.update({ id: player.id }, { password: newPassword });
+      // if (admin)
+      //   await this.loginRepository.update({ id: admin.id }, { password: newPassword });
+      // if (developer)
+      //   await this.loginRepository.update({ id: developer.id }, { password: newPassword });
+      // if (player)
+      //   await this.loginRepository.update({ id: player.id }, { password: newPassword });
+      try { await this.loginRepository.update({ id: user.id }, { password: newPassword }); }
+      catch (error) { throw new HttpException('Something went wrong! Password could not be reset.', HttpStatus.BAD_REQUEST); }
       return { message: "Password reset successful" };
     }
   }
@@ -163,27 +159,20 @@ export class AuthService {
   async signup(playerDto: PlayerDTO, loginDto: LoginDTO): Promise<PlayerEntity> {
     const playerExists = await this.playerRepository.findOneBy({ username: playerDto.username });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
-    const emailExists = await this.adminRepository.findOneBy({ email: playerDto.email }) || await this.developerRepository.findOneBy({ email: playerDto.email }) || await this.playerRepository.findOneBy({ email: playerDto.email });
-    if (playerExists || loginExists) {
-      throw new HttpException(
-        { message: [{ field: 'username', messages: [`User with username '${playerDto.username}' already exists`] }] },
-        HttpStatus.NOT_ACCEPTABLE
-      );
-    }
+    const emailExists = await this.loginRepository.findOneBy({ email: loginDto.email });
+    if (playerExists || loginExists)
+      throw new HttpException({ message: [{ field: 'username', messages: [`User with username '${playerDto.username}' already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
 
-    if (emailExists) {
-      throw new HttpException(
-        { message: [{ field: 'email', messages: [`User with email '${playerDto.email}' already exists`] }] },
-        HttpStatus.NOT_ACCEPTABLE
-      );
-    }
+    if (emailExists)
+      throw new HttpException({ message: [{ field: 'email', messages: [`User with email '${loginDto.email}' already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
+
     loginDto.role = "player";
     const login = this.loginRepository.create(loginDto);
     const savedLogin = await this.loginRepository.save(login);
 
     try {
       await this.mailerService.sendMail({
-        to: playerDto.email,
+        to: loginDto.email,
         subject: 'Sign up complete',
         text: `You have successfully signed up for Gamers United with account '${playerDto.username}'. Welcome to the community.`
       });
@@ -197,5 +186,49 @@ export class AuthService {
     });
     const savedPlayer = await this.playerRepository.save(player);
     return savedPlayer;
+  }
+
+
+  async getGames(): Promise<GamesEntity[] | object> {
+    const games = await this.gamesRepository.find({ relations: ['categories', 'developer'] });
+    if (!games || games.length === 0)
+      throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
+    return games;
+  }
+
+  async getFiveBestsellerGames(): Promise<GamesEntity[] | object> {
+    const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'], take: 5 });
+    if (!games || games.length === 0)
+      throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
+    return games;
+  }
+
+  async getBestsellerGames(): Promise<GamesEntity[] | object> {
+    const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'] });
+    if (!games || games.length === 0)
+      throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
+    return games;
+  }
+
+  async getFullGameByID(gameID: number): Promise<GamesEntity> {
+    const exists = await this.gamesRepository.findOne({ where: { id: gameID }, relations: ['categories', 'developer'] });
+    if (!exists)
+      throw new HttpException(`Game with id ${gameID} does not exist`, HttpStatus.NOT_FOUND);
+    else
+      return exists;
+  }
+
+  async getGamePicByID(gameID: number, @Res() res): Promise<any> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { image: true } });
+    if (!game || !game.image)
+      throw new HttpException(`Game image not found`, HttpStatus.NOT_FOUND);
+    return res.sendFile(game.image, { root: './uploads/games/images' })
+  }
+
+  async getGameTrailerByID(gameID: number, @Res() res): Promise<any> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameID }, select: { trailer: true } });
+    if (!game || !game.trailer)
+      throw new HttpException(`Game trailer not found`, HttpStatus.NOT_FOUND);
+    return res.sendFile(game.trailer, { root: './uploads/games/trailers' })
   }
 }

@@ -2,20 +2,24 @@ import { ReactNode } from 'react';
 import { Jaro, Itim, Inika, Inter } from 'next/font/google';
 import "./globals.css"
 
-const jaro = Jaro({ subsets: ['latin'], weight: '400'});
-const itim = Itim({ subsets: ['latin'], weight: '400'});
-const inika = Inika({ subsets: ['latin'], weight: '400'});
+const jaro = Jaro({ subsets: ['latin'], weight: '400' });
+const itim = Itim({ subsets: ['latin'], weight: '400' });
+const inika = Inika({ subsets: ['latin'], weight: '400' });
 const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const currentYear = new Date().getFullYear();
   return (
     <html>
-      <body>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "30px"}} className='bg-red-500'>
-          <img src='logo.png' style={{ height: "100px" }}/>
-          <h1 className="bg-red-500" style={{ textAlign: "center", fontFamily: "Jaro", color: "black"}}>Gamers United</h1>
+      <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', margin: 0 }}>
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "30px" }} className='bg-red-500'>
+          <img src='logo.png' style={{ height: "100px" }} />
+          <h1 className="bg-red-500" style={{ textAlign: "center", fontFamily: "Jaro", color: "black" }}>Gamers United</h1>
         </header>
-        <main>{children}</main>
+        <main style={{ flex: 1, backgroundColor: "black" }}>{children}</main>
+
+        <footer style={{ textAlign: "center", padding: "20px", fontFamily: "Inter" }} className='bg-red-500'>&copy; {currentYear} Gamers United, Bangladesh
+        </footer>
       </body>
     </html>
   );

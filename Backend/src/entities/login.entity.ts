@@ -13,6 +13,9 @@ export class LoginEntity {
     
     @Column()
     password: string;
+
+    @Column({nullable: false, unique: true})
+    email: string;
     
     @Column({type: "varchar", default: "player"})
     role: string;

@@ -66,7 +66,7 @@ export default function SignupForm() {
             userData.append('phone', phone);
             userData.append('password', password);
 
-            const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/signup', userData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/signup', userData);
 
             if (response.status === 201)
                 router.push(`./login`);
@@ -76,7 +76,7 @@ export default function SignupForm() {
             // console.log("MESSAGE:", error.message);
             // console.log("CODE:", error.code);
 
-            if (Array.isArray(error.response.data.message)) {
+            if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
                 const backendErrors: Record<string, string> = {};
                 error.response.data.message.forEach((err: any) => {
                     backendErrors[err.field] = err.messages.join(', ');

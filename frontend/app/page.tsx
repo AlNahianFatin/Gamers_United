@@ -1,13 +1,17 @@
+import FiveBestsellers from "./fiveBestsellers";
+
 import Link from "next/link";
 import { Jaro, Itim, Inika, Inter } from 'next/font/google';
 import "./globals.css"
+
+export const dynamic = "force-dynamic";
 
 const jaro = Jaro({ subsets: ['latin'], weight: '400' });
 const itim = Itim({ subsets: ['latin'], weight: '400' });
 const inika = Inika({ subsets: ['latin'], weight: '400' });
 const inter = Inter({ subsets: ['latin'] });
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <>
       <div className="bg-red-500">
@@ -18,6 +22,11 @@ export default function HomePage() {
           <Link href="/login" style={{ textAlign: "right" }}>Login</Link> | <Link href="/signup">Signup</Link> |
           <Link href="/aboutUs"> About Us</Link>
         </div>
+      </div>
+
+      <p style={{ fontWeight: "bold", margin: "3em 0 0 0" }}>{"Top 5 Bestsellers >"}</p>
+      <div style={{ margin: "3em 0" }} className="flex flex-wrap justify-center gap-20">
+        <FiveBestsellers />
       </div>
     </>
   );

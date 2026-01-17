@@ -1,9 +1,7 @@
-import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch, UseFilters } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from '../dto/login.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { SessionGuard } from 'src/session.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, MulterError } from 'multer';
 import path from 'path';
@@ -11,14 +9,16 @@ import { plainToInstance } from 'class-transformer';
 import { PlayerDTO } from 'src/dto/player.dto';
 import { PlayerEntity } from 'src/entities/player.entity';
 import { validateOrReject, ValidationError } from 'class-validator';
+import { LoginRequestDTO } from 'src/dto/loginRequest.dto';
+import * as fs from 'fs';
 
 @Controller()
 export class AuthController {
   constructor(private authService: AuthService) { }
 
   @Post('login')
-  @UsePipes(new ValidationPipe())
-  async login(@Session() session, @Body(new ValidationPipe({ transform: true, whitelist: true })) Login: LoginDTO): Promise<Object> {
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async login(@Session() session, @Body() Login: LoginRequestDTO): Promise<Object> {
     try { return await this.authService.login(session, Login); }
     catch (error) { throw error };
   }
@@ -60,12 +60,12 @@ export class AuthController {
   @Post('signup')
   @UseInterceptors(FileInterceptor('image', {
     fileFilter: (req, image, cb) => {
-      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/player',
       filename: function (req, image, cb) {
@@ -73,11 +73,10 @@ export class AuthController {
       },
     })
   }))
-  @UsePipes(new ValidationPipe())
-  async signup(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<PlayerEntity> {
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async signup(@UploadedFile() file: Express.Multer.File, @Body() body: any): Promise<PlayerEntity> {
     const playerDto = plainToInstance(PlayerDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -88,6 +87,7 @@ export class AuthController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -102,16 +102,51 @@ export class AuthController {
         field: err.property,
         messages: Object.values(err.constraints ?? {}),
       }));
-      throw new BadRequestException(formattedErrors);
+      throw new BadRequestException({ message: formattedErrors });
     }
 
     if (file)
       playerDto.image = file.filename;
     try { return await this.authService.signup(playerDto, loginDto); }
     catch (error) {
-      if (error instanceof MulterError)
-        throw new BadRequestException([{ field: 'image', messages: [error.message] }]);
       throw error;
     }
+  }
+
+
+  @Get('getGames')
+  async getGames() {
+    try { return await this.authService.getGames(); }
+    catch (error) { throw error; }
+  }
+
+  @Get('getFiveBestsellerGames')
+  async getFiveBestsellerGames() {
+    try { return await this.authService.getFiveBestsellerGames(); }
+    catch (error) { throw error; }
+  }
+
+  @Get('getBestsellerGames')
+  async getBestsellerGames() {
+    try { return await this.authService.getBestsellerGames(); }
+    catch (error) { throw error; }
+  }
+
+  @Get('getFullGameByID/:gameID')
+  async getFullGameByID(@Param('gameID') gameID: number) {
+    try { return await this.authService.getFullGameByID(gameID); }
+    catch (error) { throw error; }
+  }
+
+  @Get('getGamePicByID/:gameID')
+  async getGamePicByID(@Param('gameID') gameID: number, @Res() res) {
+    try { return await this.authService.getGamePicByID(gameID, res); }
+    catch (error) { throw error; }
+  }
+
+  @Get('getGameTrailerByID/:gameID')
+  async getGameTrailerByID(@Param('gameID') gameID: number, @Res() res) {
+    try { return await this.authService.getGameTrailerByID(gameID, res); }
+    catch (error) { throw error; }
   }
 }

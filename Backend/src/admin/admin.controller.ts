@@ -52,7 +52,7 @@ export class AdminController {
     catch (error) { throw error };
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @UseGuards(SessionGuard)
   @Get('getAdminByID/:adminID')
   async getAdminByID(@Param('adminID') adminID: number, @Req() req) {
@@ -93,12 +93,12 @@ export class AdminController {
   @Post('addAdmin')
   @UseInterceptors(FileInterceptor('image', {
     fileFilter: (req, image, cb) => {
-      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/admin',
       filename: function (req, image, cb) {
@@ -111,7 +111,6 @@ export class AdminController {
   async addAdmin(@Session() session, @UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<AdminEntity> {
     const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -123,6 +122,7 @@ export class AdminController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -150,7 +150,7 @@ export class AdminController {
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/admin',
       filename: function (req, image, cb) {
@@ -163,7 +163,6 @@ export class AdminController {
   async updateFullAdmin(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const adminDto = plainToInstance(AdminDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -175,6 +174,7 @@ export class AdminController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -271,7 +271,7 @@ export class AdminController {
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/player',
       filename: function (req, image, cb) {
@@ -284,7 +284,6 @@ export class AdminController {
   async addPlayer(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<PlayerEntity> {
     const playerDto = plainToInstance(PlayerDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -296,6 +295,7 @@ export class AdminController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -323,7 +323,7 @@ export class AdminController {
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/player',
       filename: function (req, image, cb) {
@@ -336,7 +336,6 @@ export class AdminController {
   async updateFullPlayer(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const playerDto = plainToInstance(PlayerDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -348,6 +347,7 @@ export class AdminController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -418,7 +418,7 @@ export class AdminController {
 
   @UseGuards(SessionGuard)
   @Get('getDeveloperByID/:developerID')
-  async getDeveloperByID(@Param('playerID') developerID: number) {
+  async getDeveloperByID(@Param('developerID') developerID: number) {
     try { return await this.adminService.getDeveloperByID(developerID); }
     catch (error) { throw error; }
   }
@@ -445,7 +445,7 @@ export class AdminController {
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/developer',
       filename: function (req, image, cb) {
@@ -458,7 +458,6 @@ export class AdminController {
   async addDeveloper(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<DeveloperEntity> {
     const developerDto = plainToInstance(DeveloperDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -470,6 +469,7 @@ export class AdminController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -497,7 +497,7 @@ export class AdminController {
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     },
-    limits: { fileSize: 2097152 },
+    limits: { fileSize: 10 * 1024 * 1024 },
     storage: diskStorage({
       destination: 'uploads/users/developer',
       filename: function (req, image, cb) {
@@ -510,7 +510,6 @@ export class AdminController {
   async updateFullDeveloper(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const developerDto = plainToInstance(DeveloperDTO, {
       username: body.username,
-      email: body.email,
       phone: body.phone,
       NID: body.NID
     });
@@ -522,6 +521,7 @@ export class AdminController {
     const loginDto = plainToInstance(LoginDTO, {
       username: body.username,
       password: hashedpass,
+      email: body.email,
       role: body.role,
       activation: body.activation,
       ban: body.ban
@@ -583,10 +583,32 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
+
   @UseGuards(SessionGuard)
-  @Get('getGamesWithCategories')
-  async getGamesWithCategories() {
-    try { return await this.adminService.getGamesWithCategories(); }
+  @Get('getGames')
+  async getGames() {
+    try { return await this.adminService.getGames(); }
+    catch (error) { throw error; }
+  }
+  
+  @UseGuards(SessionGuard)
+  @Get('getFiveBestsellerGames')
+  async getFiveBestsellerGames() {
+    try { return await this.adminService.getFiveBestsellerGames(); }
+    catch (error) { throw error; }
+  }
+  
+  @UseGuards(SessionGuard)
+  @Get('getBestsellerGames')
+  async getBestsellerGames() {
+    try { return await this.adminService.getBestsellerGames(); }
+    catch (error) { throw error; }
+  }
+  
+  @UseGuards(SessionGuard)
+  @Get('getFullGameByID/:gameID')
+  async getFullGameByID(@Param('gameID') gameID: number) {
+    try { return await this.adminService.getFullGameByID(gameID); }
     catch (error) { throw error; }
   }
 

@@ -11,14 +11,6 @@ export class AdminDTO {
     @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
     username: string;
 
-    @IsEmail({}, { message: 'Email must be a valid email address' })
-    @IsNotEmpty({ message: 'Email is required' })
-    @Matches(/@.*\.(xyz|com|edu)$/i, {
-        message: 'Email must contain @ and a .xyz or .com or .edu domain',
-    })
-    @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-    email: string;
-
     image?: string;
 
     @IsNotEmpty({ message: 'NID is required' })
