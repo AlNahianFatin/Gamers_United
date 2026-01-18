@@ -48,25 +48,30 @@ h1 {
 }
 
 .container {
-  width: 100vw;
+  width: 100%;
   display: flex;
-  justify-content: center; 
-  align-items: center;     
+  justify-content: center;
+  align-items: center;
   background: transparent;
+  padding: 1rem;
+  overflow: hidden;
 }
+
 
 .type {
   text-align: center;
-  font-size: 50px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
-  border-right: 3px solid #000;
+  border-right: 3px solid black;
   color: black;
   width: 0;
+  max-width: 100%;
+  font-size: clamp(18px, 5vw, 50px); /* responsive size */
   animation: typing 8s steps(28, end) infinite,
-  blink 0.7s step-end infinite;
+             blink 0.7s step-end infinite;
 }
+
 
 @keyframes typing {
   0% { width: 0; }

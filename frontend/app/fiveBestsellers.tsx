@@ -1,7 +1,5 @@
 "use client";
 
-import LoadingPage from "./loading"
-
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -69,7 +67,7 @@ export default function FiveBestsellers() {
     }
 
     return (
-        <div className="flex flex-wrap gap-10 justify-center p-6">
+        <div className="flex flex-wrap gap-15 justify-center p-6">
             {games.map((item, index) => (
                 <div key={item.id} className="card bg-base-100 w-60 shadow-md">
                     <figure>

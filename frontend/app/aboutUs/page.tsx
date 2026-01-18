@@ -16,7 +16,7 @@ export default function AboutPage() {
           <Link href="/login" style={{ textAlign: "right" }}> Login</Link> | <Link href="/signup">Signup</Link>
         </div>
       </div>
-      <p style={{ textAlign: "center", fontFamily: "Inika", marginBottom: "3em", padding: "20px" }}>We are young developers aiming to learn and build qualityful industry level web applications.<br></br>
+      <p style={{ textAlign: "center", fontFamily: "Inika", marginBottom: "3rem", padding: "20px" }}>We are young developers aiming to learn and build qualityful industry level web applications.<br></br>
         This web application was built on NEXT.JS for frontend and NestJS for backend following Node.JS architecture.<br></br>
         Feel Free to share your thoughts!
       </p>

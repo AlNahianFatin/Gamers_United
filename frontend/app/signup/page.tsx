@@ -2,7 +2,7 @@
 import SignupForm from "./SignupForm";
 
 import Link from "next/link";
-import "../globals.css"
+import "../globals.css";
 
 export default function SignupPage() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import "../globals.css"
+import "../globals.css";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 

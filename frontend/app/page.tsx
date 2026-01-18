@@ -24,7 +24,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <p style={{ fontWeight: "bold", margin: "3em 0 0 0" }}>{"Top 5 Bestsellers >"}</p>
+      <p style={{ fontWeight: "bold", margin: "3em 0 0 0" }}> <Link href="/bestsellers"> Top Bestsellers &gt; </Link> </p>
       <div style={{ margin: "3em 0" }} className="flex flex-wrap justify-center gap-20">
         <FiveBestsellers />
       </div>
