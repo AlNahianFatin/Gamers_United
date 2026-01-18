@@ -25,7 +25,7 @@ export class AuthService {
 
   private revokedTokens = new Set<string>();
 
-  async login(session, login: LoginRequestDTO): Promise<object> {
+  async login(session, login: LoginRequestDTO, res): Promise<object> {
     login.username = login.username?.trim();
     login.password = login.password?.trim();
 
@@ -47,16 +47,24 @@ export class AuthService {
     session.user = { id: userExists.id, role: userExists.role };
 
     const payload = { id: userExists.id, role: userExists.role };
+    const token = this.jwtService.sign(payload);
 
-    // const mailed = await this.mailerService.sendMail({
-    //   to: userExists.email,
-    //   subject: 'Account logged in',
-    //   text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
-    // });
-    // if (!mailed)
-    //   throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
+    res.cookie('jwtToken', token, {
+      httpOnly: true,
+      // secure: true,        
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, 
+    });
 
-    return { message: "Login Successful!", accessToken: this.jwtService.sign(payload), userExists };
+    const mailed = await this.mailerService.sendMail({
+      to: userExists.email,
+      subject: 'Account logged in',
+      text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
+    });
+    if (!mailed)
+      throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
+
+    return { message: "Login Successful!", userExists }; //accessToken: this.jwtService.sign(payload), 
   }
 
   isTokenRevoked(token?: string): boolean {

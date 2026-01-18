@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch, UseFilters } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Request, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch, UseFilters } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from '../dto/login.dto';
@@ -11,6 +11,7 @@ import { PlayerEntity } from 'src/entities/player.entity';
 import { validateOrReject, ValidationError } from 'class-validator';
 import { LoginRequestDTO } from 'src/dto/loginRequest.dto';
 import * as fs from 'fs';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller()
 export class AuthController {
@@ -18,11 +19,18 @@ export class AuthController {
 
   @Post('login')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  async login(@Session() session, @Body() Login: LoginRequestDTO): Promise<Object> {
-    try { return await this.authService.login(session, Login); }
+  async login(@Session() session, @Body() Login: LoginRequestDTO, @Res({ passthrough: true }) res): Promise<Object> {
+    try { return await this.authService.login(session, Login, res); }
     catch (error) { throw error };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Session() session, @Req() req, @Res() res): Promise<any> {
     const authHeader = req.headers?.authorization ?? '';

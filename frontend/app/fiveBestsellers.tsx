@@ -48,6 +48,7 @@ export default function FiveBestsellers() {
             setGames(response.data);
         }
         catch (error) {
+            <p className="text-center mt-10">Server Connection Lost!</p>; 
             console.error(error);
         }
         finally {
@@ -70,9 +71,9 @@ export default function FiveBestsellers() {
         <div className="flex flex-wrap gap-15 justify-center p-6">
             {games.map((item, index) => (
                 <div key={item.id} className="card bg-base-100 w-60 shadow-md">
-                    <figure>
-                        <img src={`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${item.id}`} alt={item.title} className="h-56 w-full object-cover" />
-                    </figure>
+                    <div className="relative h-56 w-full overflow-hidden">
+                        <img src={`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${item.id}`} alt={item.title} className="h-full w-full object-contain" />
+                    </div>
 
                     <div className="card-body">
                         <h2 className="card-title"> {item.title}

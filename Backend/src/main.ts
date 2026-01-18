@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import session from 'express-session';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { MulterExceptionFilter } from './MulterExceptionFilter';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,11 +24,13 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
-    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    methods: ['GET, HEAD, POST, PUT, DELETE, PATCH, OPTIONS'],
     // allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.useGlobalFilters(new MulterExceptionFilter()); 
+
+  app.use(cookieParser());
 
   //   app.useGlobalPipes(
   //   new ValidationPipe({

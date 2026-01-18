@@ -15,29 +15,41 @@ export default function AdminPage() {
   const router = useRouter();
 
   const logout = async () => {
-    if (typeof window !== "undefined") {
+    try {
       localStorage.clear();
-      setToken(null);
+      await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/logout`, { withCredentials: true });
       router.push(`./login`);
+    }
+    catch (error) {
+      console.error("Logout failed:", error);
+      router.push("/login");
     }
   }
 
   useEffect(() => {
-    if (!params.id)
+    if (!params.id) {
+      router.replace(`/admin/${params.id}/not-found`);
       return;
+    }
 
     const fetchUser = async () => {
       try {
-        const storedToken = localStorage.getItem("accessToken");
+        const storedToken = localStorage.getItem("id");
         if (!storedToken)
           router.replace(`/admin/${params.id}/not-found`);
 
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminByID/${params.id}`, { headers: { Authorization: `Bearer ${storedToken}` }, withCredentials: true });
+        const profileRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/profile`, { withCredentials: true });
+
+        if (Number(params.id) !== profileRes.data.id) {
+          router.replace(`/admin/${params.id}/not-found`);
+          return;
+        }
+
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminByID/${profileRes.data.id}`, { withCredentials: true });
         setUserData(response.data);
+        console.log(userData);
         setClientReady(true);
 
-        if (!response.data)
-          router.replace(`/admin/${params.id}/not-found`);
       }
       catch (error: any) {
         if (error.response) {
@@ -49,8 +61,10 @@ export default function AdminPage() {
           else
             router.replace(`/admin/${params.id}/not-found`);
         }
-        else
+        else {
           alert("Server not reachable. Check your internet connection.");
+          router.push('/login');
+        }
       }
     };
 

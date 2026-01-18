@@ -52,17 +52,18 @@ export class AdminController {
     catch (error) { throw error };
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UseGuards(SessionGuard)
   @Get('getAdminByID/:adminID')
   async getAdminByID(@Param('adminID') adminID: number, @Req() req) {
     const sessionUser = req.session.user;
+    const jwtUser = req.user;
 
-    if (sessionUser.role !== "admin")
-      throw new ForbiddenException();
+    if (jwtUser.role !== "admin")
+    throw new ForbiddenException();
 
-    if (sessionUser.id !== Number(adminID))
-      throw new ForbiddenException("Access denied");
+  if (jwtUser.id !== Number(adminID))
+    throw new ForbiddenException("Access denied");
 
     try { return this.adminService.getAdminByID(adminID); }
     catch (error) { throw error; }

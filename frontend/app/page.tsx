@@ -16,7 +16,7 @@ export default async function HomePage() {
     <>
       <div className="bg-red-500">
         <div className="container">
-          <h2 style={{ fontFamily: "Itim", fontSize: "25px" }} className="type">Stronger Together, One Game At A Time</h2>
+          <h2 style={{ fontFamily: "Itim", fontSize: "25px" }} className="type">Stronger Together, One Game At A Time..</h2>
         </div>
         <div style={{ alignContent: "center" }}>
           <Link href="/login" style={{ textAlign: "right" }}>Login</Link> | <Link href="/signup">Signup</Link> |

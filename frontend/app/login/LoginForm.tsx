@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
+import { useCookie } from "next-cookie";
 
 export default function LoginForm() {
     const [username, setUsername] = useState("");
@@ -15,6 +16,7 @@ export default function LoginForm() {
     // const [isLoggedIn, setIsLoggedIn] = useState(false);
     const router = useRouter();
 
+    // const [cookie, setCookie] = useCookie('jwtToken');
     const [clientReady, setClientReady] = useState(false);
     useEffect(() => {
         setClientReady(true);
@@ -56,11 +58,20 @@ export default function LoginForm() {
 
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, userData, { withCredentials: true });
             // setIsLoggedIn(true);
-
-            localStorage.setItem("accessToken", response.data.accessToken);
-
+            
             const role = response.data.userExists.role;
             const id = response.data.userExists.id;
+            
+            // localStorage.setItem("accessToken", response.data.accessToken);
+            localStorage.setItem("id", id);
+
+            // if (cookie) {
+            //     setCookie('jwtToken', cookie, {
+            //         maxAge: 60 * 60 * 24,
+            //         sameSite: 'strict',
+            //         httpOnly: true, 
+            //     });
+            // }
 
             if (role === "admin")
                 router.push(`./admin/${id}`);
