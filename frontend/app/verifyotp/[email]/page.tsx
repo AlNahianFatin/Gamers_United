@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../../globals.css";
+import Button from "@/app/components/Button";
 
 export default function VerifyOTPPage() {
   const [otp, setOtp] = useState("");
@@ -59,11 +60,14 @@ export default function VerifyOTPPage() {
       <form onSubmit={handleSubmit}>
         <div className="field">
           <label>Enter OTP: </label>
-          <input type="text" placeholder="OTP" name="otp" value={otp} onChange={(e) => setOtp(e.target.value)} /> <br />
+          <input type="text" placeholder="OTP" name="otp" value={otp} onChange={e => { setOtp(e.target.value); setOtpError(""); }} /> <br />
         </div>
+
         {otpError && <p style={{ color: "red", paddingLeft: "80px" }}>{otpError}</p>}
-        <button type="submit">Verify</button>
-        <br />
+
+        {/* <button type="submit">Verify</button> */}
+        {/* <Button text={"Verify"} /> <br></br> */}
+        <Button>Verify</Button> <br></br>
       </form>
     </>
   );

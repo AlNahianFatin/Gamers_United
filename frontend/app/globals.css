@@ -101,7 +101,7 @@ button[type="submit"] {
 input {
   font-family: Inika;
   margin: 10px 10px;
-  background-color: #3E2522;
+  background-color: #500d06;
   color: white;
   border: 2px solid transparent;
   border-radius: 7px;
@@ -112,14 +112,14 @@ input {
 input:focus {
   outline: none;
   border: 2px solid #3E2522;
-  background-color: #A07C70;
+  background-color: rgba(211, 83, 83, 0.781);
   color: white;
   box-shadow: 0 0 8px #3E2522;
 }
 
 input:hover {
   transform: scale(1.1);
-  background-color: #6E473B;
+  background-color: #3d3634;
   opacity: 0.8;
   font-weight: bold;
   box-shadow: 2px 6px 12px black;

@@ -83,7 +83,7 @@ export default function FiveBestsellers() {
                         <p>{item.description}</p>
 
                         <div className="flex items-center gap-2 text-sm">
-                            <img src="/developer.png" alt="Developer" style={{ width: "30px", height: "auto" }} />
+                            <img src="/coloreddeveloper.png" alt="Developer" style={{ width: "30px", height: "auto" }} />
                             <span> <strong> {item.developer.username} </strong> </span>
                         </div>
 

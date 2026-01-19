@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
+import Button from "../components/Button";
 
 export default function ForgotPass() {
     const [email, setEmail] = useState("");
@@ -37,13 +38,13 @@ export default function ForgotPass() {
             // console.log("FULL ERROR:", error);
             // console.log("MESSAGE:", error.message);
             // console.log("CODE:", error.code);
-            if (error.response) {
-                alert(error.response.data.message || "Something went wrong");
-            } else if (error.request) {
+            if (error.response)
+                setEmailError(error.response.data.message || "Something went wrong")
+            // alert(error.response.data.message || "Something went wrong");
+            else if (error.request)
                 alert("Server not reachable. Check your internet connection.");
-            } else {
+            else
                 alert("Unexpected error occurred");
-            }
         }
     };
 
@@ -57,7 +58,9 @@ export default function ForgotPass() {
                     <label>Enter your email: </label>
                     <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {emailError} </p> <br></br>
                 </div>
-                <button type="submit">Send OTP</button> <br></br>
+                <Button>Send OTP</Button> <br></br>
+                {/* <Button text={"Send OTP"} /> <br></br> */}
+                {/* <button type="submit">Send OTP</button> <br></br> */}
             </form >
         </>
     );

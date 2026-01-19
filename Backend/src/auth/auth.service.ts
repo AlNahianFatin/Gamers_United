@@ -56,45 +56,68 @@ export class AuthService {
       maxAge: 24 * 60 * 60 * 1000, 
     });
 
-    const mailed = await this.mailerService.sendMail({
-      to: userExists.email,
-      subject: 'Account logged in',
-      text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
-    });
-    if (!mailed)
-      throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
+    // const mailed = await this.mailerService.sendMail({
+    //   to: userExists.email,
+    //   subject: 'Account logged in',
+    //   text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
+    // });
+    // if (!mailed)
+    //   throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
 
     return { message: "Login Successful!", userExists }; //accessToken: this.jwtService.sign(payload), 
   }
 
-  isTokenRevoked(token?: string): boolean {
-    if (!token)
-      return false;
-    return this.revokedTokens.has(token);
-  }
+  // isTokenRevoked(token?: string): boolean {
+  //   if (!token)
+  //     return false;
+  //   return this.revokedTokens.has(token);
+  // }
 
   async logout(session?, token?: string, res?): Promise<object> {
-    if (!session?.user)
-      throw new HttpException('You are not currently logged in', HttpStatus.BAD_REQUEST);
+    // if (!session?.user)
+    //   throw new HttpException('You are not currently logged in', HttpStatus.BAD_REQUEST);
 
-    if (!token)
-      throw new HttpException('JWT Token missing', HttpStatus.BAD_REQUEST);
+    // if (!token)
+    //   throw new HttpException('JWT Token missing', HttpStatus.BAD_REQUEST);
 
-    if (this.isTokenRevoked(token))
-      throw new HttpException('JWT Token already revoked', HttpStatus.BAD_REQUEST);
+    // if (this.isTokenRevoked(token))
+    //   throw new HttpException('JWT Token already revoked', HttpStatus.BAD_REQUEST);
 
-    const isDestroyed: Boolean = await res.clearCookie('connect.sid');
-    if (!isDestroyed)
-      throw new HttpException('Cookie deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
-    await session.destroy((err) => {
-      if (err)
-        throw new HttpException('Session deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
+    // const isDestroyed: Boolean = await res.clearCookie('connect.sid');
+    // if (!isDestroyed)
+    //   throw new HttpException('Cookie deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
+    // await session.destroy((err) => {
+    //   if (err)
+    //     throw new HttpException('Session deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
+    // });
+
+    // if (!this.revokedTokens.add(token))
+    //   throw new HttpException('JWT token deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
+
+    // return { message: 'Logged out successfully' };
+
+     try {
+    res.clearCookie('jwtToken', {
+      httpOnly: true,
+      sameSite: 'strict',
     });
 
-    if (!this.revokedTokens.add(token))
-      throw new HttpException('JWT token deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
+    if (session) {
+      await new Promise((resolve, reject) => {
+        session.destroy((err) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+    }
 
     return { message: 'Logged out successfully' };
+  } catch (err) {
+    throw new HttpException(
+      'Logout failed',
+      HttpStatus.INTERNAL_SERVER_ERROR
+    );
+  }
   }
 
   private otpStore = new Map<string, { otp: string, expires: number }>();

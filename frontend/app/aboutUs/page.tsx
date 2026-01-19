@@ -11,10 +11,27 @@ export default function AboutPage() {
   return (
     <div className="bg-black h-screen">
       <div className="bg-red-500">
-        <div style={{ alignContent: "center" }}>
-          <Link href="/">Home</Link> |
-          <Link href="/login" style={{ textAlign: "right" }}> Login</Link> | <Link href="/signup">Signup</Link>
+
+        <div className="flex justify-end">
+          <ul className="flex">
+            <li className="mr-3">
+              <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/">Home</Link>
+            </li>
+
+            <li className="mr-3">
+              <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/login">Login</Link>
+            </li>
+
+            <li className="mr-3">
+              <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/signup">Signup</Link>
+            </li>
+
+            <li className="mr-3">
+              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-transparent-500 text-black" href={"/aboutus"}>About Us</Link>
+            </li>
+          </ul>
         </div>
+
       </div>
       <p style={{ textAlign: "center", fontFamily: "Inika", marginBottom: "3rem", padding: "20px" }}>We are young developers aiming to learn and build qualityful industry level web applications.<br></br>
         This web application was built on NEXT.JS for frontend and NestJS for backend following Node.JS architecture.<br></br>

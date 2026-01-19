@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../../globals.css";
+import Button from "@/app/components/Button";
 
 export default function VerifyOTPPage() {
     const [password, setPassword] = useState("");
@@ -78,7 +79,9 @@ export default function VerifyOTPPage() {
                     <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {errors.rpassword} </p> <br></br>
                 </div>
 
-                <button type="submit">Reset</button><br></br>
+                {/* <button type="submit">Reset</button><br></br> */}
+                {/* <Button text={"Reset"} /> <br></br> */}
+                <Button>Reset</Button> <br></br>
             </form>
         </>
     );

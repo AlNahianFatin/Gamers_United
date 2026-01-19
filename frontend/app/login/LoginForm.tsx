@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
-import { useCookie } from "next-cookie";
+import Button from "../components/Button";
 
 export default function LoginForm() {
     const [username, setUsername] = useState("");
@@ -25,7 +25,7 @@ export default function LoginForm() {
         return null;
 
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e:any) => {
         e.preventDefault();
         if (username == "")
             setUNameError("Please enter username first!")
@@ -116,7 +116,8 @@ export default function LoginForm() {
 
             <Link href="/forgotpass" style={{ textAlign: "right", color: "red", paddingLeft: "100px", paddingTop: "10px" }}>Forgot Password?</Link><br></br>
 
-            <button type="submit">Login</button> <br></br>
+            {/* <button type="submit">Login</button> <br></br> */}
+            <Button>Login</Button> <br></br>
         </form>
     );
 }

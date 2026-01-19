@@ -87,36 +87,16 @@ export default function AdminPage() {
       {/* <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/" style={{ textAlign: "right" }} onClick={logout}>Logout</Link> */}
       {/* </div> */}
 
-      {/* <div className="flex min-h-screen">
-        <Sidebar id={userData?.id} index={1}>
-          <Header name={userData?.username || "Unknown"} imageUrl={imageUrl} />
-          <TopCards></TopCards>
-
-          <div className="p-4 grid md:grid-cols-3 grid-cols-1 gap-4">
-            <BarChart></BarChart>
-            <RecentPurchases></RecentPurchases>
-          </div>
-
-        </Sidebar>
-      </div> */}
-
-
-      <div className="flex min-h-screen">
-        <Sidebar id={userData?.id} index={1} />
-
-        <div className="p-4">
-          <TopCards />
-          <div className="p-4 grid md:grid-cols-3 grid-cols-1 gap-15 min-h-screen">
-            <BarChart />
-            <RecentPurchases />
-          </div>
-        </div>
-
-        <div className="w-min">
-          {/* <Sidebar id={userData?.id} index={1} /> */}
-          <Header name={userData?.username || "Unknown"} imageUrl={imageUrl} />
-        </div>
+      {/* <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <img src={imageUrl} alt="Admin Profile" width={"10%"} height={"10%"} style={{ minWidth: "100px", minHeight: "100px", margin: "10px 1em" }} />
       </div>
+      <Header name={userData?.username || "Unknown"} /> */}
+      <Sidebar id={userData?.id} index={4}></Sidebar>
+      {/* <TopCards></TopCards>
+      <div className="p-4 grid md:grid-cols-3 grid-cols-1 gap-4">
+        <BarChart></BarChart>
+        <RecentPurchases></RecentPurchases>
+      </div> */}
     </>
   );
 }

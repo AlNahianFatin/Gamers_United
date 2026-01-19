@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import "../globals.css";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import Button from "../components/Button";
 
 export default function SignupForm() {
     const [clientReady, setClientReady] = useState(false);
@@ -102,6 +103,7 @@ export default function SignupForm() {
 
             <div className="field">
                 <label>Profile Image:</label>
+                {/* <input type="file" className="file-input file-input-error" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br> */}
                 <input type="file" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br>
             </div>
 
@@ -125,7 +127,9 @@ export default function SignupForm() {
                 <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "150px" }}> {errors.rpassword} </p> <br></br>
             </div>
 
-            <button type="submit">Register</button><br></br>
+            {/* <button type="submit">Register</button><br></br> */}
+            {/* <Button text={"Signup"} /> <br></br> */}
+            <Button>Signup</Button> <br></br>
         </form>
     )
 }

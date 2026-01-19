@@ -30,12 +30,12 @@ export class AuthController {
     return req.user;
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Post('logout')
-  async logout(@Session() session, @Req() req, @Res() res): Promise<any> {
-    const authHeader = req.headers?.authorization ?? '';
-    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    try { return await res.json(await this.authService.logout(session, token, res)); }
+  async logout(@Session() session, @Req() req, @Res({ passthrough: true }) res): Promise<any> {
+    // const authHeader = req.headers?.authorization ?? '';
+    // const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    try { return await this.authService.logout(session, res); }
     catch (error) { throw error; }
   }
 
