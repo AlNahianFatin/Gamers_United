@@ -15,10 +15,27 @@ export default async function HomePage() {
     return (
         <>
             <div className="bg-red-500">
-                <div style={{ alignContent: "center" }}>
-                    <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/login" style={{ textAlign: "right" }}>Login</Link> |
-                    <Link href="/signup"> Signup</Link> | <Link href="/aboutUs">About Us</Link>
+
+                <div className="flex justify-end">
+                    <ul className="flex">
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/">Home</Link>
+                        </li>
+
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href={"/login"}>Login</Link>
+                        </li>
+
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/signup">Signup</Link>
+                        </li>
+
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/aboutus">About Us</Link>
+                        </li>
+                    </ul>
                 </div>
+
             </div>
 
             <div style={{ margin: "3em 0" }} className="flex flex-wrap justify-center gap-20">

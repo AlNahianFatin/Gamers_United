@@ -27,7 +27,7 @@ export default function AboutPage() {
             </li>
 
             <li className="mr-3">
-              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-transparent-500 text-black" href={"/aboutus"}>About Us</Link>
+              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-white text-black" href={"/aboutus"}>About Us</Link>
             </li>
           </ul>
         </div>

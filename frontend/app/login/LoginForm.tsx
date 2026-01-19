@@ -6,14 +6,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
 import Button from "../components/Button";
+import ErrorAlert from "../components/ErrorAlert";
 
 export default function LoginForm() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
+    const [globalError, setGlobalError] = useState("");
     const [uNameError, setUNameError] = useState("");
     const [passError, setPassError] = useState("");
     // const [isLoggedIn, setIsLoggedIn] = useState(false);
+
     const router = useRouter();
 
     // const [cookie, setCookie] = useCookie('jwtToken');
@@ -24,8 +27,14 @@ export default function LoginForm() {
     if (!clientReady)
         return null;
 
+    const showError = (msg: string) => {
+        setGlobalError(msg);
+        setTimeout(() => {
+            setGlobalError("");
+        }, 2000);
+    };
 
-    const handleSubmit = async (e:any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
         if (username == "")
             setUNameError("Please enter username first!")
@@ -58,10 +67,10 @@ export default function LoginForm() {
 
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, userData, { withCredentials: true });
             // setIsLoggedIn(true);
-            
+
             const role = response.data.userExists.role;
             const id = response.data.userExists.id;
-            
+
             // localStorage.setItem("accessToken", response.data.accessToken);
             localStorage.setItem("id", id);
 
@@ -93,31 +102,34 @@ export default function LoginForm() {
                 else if (status === 400)
                     setPassError(message);
                 else if (status === 401)
-                    alert(message);
+                    showError(message);
                 else
-                    alert("Something went wrong. Please try again later.");
+                    showError(message);
             }
             else
-                alert("Server not reachable. Check your internet connection.");
+                showError("Server not reachable. Check your internet connection.");
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="field">
-                <label>Username: </label>
-                <input type="text" placeholder="Username" value={username} onChange={e => { setUsername(e.target.value); setUNameError(""); }} /> <p style={{ color: "red", paddingLeft: "100px"}}> {uNameError} </p> <br></br>
-            </div>
+        <>
+            {globalError && <ErrorAlert text={globalError} />}
+            <form onSubmit={handleSubmit}>
+                <div className="field">
+                    <label>Username: </label>
+                    <input type="text" placeholder="Username" value={username} onChange={e => { setUsername(e.target.value); setUNameError(""); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {uNameError} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>Password: </label>
-                <input type="password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setPassError(""); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {passError} </p>
-            </div>
+                <div className="field">
+                    <label>Password: </label>
+                    <input type="password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setPassError(""); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {passError} </p>
+                </div>
 
-            <Link href="/forgotpass" style={{ textAlign: "right", color: "red", paddingLeft: "100px", paddingTop: "10px" }}>Forgot Password?</Link><br></br>
+                <Link href="/forgotpass" style={{ textAlign: "right", color: "red", paddingLeft: "100px", paddingTop: "10px" }}>Forgot Password?</Link><br></br>
 
-            {/* <button type="submit">Login</button> <br></br> */}
-            <Button>Login</Button> <br></br>
-        </form>
+                {/* <button type="submit">Login</button> <br></br> */}
+                <Button>Login</Button> <br></br>
+            </form>
+        </>
     );
 }

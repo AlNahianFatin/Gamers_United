@@ -12,25 +12,14 @@ import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
+import Search from "../../../components/Search";
 
-export default function AdminPage() {
+export default function Admins() {
   const params = useParams();
   const [clientReady, setClientReady] = useState(false);
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
-
-  const logout = async () => {
-    try {
-      localStorage.clear();
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
-      router.push(`./login`);
-    }
-    catch (error) {
-      console.warn("Logout failed, forcing client logout. Error:", error);
-      router.push("/login");
-    }
-  };
 
   useEffect(() => {
     if (!params.id) {
@@ -83,7 +72,8 @@ export default function AdminPage() {
   const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      <Sidebar id={userData?.id} index={7}></Sidebar>
+      <Search></Search>
+      <Sidebar id={userData?.id} index={2}></Sidebar>
     </>
   );
 }

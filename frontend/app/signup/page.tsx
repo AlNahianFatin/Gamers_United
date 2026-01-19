@@ -20,7 +20,7 @@ export default function SignupPage() {
             </li>
 
             <li className="mr-3">
-              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-transparent-500 text-black" href={"/signup"}>Signup</Link>
+              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-white text-black" href={"/signup"}>Signup</Link>
             </li>
 
             <li className="mr-3">

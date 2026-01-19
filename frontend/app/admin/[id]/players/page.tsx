@@ -2,7 +2,7 @@
 
 import Greeting from "@/app/components/Greeting";
 import Header from "@/app/components/Header";
-import Sidebar from "@/app/components/Sidebar";
+import Sidebar from "../../../components/Sidebar";
 import TopCards from "@/app/components/TopCards";
 import BarChart from "@/app/components/BarChart";
 import RecentPurchases from "@/app/components/RecentPurchases";
@@ -12,6 +12,7 @@ import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
+import Search from "../../../components/Search";
 
 export default function AdminPage() {
   const params = useParams();
@@ -83,20 +84,8 @@ export default function AdminPage() {
   const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      {/* <div className="bg-red-500"> */}
-      {/* <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/" style={{ textAlign: "right" }} onClick={logout}>Logout</Link> */}
-      {/* </div> */}
-
-      {/* <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <img src={imageUrl} alt="Admin Profile" width={"10%"} height={"10%"} style={{ minWidth: "100px", minHeight: "100px", margin: "10px 1em" }} />
-      </div>
-      <Header name={userData?.username || "Unknown"} /> */}
-      <Sidebar id={userData?.id} index={3}></Sidebar>
-      {/* <TopCards></TopCards>
-      <div className="p-4 grid md:grid-cols-3 grid-cols-1 gap-4">
-        <BarChart></BarChart>
-        <RecentPurchases></RecentPurchases>
-      </div> */}
+      <Search></Search>
+      <Sidebar id={userData?.id} index={4}></Sidebar>
     </>
   );
 }

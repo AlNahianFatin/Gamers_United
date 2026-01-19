@@ -34,14 +34,7 @@ body {
 }
 
 h1 {
-  font-family: "Jaro";
-  font-size: 50px;
-  color: #3E2522;
-  text-align: center;
-}
-
-h1 {
-  font-family: "Itim";
+  font-family: "Inter";
   font-size: 50px;
   color: #3E2522;
   text-align: center;

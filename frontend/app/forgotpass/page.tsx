@@ -5,11 +5,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
 import Button from "../components/Button";
+import ErrorAlert from "../components/ErrorAlert";
 
 export default function ForgotPass() {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const router = useRouter();
+
+    const [globalError, setGlobalError] = useState("");
 
     const [clientReady, setClientReady] = useState(false);
     useEffect(() => {
@@ -18,6 +21,12 @@ export default function ForgotPass() {
     if (!clientReady)
         return null;
 
+    const showError = (msg: string) => {
+        setGlobalError(msg);
+        setTimeout(() => {
+            setGlobalError("");
+        }, 2000);
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -42,17 +51,40 @@ export default function ForgotPass() {
                 setEmailError(error.response.data.message || "Something went wrong")
             // alert(error.response.data.message || "Something went wrong");
             else if (error.request)
-                alert("Server not reachable. Check your internet connection.");
+                showError("Server not reachable. Check your internet connection.");
+
             else
-                alert("Unexpected error occurred");
+                showError("Unexpected error occurred");
         }
     };
 
     return (
         <>
             <div className="bg-red-500">
-                <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/login" style={{ textAlign: "right" }}>Login</Link> | <Link href="/signup" style={{ textAlign: "right" }}>Signup</Link>
+
+                <div className="flex justify-end">
+                    <ul className="flex">
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/">Home</Link>
+                        </li>
+
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href={"/login"}>Login</Link>
+                        </li>
+
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/signup">Signup</Link>
+                        </li>
+
+                        <li className="mr-3">
+                            <Link className="inline-block border border-white rounded hover:border-gray-200 text-black hover:bg-gray-200 py-1 px-3" href="/aboutus">About Us</Link>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
+
+            {globalError && <ErrorAlert text={globalError} />}
             <form onSubmit={handleSubmit}>
                 <div className="field">
                     <label>Enter your email: </label>

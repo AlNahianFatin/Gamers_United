@@ -1,6 +1,5 @@
 import Link from "next/link";
 import LoginForm from "./LoginForm";
-import Download from "../components/Download";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +15,7 @@ export default function LoginPage() {
             </li>
 
             <li className="mr-3">
-              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-transparent-500 text-black" href={"/login"}>Login</Link>
+              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-white text-black" href={"/login"}>Login</Link>
             </li>
 
             <li className="mr-3">
@@ -34,7 +33,6 @@ export default function LoginPage() {
       <div style={{ background: "black", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center" }}>
         <label>Don't have an account?</label>
         <Link href="/signup" style={{  paddingLeft: "10px" }}>Signup</Link>
-        {/* <Download></Download> */}
       </div>
     </>
   );

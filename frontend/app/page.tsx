@@ -3,6 +3,7 @@ import FiveBestsellers from "./fiveBestsellers";
 import Link from "next/link";
 import { Jaro, Itim, Inika, Inter } from 'next/font/google';
 import "./globals.css"
+import Accordion from "./components/Accordion";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function HomePage() {
         <div className="flex justify-end">
           <ul className="flex">
             <li className="mr-3">
-              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-transparent-500 text-black" href={"/"}>Home</Link>
+              <Link className="inline-block border border-red-500 rounded py-1 px-3 bg-white text-black" href={"/"}>Home</Link>
             </li>
 
             <li className="mr-3">
@@ -40,6 +41,8 @@ export default async function HomePage() {
         </div>
 
       </div>
+
+      <Accordion></Accordion>
 
       <p style={{ fontWeight: "bold", margin: "3em 0 0 0" }}> <Link href="/bestsellers"> Top Bestsellers &gt; </Link> </p>
       <div style={{ margin: "3em 0" }} className="flex flex-wrap justify-center gap-20">

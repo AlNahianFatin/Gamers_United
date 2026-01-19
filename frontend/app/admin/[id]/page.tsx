@@ -1,24 +1,35 @@
 "use client";
 
-import Greeting from "@/app/components/Greeting";
-import Header from "@/app/components/Header";
-import Sidebar from "@/app/components/Sidebar";
-import TopCards from "@/app/components/TopCards";
-import BarChart from "@/app/components/BarChart";
-import RecentPurchases from "@/app/components/RecentPurchases";
 import axios from "axios";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
+import Greeting from "../../components/Greeting";
+import Header from "../../components/Header";
+import Sidebar from "../../components/Sidebar";
+import TopCards from "../../components/TopCards";
+import BarChart from "../../components/BarChart";
+import RecentPurchases from "../../components/RecentPurchases";
+import ErrorAlert from "../../components/ErrorAlert";
 
 export default function AdminPage() {
   const params = useParams();
   const [clientReady, setClientReady] = useState(false);
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  // const [token, setToken] = useState<string | null>(null);
+
+  const [globalError, setGlobalError] = useState("");
+
   const router = useRouter();
+
+  const showError = (msg: string) => {
+    setGlobalError(msg);
+    setTimeout(() => {
+      setGlobalError("");
+    }, 2000);
+  };
 
   const logout = async () => {
     try {
@@ -68,7 +79,7 @@ export default function AdminPage() {
             router.replace(`/admin/${params.id}/not-found`);
         }
         else {
-          alert("Server not reachable. Check your internet connection.");
+          showError("Server not reachable. Check your internet connection.");
           router.push('/login');
         }
       }
@@ -101,6 +112,7 @@ export default function AdminPage() {
       </div> */}
 
 
+      {globalError && <ErrorAlert text={globalError} />}
       <div className="flex min-h-screen">
         <Sidebar id={userData?.id} index={1} />
 

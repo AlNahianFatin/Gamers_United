@@ -1,15 +1,15 @@
 "use client";
 
-export default function PasswordField({ children, name }: any) {
+export default function Search({ children, name }: any) {
     return (
         <div className="join">
             <div>
                 <div>
-                    <input className="input join-item" placeholder="Search" />
+                    <input className="input join-item p-5" placeholder="Search" />
                 </div>
             </div>
             <select className="select join-item">
-                <option disabled selected>Filter</option>
+                <option defaultValue={""}>Filter</option>
                 <option>Sci-fi</option>
                 <option>Drama</option>
                 <option>Action</option>

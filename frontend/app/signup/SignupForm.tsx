@@ -5,6 +5,7 @@ import "../globals.css";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Button from "../components/Button";
+import ErrorAlert from "../components/ErrorAlert";
 
 export default function SignupForm() {
     const [clientReady, setClientReady] = useState(false);
@@ -16,7 +17,8 @@ export default function SignupForm() {
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [rpassword, setRPassword] = useState("");
-
+    
+    const [globalError, setGlobalError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const router = useRouter();
@@ -24,6 +26,13 @@ export default function SignupForm() {
     useEffect(() => { setClientReady(true); }, []);
     if (!clientReady)
         return null;
+
+    const showError = (msg: string) => {
+        setGlobalError(msg);
+        setTimeout(() => {
+            setGlobalError("");
+        }, 2000);
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -85,51 +94,54 @@ export default function SignupForm() {
                 setErrors(backendErrors);
             }
             else
-                alert("Something went wrong. Please try again later.");
+                showError("Server not reachable. Check your internet connection.");
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="field">
-                <label>Username:</label>
-                <input type="text" placeholder="Username" name="username" value={username} onChange={e => { setUsername(e.target.value); setErrors(prev => ({ ...prev, username: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.username} </p> <br></br>
-            </div>
+        <>
+            {globalError && <ErrorAlert text={globalError} />}
+            <form onSubmit={handleSubmit}>
+                <div className="field">
+                    <label>Username:</label>
+                    <input type="text" placeholder="Username" name="username" value={username} onChange={e => { setUsername(e.target.value); setErrors(prev => ({ ...prev, username: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.username} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>Email:</label>
-                <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }} /> <p style={{ color: "red", paddingLeft: "60px" }}> {errors.email} </p> <br></br>
-            </div>
+                <div className="field">
+                    <label>Email:</label>
+                    <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }} /> <p style={{ color: "red", paddingLeft: "60px" }}> {errors.email} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>Profile Image:</label>
-                {/* <input type="file" className="file-input file-input-error" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br> */}
-                <input type="file" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br>
-            </div>
+                <div className="field">
+                    <label>Profile Image:</label>
+                    {/* <input type="file" className="file-input file-input-error" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br> */}
+                    <input type="file" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>NID:</label>
-                <input type="text" placeholder="NID" name="NID" value={NID} onChange={e => { setNid(e.target.value); setErrors(prev => ({ ...prev, NID: "" })); }} /> <p style={{ color: "red", paddingLeft: "40px" }}> {errors.NID} </p> <br></br>
-            </div>
+                <div className="field">
+                    <label>NID:</label>
+                    <input type="text" placeholder="NID" name="NID" value={NID} onChange={e => { setNid(e.target.value); setErrors(prev => ({ ...prev, NID: "" })); }} /> <p style={{ color: "red", paddingLeft: "40px" }}> {errors.NID} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>Phone No.:</label>
-                <input type="tel" placeholder="Phone No." name="phone" value={phone} onChange={e => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.phone} </p> <br></br>
-            </div>
+                <div className="field">
+                    <label>Phone No.:</label>
+                    <input type="tel" placeholder="Phone No." name="phone" value={phone} onChange={e => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.phone} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>Password:</label>
-                <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red", paddingLeft: "90px" }}> {errors.password} </p> <br></br>
-            </div>
+                <div className="field">
+                    <label>Password:</label>
+                    <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red", paddingLeft: "90px" }}> {errors.password} </p> <br></br>
+                </div>
 
-            <div className="field">
-                <label>Retype Password:</label>
-                <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "150px" }}> {errors.rpassword} </p> <br></br>
-            </div>
+                <div className="field">
+                    <label>Retype Password:</label>
+                    <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "150px" }}> {errors.rpassword} </p> <br></br>
+                </div>
 
-            {/* <button type="submit">Register</button><br></br> */}
-            {/* <Button text={"Signup"} /> <br></br> */}
-            <Button>Signup</Button> <br></br>
-        </form>
+                {/* <button type="submit">Register</button><br></br> */}
+                {/* <Button text={"Signup"} /> <br></br> */}
+                <Button>Signup</Button> <br></br>
+            </form>
+        </>
     )
 }
