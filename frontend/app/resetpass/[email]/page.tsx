@@ -115,7 +115,7 @@ export default function VerifyOTPPage() {
 
                 {/* <button type="submit">Reset</button><br></br> */}
                 {/* <Button text={"Reset"} /> <br></br> */}
-                <Button>Reset</Button> <br></br>
+                <Button text={"Reset"}></Button> <br></br>
             </form>
         </>
     );

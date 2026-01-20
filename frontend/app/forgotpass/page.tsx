@@ -90,7 +90,7 @@ export default function ForgotPass() {
                     <label>Enter your email: </label>
                     <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {emailError} </p> <br></br>
                 </div>
-                <Button>Send OTP</Button> <br></br>
+                <Button text={"Send OTP"}></Button> <br></br>
                 {/* <Button text={"Send OTP"} /> <br></br> */}
                 {/* <button type="submit">Send OTP</button> <br></br> */}
             </form >

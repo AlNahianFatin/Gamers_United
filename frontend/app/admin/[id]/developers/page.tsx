@@ -1,11 +1,11 @@
 "use client";
 
 import Greeting from "@/app/components/Greeting";
-import Header from "@/app/components/Header";
+import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
-import TopCards from "@/app/components/TopCards";
-import BarChart from "@/app/components/BarChart";
-import RecentPurchases from "@/app/components/RecentPurchases";
+import TopCards from "../../../components/TopCards";
+import BarChart from "../../../components/BarChart";
+import RecentPurchases from "../../../components/RecentPurchases";
 import axios from "axios";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -13,24 +13,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
 import Search from "../../../components/Search";
+import ErrorAlert from "../../../components/ErrorAlert";
+import GetDevelopers from "./getDevelopers";
 
-export default function AdminPage() {
+export default function Developer() {
   const params = useParams();
   const [clientReady, setClientReady] = useState(false);
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+
+  const [globalError, setGlobalError] = useState("");
+
   const router = useRouter();
 
-  const logout = async () => {
-    try {
-      localStorage.clear();
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
-      router.push(`./login`);
-    }
-    catch (error) {
-      console.warn("Logout failed, forcing client logout. Error:", error);
-      router.push("/login");
-    }
+  const showError = (msg: string) => {
+    setGlobalError(msg);
+    setTimeout(() => {
+      setGlobalError("");
+    }, 2000);
   };
 
   useEffect(() => {
@@ -81,11 +80,17 @@ export default function AdminPage() {
   if (!clientReady)
     return null;
 
-  const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      <Search></Search>
-      <Sidebar id={userData?.id} index={3}></Sidebar>
+      {globalError && <ErrorAlert text={globalError} />}
+      <div className="flex min-h-screen">
+        <Sidebar id={userData?.id} index={3} />
+
+        <div className="w-full flex flex-col gap-16 p-4">
+          <Search />
+          <GetDevelopers />
+        </div>
+      </div>
     </>
   );
 }

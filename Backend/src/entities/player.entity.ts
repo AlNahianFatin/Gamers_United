@@ -1,30 +1,34 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryColumn } from "typeorm";
 import { LoginEntity } from "./login.entity";
+import { PurchasesEntity } from "./purchases.entity";
 
 @Entity("player")
 export class PlayerEntity {
     @PrimaryColumn()
     id: number;
 
-    @Column({type: "varchar", nullable: false, unique: true})
+    @Column({ type: "varchar", nullable: false, unique: true })
     username: string;
-    
-    @Column({nullable: true})
+
+    @Column({ nullable: true })
     image: string;
-    
-    @Column({nullable: true})
+
+    @Column({ nullable: true })
     NID: string;
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     phone: string;
-    
-    @CreateDateColumn({nullable: true})
+
+    @CreateDateColumn({ nullable: true })
     created_at: Date;
 
-    @Column("simple-array", {nullable: true})
-    game_ids: number[];
+    @Column("simple-array", { nullable: true })
+    game_ids?: number[];
 
-    @OneToOne(() => LoginEntity, login => login.player, {cascade: true, onDelete: 'CASCADE'})
+    @OneToOne(() => LoginEntity, login => login.player, { cascade: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: "id" })
     login: LoginEntity;
+
+    @OneToMany(() => PurchasesEntity, purchase => purchase.player)
+    purchases?: PurchasesEntity[];
 }

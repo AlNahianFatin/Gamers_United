@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsString, IsNotEmpty, Matches, IsNumber, Min, IsArray, ArrayNotEmpty } from 'class-validator';
 import { CategoriesEntity } from '../entities/categories.entity';
 import { DeveloperEntity } from '../entities/developer.entity';
+import { PurchasesEntity } from '../entities/purchases.entity';
 
 export class GamesDTO {
     @IsString()
@@ -29,14 +30,6 @@ export class GamesDTO {
     @Transform(({ value }) => value !== undefined && value !== null ? Number(value) : value)
     price: number;
 
-    // @Transform(({ value }) => {
-    //     if (Array.isArray(value)) return value;
-    //     if (typeof value === 'string') { try { return JSON.parse(value); } catch { return value.split(',').map(s=>s.trim()); } }
-    //     return [];
-    // })
-    // @IsArray()
-    // category_ids: string[];
-
     image?: string;
 
     trailer?: string;
@@ -45,15 +38,15 @@ export class GamesDTO {
 
     published_at?: Date;
 
-    view_count?: number;
+    // view_count?: number;
 
-    play_count?: number;
+    // play_count?: number;
 
     purchase_count?: number;
     
-    // category?: string[];
-
     categories?: CategoriesEntity[];
 
     developer?: DeveloperEntity;
+
+    purchases?: PurchasesEntity[];
 }

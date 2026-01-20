@@ -11,7 +11,7 @@ export default function Accordion({ children, name }: any) {
             </details>
             <details className="collapse collapse-arrow bg-gray-900 border border-transparent open:border-white transition-all" name="my-accordion-det-1">
                 <summary className="collapse-title font-semibold">I forgot my password. What should I do?</summary>
-                <div className="collapse-content text-sm">Click on "Forgot Password" on the login page and follow the instructions sent to your email.</div>
+                <div className="collapse-content text-sm">Click on "Forgot Password?" on the login page and enter the OTP sent to your email.</div>
             </details>
             <details className="collapse collapse-arrow bg-gray-900 border border-transparent open:border-white transition-all" name="my-accordion-det-1">
                 <summary className="collapse-title font-semibold">How do I update my profile information?</summary>

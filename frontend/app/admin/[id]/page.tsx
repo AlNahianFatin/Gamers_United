@@ -94,24 +94,6 @@ export default function AdminPage() {
   const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      {/* <div className="bg-red-500"> */}
-      {/* <Link href="/" style={{ textAlign: "right" }}>Home</Link> | <Link href="/" style={{ textAlign: "right" }} onClick={logout}>Logout</Link> */}
-      {/* </div> */}
-
-      {/* <div className="flex min-h-screen">
-        <Sidebar id={userData?.id} index={1}>
-          <Header name={userData?.username || "Unknown"} imageUrl={imageUrl} />
-          <TopCards></TopCards>
-
-          <div className="p-4 grid md:grid-cols-3 grid-cols-1 gap-4">
-            <BarChart></BarChart>
-            <RecentPurchases></RecentPurchases>
-          </div>
-
-        </Sidebar>
-      </div> */}
-
-
       {globalError && <ErrorAlert text={globalError} />}
       <div className="flex min-h-screen">
         <Sidebar id={userData?.id} index={1} />

@@ -1,7 +1,12 @@
+import { GamesEntity } from "../entities/games.entity";
+import { PlayerEntity } from "../entities/player.entity";
+
 export class PurchasesDTO {
-    id: number;
-    player_id: number;
-    game_id: number;
-    purchase_date: Date;
-    amount: number;
+    player?: PlayerEntity;
+
+    game?: GamesEntity;
+
+    purchase_date?: Date;
+
+    amount?: number;
 }

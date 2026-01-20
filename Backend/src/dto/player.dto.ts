@@ -2,6 +2,7 @@ import { Transform } from "class-transformer";
 import { IsEmail, IsNotEmpty, IsNumber, IsString, Matches } from "class-validator";
 import { LoginEntity } from "../entities/login.entity";
 import { GamesEntity } from "../entities/games.entity";
+import { PurchasesEntity } from "../entities/purchases.entity";
 
 export class PlayerDTO {
     @IsString()
@@ -32,5 +33,7 @@ export class PlayerDTO {
 
     game_ids?: number[];
 
-    login?: LoginEntity;    
+    login?: LoginEntity;   
+    
+    purchases?: PurchasesEntity[];
 }

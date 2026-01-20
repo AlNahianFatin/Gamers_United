@@ -1,6 +1,8 @@
 "use client";
 
 import axios from "axios";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type Category = {
@@ -35,8 +37,11 @@ type Game = {
 };
 
 export default function FiveBestsellers() {
+    const router = useRouter();
+
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         fetchData();
@@ -48,7 +53,7 @@ export default function FiveBestsellers() {
             setGames(response.data);
         }
         catch (error) {
-            <p className="text-center mt-10">Server Connection Lost!</p>; 
+            <p className="text-center mt-10">Server Connection Lost!</p>;
             console.error(error);
         }
         finally {
@@ -59,7 +64,6 @@ export default function FiveBestsellers() {
     if (loading) {
         return (
             <>
-                {/* <p className="text-center mt-10">Loading...</p>; */}
                 <div className="flex items-center justify-center h-screen">
                     <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
                 </div>
@@ -70,7 +74,7 @@ export default function FiveBestsellers() {
     return (
         <div className="flex flex-wrap gap-15 justify-center p-6">
             {games.map((item, index) => (
-                <div key={item.id} className="card bg-base-100 w-60 shadow-md">
+                <div key={item.id} className="card bg-base-100 w-60 shadow-md" onClick={() => router.push(`./game/${item.id}`)} >
                     <div className="relative h-56 w-full overflow-hidden">
                         <img src={`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${item.id}`} alt={item.title} className="h-full w-full object-contain" />
                     </div>

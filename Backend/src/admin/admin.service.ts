@@ -18,15 +18,17 @@ import path from 'path';
 import { promises } from 'fs';
 import { GamesEntity } from '../entities/games.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
+import { PurchasesEntity } from 'src/entities/purchases.entity';
 
 @Injectable()
 export class AdminService {
   constructor(@InjectRepository(LoginEntity) private loginRepository: Repository<LoginEntity>,
     @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
-    @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
     @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>,
+    @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
     @InjectRepository(GamesEntity) private gamesRepository: Repository<GamesEntity>,
-    @InjectRepository(CategoriesEntity) private categoriesRepository: Repository<CategoriesEntity>) { }
+    @InjectRepository(CategoriesEntity) private categoriesRepository: Repository<CategoriesEntity>,
+    @InjectRepository(PurchasesEntity) private purchasesRepository: Repository<PurchasesEntity>) { }
 
   async getAdmins(): Promise<AdminEntity[]> {
     const admins = await this.adminRepository.find({ relations: ['login'] });
@@ -445,7 +447,7 @@ export class AdminService {
 
 
   async getDevelopers(): Promise<DeveloperEntity[]> {
-    const developers = await this.developerRepository.find({ relations: ['login'] });
+    const developers = await this.developerRepository.find({ relations: ['login', 'games'] });
     if (!developers || developers.length < 1)
       throw new HttpException(`No developer found!`, HttpStatus.NOT_FOUND);
     return developers;
@@ -566,8 +568,8 @@ export class AdminService {
           await promises.unlink(filePath);
 
           for (const game of developer.games) {
-            game.categories = [];  
-            await this.gamesRepository.save(game); 
+            game.categories = [];
+            await this.gamesRepository.save(game);
           }
 
           await this.loginRepository.remove(developer.login);
@@ -656,14 +658,14 @@ export class AdminService {
       throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
     return games;
   }
-  
+
   async getFiveBestsellerGames(): Promise<GamesEntity[] | object> {
     const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'], take: 5 });
     if (!games || games.length === 0)
       throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
     return games;
   }
-  
+
   async getBestsellerGames(): Promise<GamesEntity[] | object> {
     const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'] });
     if (!games || games.length === 0)
@@ -830,16 +832,13 @@ export class AdminService {
     return { message: `Category with id ${id} has been deleted` };
   }
 
-  // getPurchases(): object {
-  //   let purchase1: Object = {
-  //       id: 453146,
-  //       user_id: 4523,
-  //       game_id: 235,
-  //       purchase_date: "2025-11-03T18:21:00.000Z",
-  //       amount: 60
-  //     };
-  //     return purchase1;
-  //   }
+
+  async getPurchases(): Promise<PurchasesEntity[] | object> {
+    const purchases = await this.purchasesRepository.find({ relations: ['player', 'game'] });
+    if (!purchases || purchases.length === 0)
+      return { message: `No purchase record found!` };
+    return purchases;
+  }
 
   //   addPurchase(purchase: PurchasesDTO): string {
   //     return purchase.id + " has been added successfully";
@@ -853,9 +852,14 @@ export class AdminService {
   //     return `${id} has been updated successfully`;
   //   }
 
-  //   deletePurchase(id: number): string {
-  //     return `Purchase record with ID ${id} has been deleted successfully`;
-  //   }
+  async removePurchase(id: number): Promise<object> {
+    const purchase = await this.purchasesRepository.findOneBy({ id: id });
+    if (!purchase)
+      throw new HttpException(`Purchase record with id ${id} not found!`, HttpStatus.NOT_FOUND);
+    await this.categoriesRepository.delete(id);
+    return { message: `Category with id ${id} has been deleted` };
+  }
+
 
   //   getViews(): object {
   //     let view1: Object = {

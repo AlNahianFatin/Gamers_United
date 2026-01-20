@@ -24,6 +24,7 @@ export default function LoginForm() {
     useEffect(() => {
         setClientReady(true);
     }, []);
+    
     if (!clientReady)
         return null;
 
@@ -128,7 +129,7 @@ export default function LoginForm() {
                 <Link href="/forgotpass" style={{ textAlign: "right", color: "red", paddingLeft: "100px", paddingTop: "10px" }}>Forgot Password?</Link><br></br>
 
                 {/* <button type="submit">Login</button> <br></br> */}
-                <Button>Login</Button> <br></br>
+                <Button text={"Login"}></Button> <br></br>
             </form>
         </>
     );

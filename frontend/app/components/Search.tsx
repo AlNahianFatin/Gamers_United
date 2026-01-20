@@ -4,9 +4,10 @@ export default function Search({ children, name }: any) {
     return (
         <div className="join">
             <div>
-                <div>
+                {/* <div> */}
                     <input className="input join-item p-5" placeholder="Search" />
-                </div>
+                <button className="btn join-item">Search</button>
+                {/* </div> */}
             </div>
             <select className="select join-item">
                 <option defaultValue={""}>Filter</option>
@@ -15,8 +16,7 @@ export default function Search({ children, name }: any) {
                 <option>Action</option>
             </select>
             <div className="indicator">
-                <span className="indicator-item badge badge-secondary">new</span>
-                <button className="btn join-item">Search</button>
+                {/* <span className="indicator-item badge badge-secondary">new</span> */}
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { CategoriesEntity } from "./categories.entity";
 import { DeveloperEntity } from "./developer.entity";
+import { PurchasesEntity } from "./purchases.entity";
 
 @Entity("games")
 export class GamesEntity {
@@ -21,11 +22,11 @@ export class GamesEntity {
 
     @Column({ nullable: true })
     trailer: string;
-    
+
     @Column({ nullable: true })
     game: string;
 
-    @CreateDateColumn({nullable: true})
+    @CreateDateColumn({ nullable: true })
     published_at: Date;
 
     @Column({ nullable: true, default: 0 })
@@ -39,7 +40,10 @@ export class GamesEntity {
 
     @ManyToMany(() => CategoriesEntity, category => category.games)
     categories: CategoriesEntity[];
-    
-    @ManyToOne(() => DeveloperEntity, developer => developer.games, {onDelete: 'CASCADE', nullable: false})
+
+    @ManyToOne(() => DeveloperEntity, developer => developer.games, { onDelete: 'CASCADE', nullable: false })
     developer: DeveloperEntity;
+
+    @OneToMany(() => PurchasesEntity, purchase => purchase.game)
+    purchases?: PurchasesEntity[];
 }

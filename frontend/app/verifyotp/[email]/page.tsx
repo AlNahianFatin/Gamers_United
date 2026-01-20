@@ -103,7 +103,7 @@ export default function VerifyOTPPage() {
 
         {/* <button type="submit">Verify</button> */}
         {/* <Button text={"Verify"} /> <br></br> */}
-        <Button>Verify</Button> <br></br>
+        <Button text={"Verify"}></Button> <br></br>
       </form>
     </>
   );

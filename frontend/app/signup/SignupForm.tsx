@@ -140,7 +140,7 @@ export default function SignupForm() {
 
                 {/* <button type="submit">Register</button><br></br> */}
                 {/* <Button text={"Signup"} /> <br></br> */}
-                <Button>Signup</Button> <br></br>
+                <Button text={"Signup"}></Button> <br></br>
             </form>
         </>
     )

@@ -1,11 +1,11 @@
 "use client";
 
 import Greeting from "@/app/components/Greeting";
-import Header from "@/app/components/Header";
+import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
-import TopCards from "@/app/components/TopCards";
-import BarChart from "@/app/components/BarChart";
-import RecentPurchases from "@/app/components/RecentPurchases";
+import TopCards from "../../../components/TopCards";
+import BarChart from "../../../components/BarChart";
+import RecentPurchases from "../../../components/RecentPurchases";
 import axios from "axios";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -13,13 +13,24 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
 import Search from "../../../components/Search";
+import ErrorAlert from "../../../components/ErrorAlert";
+import GetAdmins from "./getAdmins";
 
-export default function Admins() {
+export default function Admin() {
   const params = useParams();
   const [clientReady, setClientReady] = useState(false);
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+
+  const [globalError, setGlobalError] = useState("");
+
   const router = useRouter();
+
+  const showError = (msg: string) => {
+    setGlobalError(msg);
+    setTimeout(() => {
+      setGlobalError("");
+    }, 2000);
+  };
 
   useEffect(() => {
     if (!params.id) {
@@ -69,11 +80,17 @@ export default function Admins() {
   if (!clientReady)
     return null;
 
-  const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      <Search></Search>
-      <Sidebar id={userData?.id} index={2}></Sidebar>
+      {globalError && <ErrorAlert text={globalError} />}
+      <div className="flex min-h-screen">
+        <Sidebar id={userData?.id} index={2} />
+
+        <div className="w-full flex flex-col gap-16 p-4">
+          <Search />
+          <GetAdmins />
+        </div>
+      </div>
     </>
   );
 }
