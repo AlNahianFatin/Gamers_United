@@ -19,7 +19,9 @@ import GetAdmins from "./getAdmins";
 export default function Admin() {
   const params = useParams();
   const [clientReady, setClientReady] = useState(false);
+
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
+  const [totalSales, setTotalSales] = useState(0);
 
   const [globalError, setGlobalError] = useState("");
 
@@ -73,7 +75,6 @@ export default function Admin() {
         }
       }
     };
-
     fetchUser();
   }, [params.id]);
 

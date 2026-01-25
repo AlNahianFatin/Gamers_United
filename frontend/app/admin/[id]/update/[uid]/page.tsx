@@ -2,7 +2,7 @@
 
 import Greeting from "@/app/components/Greeting";
 import Header from "@/app/components/Header";
-import Sidebar from "../../../components/Sidebar";
+import Sidebar from "../../../../components/Sidebar";
 import TopCards from "@/app/components/TopCards";
 import BarChart from "@/app/components/BarChart";
 import RecentPurchases from "@/app/components/RecentPurchases";
@@ -12,6 +12,7 @@ import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
+import UpdateForm from "./updateForm";
 
 export default function AdminPage() {
   const params = useParams();
@@ -83,7 +84,14 @@ export default function AdminPage() {
   const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      <Sidebar id={userData?.id} index={7}></Sidebar>
+      <div className="flex min-h-screen">
+        <Sidebar id={userData?.id} index={7} />
+
+        <div className="w-full flex flex-col gap-16 p-4">
+          <UpdateForm uid={userData?.id}></UpdateForm>
+        </div>
+        
+      </div>
     </>
   );
 }

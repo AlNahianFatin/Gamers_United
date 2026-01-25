@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable, Res } from '@nestjs/common';
-import { IsNull, Like, Not, Repository } from 'typeorm';
+import { IsNull, Like, MoreThanOrEqual, MoreThan, Not, Repository } from 'typeorm';
 import { GamesDTO } from '../dto/games.dto';
 import { PurchasesDTO } from '../dto/purchases.dto';
 import { ViewsDTO } from '../dto/views.dto';
@@ -106,7 +106,7 @@ export class AdminService {
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       const adminExists = await this.adminRepository.findOne({ where: { username: adminDto.username, id: Not(id) } });
-      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(id) } });
+      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(exists.login.id) }});
       if (adminExists || loginExists)
         throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
@@ -124,7 +124,7 @@ export class AdminService {
         if (loginDto.activation)
           loginDto.ban = false;
         loginDto.role = "admin";
-        await this.loginRepository.update({ id }, {
+        await this.loginRepository.update({ id: exists.login.id }, {
           username: loginDto.username || exists.login.username,
           password: loginDto.password || exists.login.password,
           email: loginDto.email || exists.login.email,
@@ -234,6 +234,11 @@ export class AdminService {
     if (!players || players.length < 0)
       throw new HttpException(`No player found`, HttpStatus.NOT_FOUND);
     return players;
+  }
+
+  async getNoOfActivePlayers(): Promise<number> {
+    const total = await this.loginRepository.count({ where: { role: "player", activation: true, ban: false } });
+    return total;
   }
 
   async getPlayerByID(playerID: number): Promise<PlayerEntity> {
@@ -667,10 +672,15 @@ export class AdminService {
   }
 
   async getBestsellerGames(): Promise<GamesEntity[] | object> {
-    const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'] });
+    const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'], take: 10 });
     if (!games || games.length === 0)
       throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
     return games;
+  }
+
+  async getTotalNoOfGames(): Promise<Number> {
+    const total = await this.gamesRepository.count();
+    return Number(total);
   }
 
   async getFullGameByID(gameID: number): Promise<GamesEntity> {
@@ -839,6 +849,44 @@ export class AdminService {
       return { message: `No purchase record found!` };
     return purchases;
   }
+  
+  async getRecentTopPurchases(): Promise<PurchasesEntity[] | object> {
+    const purchases = await this.purchasesRepository.find({ order: { amount: 'DESC' }, relations: ['player'], take: 10 });
+    if (!purchases || purchases.length === 0)
+      return { message: `No purchase record found!` };
+    return purchases;
+  }
+
+  async getLastWeekTotalPurchases(): Promise<number> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const total = await this.purchasesRepository.sum('amount', { purchase_date: MoreThanOrEqual(sevenDaysAgo), });
+    return Number(total) || 0;
+  }
+
+  async getLastWeekPurchases(): Promise<{ date: string; total: number }[]> {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+
+    const purchases = await this.purchasesRepository.find({ where: { purchase_date: MoreThan(sevenDaysAgo) } });
+
+    const salesMap: { [date: string]: number } = {};
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(sevenDaysAgo);
+      date.setDate(sevenDaysAgo.getDate() + i);
+      const key = date.toISOString().split("T")[0];
+      salesMap[key] = 0;
+    }
+
+    purchases.forEach(p => {
+      const key = p.purchase_date.toISOString().split("T")[0];
+      salesMap[key] = (salesMap[key] || 0) + Number(p.amount || 0);
+    });
+
+    return Object.keys(salesMap).sort().map(date => ({ date, total: salesMap[date] }));
+  }
 
   //   addPurchase(purchase: PurchasesDTO): string {
   //     return purchase.id + " has been added successfully";
@@ -856,7 +904,7 @@ export class AdminService {
     const purchase = await this.purchasesRepository.findOneBy({ id: id });
     if (!purchase)
       throw new HttpException(`Purchase record with id ${id} not found!`, HttpStatus.NOT_FOUND);
-    await this.categoriesRepository.delete(id);
+    await this.purchasesRepository.delete(id);
     return { message: `Category with id ${id} has been deleted` };
   }
 

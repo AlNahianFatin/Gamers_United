@@ -19,11 +19,11 @@ export default function Sidebar({ children, id, index }: any) {
         try {
             localStorage.clear();
             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
-            router.push(`./login`);
+            router.push(`../`);
         }
         catch (error) {
             console.warn("Logout failed, forcing client logout. Error:", error);
-            router.push("/login");
+            router.push("../");
         }
     };
 
@@ -78,7 +78,7 @@ export default function Sidebar({ children, id, index }: any) {
                             </div>
                         </Link>
 
-                        <Link href={`/admin/${id}/update`}>
+                        <Link href={`/admin/${id}/update/${id}`}>
                             <div className={`${index === 7 ? 'bg-red-500 text-white' : 'bg-white hover:bg-red-400 cursor-pointer'} my-4 p-3 rounded-lg inline-block tooltip`} data-tip={"Update"}>
                                 <img src="/settings.png" alt="Update" style={{ width: "30px", height: "auto" }} />
                             </div>
