@@ -2,7 +2,6 @@ import FiveBestsellers from "./fiveBestsellers";
 
 import Link from "next/link";
 import { Jaro, Itim, Inika, Inter } from 'next/font/google';
-import "./globals.css"
 import Accordion from "./components/Accordion";
 import PasswordField from "./components/PasswordField";
 
