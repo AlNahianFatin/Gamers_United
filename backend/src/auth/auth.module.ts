@@ -6,12 +6,12 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { LoginEntity } from '../entities/login.entity';
-import { PlayerEntity } from 'src/entities/player.entity';
-import { AdminEntity } from 'src/entities/admin.entity';
-import { DeveloperEntity } from 'src/entities/developer.entity';
+import { PlayerEntity } from '../entities/player.entity';
+import { AdminEntity } from '../entities/admin.entity';
+import { DeveloperEntity } from '../entities/developer.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule } from '@nestjs/config';
-import { GamesEntity } from 'src/entities/games.entity';
+import { GamesEntity } from '../entities/games.entity';
 
 @Module({
   imports: [

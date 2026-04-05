@@ -10,7 +10,7 @@ import { DeveloperEntity } from '../entities/developer.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
 import { GamesEntity } from '../entities/games.entity';
 import { ConfigModule } from '@nestjs/config';
-import { PurchasesEntity } from 'src/entities/purchases.entity';
+import { PurchasesEntity } from '../entities/purchases.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([LoginEntity]), TypeOrmModule.forFeature([AdminEntity]), TypeOrmModule.forFeature([DeveloperEntity]), TypeOrmModule.forFeature([PlayerEntity]),

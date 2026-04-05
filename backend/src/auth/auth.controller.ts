@@ -6,10 +6,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, MulterError } from 'multer';
 import path from 'path';
 import { plainToInstance } from 'class-transformer';
-import { PlayerDTO } from 'src/dto/player.dto';
-import { PlayerEntity } from 'src/entities/player.entity';
+import { PlayerDTO } from '../dto/player.dto';
+import { PlayerEntity } from '../entities/player.entity';
 import { validateOrReject, ValidationError } from 'class-validator';
-import { LoginRequestDTO } from 'src/dto/loginRequest.dto';
+import { LoginRequestDTO } from '../dto/loginRequest.dto';
 import * as fs from 'fs';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 

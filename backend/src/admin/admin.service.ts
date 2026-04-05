@@ -18,7 +18,7 @@ import path from 'path';
 import { promises } from 'fs';
 import { GamesEntity } from '../entities/games.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
-import { PurchasesEntity } from 'src/entities/purchases.entity';
+import { PurchasesEntity } from '../entities/purchases.entity';
 
 @Injectable()
 export class AdminService {

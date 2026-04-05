@@ -3,15 +3,15 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from '../dto/login.dto';
 import { Repository } from 'typeorm';
-import { LoginEntity } from 'src/entities/login.entity';
+import { LoginEntity } from '../entities/login.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PlayerDTO } from 'src/dto/player.dto';
-import { PlayerEntity } from 'src/entities/player.entity';
-import { AdminEntity } from 'src/entities/admin.entity';
-import { DeveloperEntity } from 'src/entities/developer.entity';
+import { PlayerDTO } from '../dto/player.dto';
+import { PlayerEntity } from '../entities/player.entity';
+import { AdminEntity } from '../entities/admin.entity';
+import { DeveloperEntity } from '../entities/developer.entity';
 import { MailerService } from '@nestjs-modules/mailer';
-import { LoginRequestDTO } from 'src/dto/loginRequest.dto';
-import { GamesEntity } from 'src/entities/games.entity';
+import { LoginRequestDTO } from '../dto/loginRequest.dto';
+import { GamesEntity } from '../entities/games.entity';
 
 @Injectable()
 export class AuthService {

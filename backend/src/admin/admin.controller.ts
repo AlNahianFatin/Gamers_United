@@ -2,7 +2,7 @@ import { Body, Controller, Delete, ForbiddenException, Get, HttpException, HttpS
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { MulterError, diskStorage } from 'multer';
 import * as bcrypt from 'bcrypt';
-import { SessionGuard } from 'src/session.guard';
+import { SessionGuard } from '../session.guard';
 import { AdminService } from './admin.service';
 import { GamesDTO } from '../dto/games.dto';
 import { PurchasesDTO } from '../dto/purchases.dto';
@@ -23,7 +23,7 @@ import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 import { GamesEntity } from '../entities/games.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('admin')
 export class AdminController {
