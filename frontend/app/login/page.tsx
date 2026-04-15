@@ -32,7 +32,7 @@ export default function LoginPage() {
       <LoginForm />
       <div style={{ background: "black", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center" }}>
         <label>Don't have an account?</label>
-        <Link href="/signup" style={{  paddingLeft: "10px" }}>Signup</Link>
+        <Link href="/signup" style={{  color: "red", paddingLeft: "10px" }}>Signup</Link>
       </div>
     </>
   );

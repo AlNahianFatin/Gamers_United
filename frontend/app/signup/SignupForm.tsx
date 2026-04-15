@@ -17,7 +17,7 @@ export default function SignupForm() {
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [rpassword, setRPassword] = useState("");
-    
+
     const [globalError, setGlobalError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -101,7 +101,9 @@ export default function SignupForm() {
     return (
         <>
             {globalError && <ErrorAlert text={globalError} />}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="bg-base-200 border-base-300 rounded-box w-xs border p-4">
+                <legend className="fieldset-legend">Signup</legend>
+
                 <div className="field">
                     <label>Username:</label>
                     <input type="text" placeholder="Username" name="username" value={username} onChange={e => { setUsername(e.target.value); setErrors(prev => ({ ...prev, username: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.username} </p> <br></br>

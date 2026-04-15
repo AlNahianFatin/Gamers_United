@@ -33,7 +33,7 @@ type Game = {
 
 async function getGames(): Promise<Game[]> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getBestsellerGames`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getFiveBestsellerGames`, {
             cache: "no-store",
         });
 
@@ -47,7 +47,7 @@ async function getGames(): Promise<Game[]> {
     }
 }
 
-export default async function GetBestsellers() {
+export default async function FiveBestsellers() {
     const games = await getGames();
 
     if (!games.length) {

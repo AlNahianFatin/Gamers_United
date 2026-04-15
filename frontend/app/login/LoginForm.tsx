@@ -24,7 +24,7 @@ export default function LoginForm() {
     useEffect(() => {
         setClientReady(true);
     }, []);
-    
+
     if (!clientReady)
         return null;
 
@@ -115,7 +115,9 @@ export default function LoginForm() {
     return (
         <>
             {globalError && <ErrorAlert text={globalError} />}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="bg-base-200 border-base-300 rounded-box w-xs border p-4">
+                {/* <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4"> */}
+                <legend className="fieldset-legend">Login</legend>
                 <div className="field">
                     <label>Username: </label>
                     <input type="text" placeholder="Username" value={username} onChange={e => { setUsername(e.target.value); setUNameError(""); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {uNameError} </p> <br></br>
@@ -130,6 +132,7 @@ export default function LoginForm() {
 
                 {/* <button type="submit">Login</button> <br></br> */}
                 <Button text={"Login"}></Button> <br></br>
+                {/* </fieldset> */}
             </form>
         </>
     );
