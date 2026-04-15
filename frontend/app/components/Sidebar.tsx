@@ -19,11 +19,11 @@ export default function Sidebar({ children, id, index }: any) {
         try {
             localStorage.clear();
             await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
-            router.push(`../`);
+            router.push(`../login`);
         }
         catch (error) {
             console.warn("Logout failed, forcing client logout. Error:", error);
-            router.push("../");
+            router.push("/");
         }
     };
 

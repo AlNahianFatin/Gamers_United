@@ -62,7 +62,7 @@ export default function getPlayers() {
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/getPlayers`, { withCredentials: true });
             setPlayers(response.data);
 
-            const allGameIds = response.data.flatMap((p: any) => p.game_ids.map((id: string) => Number(id.trim())));
+            const allGameIds = response.data.flatMap((p: any) => (p.game_ids || []).map((id: string) => Number(id.trim())));
             const uniqueGameIds = Array.from(new Set(allGameIds));
 
             const titles: { [key: number]: string } = {};
@@ -134,7 +134,7 @@ export default function getPlayers() {
                         <p className="text-sm"> Total Owned Games: {item.game_ids?.length ? item.game_ids.length : 0} </p>
 
                         {item.game_ids?.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
+                            <div className="flex flex-wrap gap-2 mt-2 max-w-[20em]">
                                 {item.game_ids.map((g) => {
                                     const id = Number(g.trim());
                                     return (

@@ -53,7 +53,7 @@ export class AuthService {
       httpOnly: true,
       // secure: true,        
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, 
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     // const mailed = await this.mailerService.sendMail({
@@ -73,7 +73,7 @@ export class AuthService {
   //   return this.revokedTokens.has(token);
   // }
 
-  async logout(session?, token?: string, res?): Promise<object> {
+  async logout(session?, res?): Promise<object> {
     // if (!session?.user)
     //   throw new HttpException('You are not currently logged in', HttpStatus.BAD_REQUEST);
 
@@ -96,28 +96,33 @@ export class AuthService {
 
     // return { message: 'Logged out successfully' };
 
-     try {
-    res.clearCookie('jwtToken', {
-      httpOnly: true,
-      sameSite: 'strict',
-    });
-
-    if (session) {
-      await new Promise((resolve, reject) => {
-        session.destroy((err) => {
-          if (err) reject(err);
-          else resolve(true);
-        });
+    try {
+      res.clearCookie('jwtToken', {
+        httpOnly: true,
+        sameSite: 'strict',
       });
-    }
 
-    return { message: 'Logged out successfully' };
-  } catch (err) {
-    throw new HttpException(
-      'Logout failed',
-      HttpStatus.INTERNAL_SERVER_ERROR
-    );
-  }
+      res.clearCookie('connect.sid', {
+        httpOnly: true,
+        sameSite: 'strict',
+      });
+
+      if (session) {
+        await new Promise((resolve, reject) => {
+          session.destroy((err) => {
+            if (err)
+              reject(err);
+            else
+              resolve(true);
+          });
+        });
+      }
+
+      return { message: 'Logged out successfully' };
+    }
+    catch (err) {
+      throw new HttpException('Logout failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   private otpStore = new Map<string, { otp: string, expires: number }>();
@@ -234,11 +239,26 @@ export class AuthService {
     return games;
   }
 
-  async getBestsellerGames(): Promise<GamesEntity[] | object> {
-    const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'] });
-    if (!games || games.length === 0)
+  // async getBestsellerGames(): Promise<GamesEntity[] | object> {
+  //   const games = await this.gamesRepository.find({ order: { purchase_count: 'DESC' }, relations: ['categories', 'developer'] });
+  //   if (!games || games.length === 0)
+  //     throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
+  //   return games;
+  // }
+
+  async getBestsellerGames(page: number, limit: number) {
+    const [games, total] = await this.gamesRepository.findAndCount({
+      order: { purchase_count: 'DESC' },
+      relations: ['categories', 'developer'],
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    if (!games.length) {
       throw new HttpException(`No game found!`, HttpStatus.NOT_FOUND);
-    return games;
+    }
+
+    return { data: games, total, page, lastPage: Math.ceil(total / limit) };
   }
 
   async getFullGameByID(gameID: number): Promise<GamesEntity> {

@@ -2,7 +2,7 @@ import GetBestsellers from "./getBestsellers";
 
 import Link from "next/link";
 import { Jaro, Itim, Inika, Inter } from 'next/font/google';
-import "../globals.css";
+// import "../globals.css";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,9 @@ const itim = Itim({ subsets: ['latin'], weight: '400' });
 const inika = Inika({ subsets: ['latin'], weight: '400' });
 const inter = Inter({ subsets: ['latin'] });
 
-export default async function HomePage() {
+export default async function BestSellersPage({ searchParams }: any) {
+    const params = await searchParams;
+    const page = Number(params.page) || 1;
     return (
         <>
             <div className="bg-red-500">
@@ -39,7 +41,7 @@ export default async function HomePage() {
             </div>
 
             <div style={{ margin: "3em 0" }} className="flex flex-wrap justify-center gap-20">
-                <GetBestsellers />
+                <GetBestsellers page={page} />
             </div>
         </>
     );

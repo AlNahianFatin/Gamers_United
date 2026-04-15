@@ -21,7 +21,7 @@ export default function Admin() {
   const [clientReady, setClientReady] = useState(false);
 
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
-  const [totalSales, setTotalSales] = useState(0);
+  // const [totalSales, setTotalSales] = useState(0);
 
   const [globalError, setGlobalError] = useState("");
 

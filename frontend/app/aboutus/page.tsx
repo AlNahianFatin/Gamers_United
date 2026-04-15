@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { Jaro, Itim, Inika, Inter } from 'next/font/google';
-import "../globals.css"
+// import { Jaro, Itim, Inika, Inter } from 'next/font/google';
 
-const jaro = Jaro({ subsets: ['latin'], weight: '400' });
-const itim = Itim({ subsets: ['latin'], weight: '400' });
-const inika = Inika({ subsets: ['latin'], weight: '400' });
-const inter = Inter({ subsets: ['latin'] });
+// const jaro = Jaro({ subsets: ['latin'], weight: '400' });
+// const itim = Itim({ subsets: ['latin'], weight: '400' });
+// const inika = Inika({ subsets: ['latin'], weight: '400' });
+// const inter = Inter({ subsets: ['latin'] });
 
 export default function AboutPage() {
   return (
-    <div className="bg-black h-screen">
+    <div className="bg-black min-h-full">
       <div className="bg-red-500">
 
         <div className="flex justify-end">
@@ -38,7 +37,7 @@ export default function AboutPage() {
         Feel free to share your thoughts!
       </p>
 
-      <div className="flex flex-wrap justify-center gap-20" style={{ fontFamily: "Inter" }}>
+      <div className="flex flex-wrap justify-center gap-20 pb-20" style={{ fontFamily: "Inter" }}>
         <div className="card bg-base-100 w-66 shadow-sm">
           <figure className="px-10 pt-10">
             <img src="/Fatin.jpg" alt="Al Nahian Fatin" className="rounded-xl" />

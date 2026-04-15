@@ -31,29 +31,31 @@ export default function AdminPage() {
     }, 2000);
   };
 
-  const logout = async () => {
-    try {
-      localStorage.clear();
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
-      router.push(`./login`);
-    }
-    catch (error) {
-      console.warn("Logout failed, forcing client logout. Error:", error);
-      router.push("/login");
-    }
-  };
+  // const logout = async () => {
+  //   try {
+  //     localStorage.clear();
+  //     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
+  //     router.push(`/login`);
+  //   }
+  //   catch (error) {
+  //     console.warn("Logout failed, forcing client logout. Error:", error);
+  //     router.push("/");
+  //   }
+  // };
 
   useEffect(() => {
     if (!params.id) {
-      router.replace(`/admin/${params.id}/not-found`);
+      router.replace("/login");
       return;
     }
 
     const fetchUser = async () => {
       try {
         const storedToken = localStorage.getItem("id");
-        if (!storedToken)
-          router.replace(`/admin/${params.id}/not-found`);
+        if (!storedToken) {
+          router.replace("/login");
+          return;
+        }
 
         const profileRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/profile`, { withCredentials: true });
 
@@ -63,6 +65,10 @@ export default function AdminPage() {
         }
 
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminByID/${profileRes.data.id}`, { withCredentials: true });
+        if (Number(params.id) !== profileRes.data.id) {
+          router.replace(`/admin/${params.id}/not-found`);
+          return;
+        }
         setUserData(response.data);
         console.log(userData);
         setClientReady(true);
@@ -80,7 +86,7 @@ export default function AdminPage() {
         }
         else {
           showError("Server not reachable. Check your internet connection.");
-          router.push('/login');
+          router.push('/');
         }
       }
     };
@@ -107,8 +113,7 @@ export default function AdminPage() {
         </div>
 
         <div className="w-min">
-          {/* <Sidebar id={userData?.id} index={1} /> */}
-          <Header name={userData?.username || "Unknown"} imageUrl={imageUrl} />
+          <Header name={userData?.username || "Unknown"} id={userData?.id || "ID not found"} imageUrl={imageUrl} />
         </div>
       </div>
     </>

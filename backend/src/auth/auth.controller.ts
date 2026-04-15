@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Request, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch, UseFilters } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, UsePipes, ValidationPipe, Request, Res, Session, UseInterceptors, UploadedFile, HttpException, HttpStatus, BadRequestException, Param, Patch, UseFilters, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from '../dto/login.dto';
@@ -30,7 +30,7 @@ export class AuthController {
     return req.user;
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Session() session, @Req() req, @Res({ passthrough: true }) res): Promise<any> {
     // const authHeader = req.headers?.authorization ?? '';
@@ -134,10 +134,15 @@ export class AuthController {
     catch (error) { throw error; }
   }
 
+  // @Get('getBestsellerGames')
+  // async getBestsellerGames() {
+  //   try { return await this.authService.getBestsellerGames(); }
+  //   catch (error) { throw error; }
+  // }
+
   @Get('getBestsellerGames')
-  async getBestsellerGames() {
-    try { return await this.authService.getBestsellerGames(); }
-    catch (error) { throw error; }
+  async getBestsellerGames(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
+    return this.authService.getBestsellerGames(page, limit);
   }
 
   @Get('getFullGameByID/:gameID')

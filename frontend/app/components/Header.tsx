@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-export default function Header({ children, name, imageUrl }: any) {
+export default function Header({ name, id, imageUrl }: any) {
     return (
         <>
             <div className='flex justify-end px-4 pt-4'>
@@ -12,6 +12,7 @@ export default function Header({ children, name, imageUrl }: any) {
                 </div>
             </div>
             <h2 className='flex justify-end px-4 pt-4'>Welcome Back, {name}</h2>
+            <h2 className='flex justify-end px-4 pt-4'>ID: {id}</h2>
         </>
     )
 }
