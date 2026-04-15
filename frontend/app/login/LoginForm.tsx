@@ -115,25 +115,27 @@ export default function LoginForm() {
     return (
         <>
             {globalError && <ErrorAlert text={globalError} />}
-            <form onSubmit={handleSubmit} className="bg-base-200 border-base-300 rounded-box w-xs border p-4">
-                {/* <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4"> */}
-                <legend className="fieldset-legend">Login</legend>
-                <div className="field">
-                    <label>Username: </label>
-                    <input type="text" placeholder="Username" value={username} onChange={e => { setUsername(e.target.value); setUNameError(""); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {uNameError} </p> <br></br>
-                </div>
+            <div className="flex items-center justify-center p-4">
+                <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
+                    <legend className="text-2xl font-bold text-center">Login</legend>
 
-                <div className="field">
-                    <label>Password: </label>
-                    <input type="password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setPassError(""); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {passError} </p>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <label>Username: </label>
+                        <input type="text" placeholder="Username" className="input input-bordered w-full max-w-md" value={username} onChange={e => { setUsername(e.target.value); setUNameError(""); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {uNameError} </p> <br></br>
+                    </div>
 
-                <Link href="/forgotpass" style={{ textAlign: "right", color: "red", paddingLeft: "100px", paddingTop: "10px" }}>Forgot Password?</Link><br></br>
+                    <div className="form-control w-full max-w-md">
+                        <label>Password: </label>
+                        <input type="password" placeholder="Password" className="input input-bordered w-full max-w-md" value={password} onChange={e => { setPassword(e.target.value); setPassError(""); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {passError} </p>
+                    </div>
 
-                {/* <button type="submit">Login</button> <br></br> */}
-                <Button text={"Login"}></Button> <br></br>
-                {/* </fieldset> */}
-            </form>
+                    <Link href="/forgotpass" style={{ color: "red", textAlign: "right", marginTop: "1em" }}>Forgot Password?</Link><br></br>
+
+                    <Button text={"Login"}></Button> <br></br>
+                </form>
+            </div>
         </>
     );
 }

@@ -106,7 +106,7 @@ export class AdminService {
       throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
     else {
       const adminExists = await this.adminRepository.findOne({ where: { username: adminDto.username, id: Not(id) } });
-      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(exists.login.id) }});
+      const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(exists.login.id) } });
       if (adminExists || loginExists)
         throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
@@ -312,12 +312,11 @@ export class AdminService {
       if (playerExists || loginExists)
         throw new HttpException(`User with username ${playerDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
       else {
-        await this.playerRepository.update({ id }, {
-          username: playerDto.username || exists.username,
-          image: playerDto.image || exists.image,
-          phone: playerDto.phone || exists.phone,
-          NID: playerDto.NID || exists.NID
-        });
+        exists.username = playerDto.username?.trim() ? playerDto.username : exists.username;
+        exists.image = playerDto.image || exists.image;
+        exists.phone = playerDto.phone || exists.phone;
+        exists.NID = playerDto.NID || exists.NID;
+
         const newGameIds = playerDto.game_ids ?? [];
         const oldGameIds = exists.game_ids ?? [];
 
@@ -348,7 +347,7 @@ export class AdminService {
           loginDto.ban = false;
         loginDto.role = "player";
         await this.loginRepository.update({ id }, {
-          username: loginDto.username || exists.login.username,
+          username: loginDto.username?.trim() ? loginDto.username : exists.login.username,
           password: loginDto.password || exists.login.password,
           email: loginDto.email || exists.login.email,
           role: loginDto.role || exists.login.role,
@@ -849,7 +848,7 @@ export class AdminService {
       return { message: `No purchase record found!` };
     return purchases;
   }
-  
+
   async getRecentTopPurchases(): Promise<PurchasesEntity[] | object> {
     const purchases = await this.purchasesRepository.find({ order: { amount: 'DESC' }, relations: ['player'], take: 10 });
     if (!purchases || purchases.length === 0)

@@ -101,49 +101,56 @@ export default function SignupForm() {
     return (
         <>
             {globalError && <ErrorAlert text={globalError} />}
-            <form onSubmit={handleSubmit} className="bg-base-200 border-base-300 rounded-box w-xs border p-4">
-                <legend className="fieldset-legend">Signup</legend>
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
+                    <legend className="text-2xl font-bold text-center">Signup</legend>
 
-                <div className="field">
-                    <label>Username:</label>
-                    <input type="text" placeholder="Username" name="username" value={username} onChange={e => { setUsername(e.target.value); setErrors(prev => ({ ...prev, username: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.username} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">Username:</span>
+                        <input type="text" placeholder="Username" className="input input-bordered w-full max-w-md" name="username" value={username} onChange={e => { setUsername(e.target.value); setErrors(prev => ({ ...prev, username: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.username} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>Email:</label>
-                    <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }} /> <p style={{ color: "red", paddingLeft: "60px" }}> {errors.email} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">Email:</span>
+                        <input type="email" placeholder="Email" className="input input-bordered w-full max-w-md" name="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.email} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>Profile Image:</label>
-                    {/* <input type="file" className="file-input file-input-error" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br> */}
-                    <input type="file" id="image" placeholder="Profile Image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); } }} /> <p style={{ color: "red", paddingLeft: "120px" }}> {errors.image} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">Profile Image:</span>
+                        <input type="file" className="file-input file-input-bordered w-full max-w-md" id="image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); setErrors(prev => ({ ...prev, image: "" })); } }} />
+                        <p className="label-text-alt font-extralight" style={{ textAlign: "right" }}>Max size 10MB</p>
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.image} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>NID:</label>
-                    <input type="text" placeholder="NID" name="NID" value={NID} onChange={e => { setNid(e.target.value); setErrors(prev => ({ ...prev, NID: "" })); }} /> <p style={{ color: "red", paddingLeft: "40px" }}> {errors.NID} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">NID:</span>
+                        <input type="text" placeholder="NID" className="input input-bordered w-full max-w-md" name="NID" value={NID} onChange={e => { setNid(e.target.value); setErrors(prev => ({ ...prev, NID: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.NID} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>Phone No.:</label>
-                    <input type="tel" placeholder="Phone No." name="phone" value={phone} onChange={e => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: "" })); }} /> <p style={{ color: "red", paddingLeft: "100px" }}> {errors.phone} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">Phone No.:</span>
+                        <input type="tel" placeholder="Phone No." className="input input-bordered w-full max-w-md" name="phone" value={phone} onChange={e => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.phone} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>Password:</label>
-                    <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red", paddingLeft: "90px" }}> {errors.password} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">Password:</span>
+                        <input type="password" placeholder="Password" className="input input-bordered w-full max-w-md" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.password} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>Retype Password:</label>
-                    <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "150px" }}> {errors.rpassword} </p> <br></br>
-                </div>
+                    <div className="form-control w-full max-w-md">
+                        <span className="label-text">Retype Password:</span>
+                        <input type="password" placeholder="Retype Password" className="input input-bordered w-full max-w-md" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.rpassword} </p> <br></br>
+                    </div>
 
-                {/* <button type="submit">Register</button><br></br> */}
-                {/* <Button text={"Signup"} /> <br></br> */}
-                <Button text={"Signup"}></Button> <br></br>
-            </form>
+                    <Button text={"Signup"}></Button> <br></br>
+                </form>
+            </div>
         </>
     )
 }

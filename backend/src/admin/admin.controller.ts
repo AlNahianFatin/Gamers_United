@@ -159,7 +159,7 @@ export class AdminController {
       },
     })
   }))
-  // @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard)
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe({ transform: true }))
   async updateFullAdmin(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body() body: any) {
@@ -341,12 +341,14 @@ export class AdminController {
     })
   }))
   @UseGuards(SessionGuard)
+  // @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async updateFullPlayer(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const playerDto = plainToInstance(PlayerDTO, {
       username: body.username,
       phone: body.phone,
-      NID: body.NID
+      NID: body.NID,
+      game_ids: body.game_ids //Frontend must send -> game_ids.forEach(id => { formData.append("game_ids[]", id.toString());});
     });
     await validateOrReject(playerDto);
 

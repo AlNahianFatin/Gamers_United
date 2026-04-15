@@ -30,9 +30,9 @@ export default function LoginPage() {
 
       </div>
       <LoginForm />
-      <div style={{ background: "black", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div style={{ background: "black", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center", paddingBottom: "1em"  }}>
         <label>Don't have an account?</label>
-        <Link href="/signup" style={{  color: "red", paddingLeft: "10px" }}>Signup</Link>
+        <Link href="/signup" style={{  color: "red", paddingLeft: "1em" }}>Signup</Link>
       </div>
     </>
   );
