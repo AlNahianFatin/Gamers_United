@@ -7,7 +7,7 @@ export default function Accordion({ children, name }: any) {
         <>
             <details className="collapse collapse-arrow bg-gray-900 border border-transparent open:border-white transition-all" name="my-accordion-det-1">
                 <summary className="collapse-title font-semibold">How do I create an account?</summary>
-                <div className="collapse-content text-sm">Click the "Sign Up" button in the top right corner and follow the registration process.</div>
+                <div className="collapse-content text-sm">Click the "Signup" button in the top right corner and follow the registration process.</div>
             </details>
             <details className="collapse collapse-arrow bg-gray-900 border border-transparent open:border-white transition-all" name="my-accordion-det-1">
                 <summary className="collapse-title font-semibold">I forgot my password. What should I do?</summary>

@@ -102,21 +102,22 @@ export default function VerifyOTPPage() {
             </div>
 
             {globalError && <ErrorAlert text={globalError} />}
-            <form onSubmit={handleSubmit}>
-                <div className="field">
-                    <label>Password:</label>
-                    <input type="password" placeholder="Password" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} /> <p style={{ color: "red", paddingLeft: "90px" }}> {errors.password} </p> <br></br>
-                </div>
+            <div className="flex items-center justify-center p-4">
+                <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
+                    <div className="form-control w-full max-w-md">
+                        <label>Password:</label>
+                        <input type="password" placeholder="Password" className="input input-bordered w-full max-w-md" name="password" value={password} onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.password} </p> <br></br>
+                    </div>
 
-                <div className="field">
-                    <label>Retype Password:</label>
-                    <input type="password" placeholder="Retype Password" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {errors.rpassword} </p> <br></br>
-                </div>
-
-                {/* <button type="submit">Reset</button><br></br> */}
-                {/* <Button text={"Reset"} /> <br></br> */}
-                <Button text={"Reset"}></Button> <br></br>
-            </form>
+                    <div className="form-control w-full max-w-md">
+                        <label>Retype Password:</label>
+                        <input type="password" placeholder="Retype Password" className="input input-bordered w-full max-w-md" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.rpassword} </p> <br></br>
+                    </div>
+                    <Button text={"Reset"}></Button> <br></br>
+                </form>
+            </div>
         </>
     );
 }

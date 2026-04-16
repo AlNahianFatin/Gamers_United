@@ -21,8 +21,8 @@ export default function VerifyOTPPage() {
   useEffect(() => {
     setClientReady(true);
   }, []);
-  
-  if (!clientReady) 
+
+  if (!clientReady)
     return null;
 
   // useEffect(() => {
@@ -92,19 +92,16 @@ export default function VerifyOTPPage() {
       </div>
 
       {globalError && <ErrorAlert text={globalError} />}
-
-      <form onSubmit={handleSubmit}>
-        <div className="field">
-          <label>Enter OTP: </label>
-          <input type="text" placeholder="OTP" name="otp" value={otp} onChange={e => { setOtp(e.target.value); setOtpError(""); }} /> <br />
-        </div>
-
-        {otpError && <p style={{ color: "red", paddingLeft: "80px" }}>{otpError}</p>}
-
-        {/* <button type="submit">Verify</button> */}
-        {/* <Button text={"Verify"} /> <br></br> */}
-        <Button text={"Verify"}></Button> <br></br>
-      </form>
+      <div className="flex items-center justify-center p-4">
+        <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
+          <div className="form-control w-full max-w-md">
+            <label>Enter OTP: </label>
+            <input type="text" placeholder="OTP" className="input input-bordered w-full max-w-md" name="otp" value={otp} onChange={e => { setOtp(e.target.value); setOtpError(""); }} /> <br />
+            <p style={{ color: "red", textAlign: "center" }}> {otpError} </p> <br></br>
+          </div>
+          <Button text={"Verify"}></Button> <br></br>
+        </form>
+      </div>
     </>
   );
 }

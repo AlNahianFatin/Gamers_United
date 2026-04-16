@@ -140,16 +140,28 @@ export class AuthService {
       pass += keys[randomKey];
     }
 
-    const expires = Date.now() + 5 * 60 * 1000;
+    const emailKey = email.trim().toLowerCase();
+
+    const existing = this.otpStore.get(emailKey);
+    if (existing && Date.now() < existing.expires) 
+      throw new HttpException("OTP already sent. Please wait.", HttpStatus.TOO_MANY_REQUESTS);
+
+    const expiresIn = 5 * 60 * 1000;
+    const expires = Date.now() + expiresIn;
     this.otpStore.set(email.trim().toLowerCase(), { otp: pass, expires });
+
+    setTimeout(() => {
+      this.otpStore.delete(emailKey);
+    }, expiresIn);
 
     const mailed = await this.mailerService.sendMail({
       to: email,
       subject: 'OTP',
-      text: `Your OTP for Gamers United password reset is ${pass}. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
+      text: `Your OTP for Gamers United password reset is ${pass}. Please enter OTP within next 5 minutes or it will expire. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
     });
     if (!mailed)
       throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
+
 
     return { message: "OTP sent to email" };
   }
@@ -161,8 +173,10 @@ export class AuthService {
     if (!record)
       throw new HttpException("OTP not found", HttpStatus.BAD_REQUEST);
 
-    if (Date.now() > record.expires)
+    if (Date.now() > record.expires) {
+      this.otpStore.delete(email);
       throw new HttpException("OTP expired", HttpStatus.BAD_REQUEST);
+    }
 
     if (record.otp !== otp)
       throw new HttpException("Invalid OTP", HttpStatus.BAD_REQUEST);

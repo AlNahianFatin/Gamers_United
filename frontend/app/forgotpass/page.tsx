@@ -85,15 +85,16 @@ export default function ForgotPass() {
             </div>
 
             {globalError && <ErrorAlert text={globalError} />}
-            <form onSubmit={handleSubmit}>
-                <div className="field">
-                    <label>Enter your email: </label>
-                    <input type="email" placeholder="Email" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} /> <p style={{ color: "red", paddingLeft: "140px" }}> {emailError} </p> <br></br>
-                </div>
-                <Button text={"Send OTP"}></Button> <br></br>
-                {/* <Button text={"Send OTP"} /> <br></br> */}
-                {/* <button type="submit">Send OTP</button> <br></br> */}
-            </form >
+            <div className="flex items-center justify-center p-4">
+                <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
+                    <div className="form-control w-full max-w-md">
+                        <label>Enter your email: </label>
+                        <input type="email" placeholder="Email" className="input input-bordered w-full max-w-md" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {emailError} </p> <br></br>
+                    </div>
+                    <Button text={"Send OTP"}></Button> <br></br>
+                </form >
+            </div>
         </>
     );
 }
