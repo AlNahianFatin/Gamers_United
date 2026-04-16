@@ -33,8 +33,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Session() session, @Req() req, @Res({ passthrough: true }) res): Promise<any> {
-    // const authHeader = req.headers?.authorization ?? '';
-    // const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
     try { return await this.authService.logout(session, res); }
     catch (error) { throw error; }
   }
@@ -52,10 +50,14 @@ export class AuthController {
   }
 
   @Patch('resetpass')
-  async resetPass(@Body() body: { email: string; newPass: string }): Promise<any> {
+  async resetPass(@Body() body: { email: string; newPass: string, oldPass: string }): Promise<any> {
     const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.newPass, salt);
-    try { return this.authService.resetPass(body.email, hashedpass); }
+    const hashedNewPass = await bcrypt.hash(body.newPass, salt);
+    const hashedOldPass = await bcrypt.hash(body.oldPass, salt);
+
+    if (hashedNewPass !== hashedOldPass)
+      throw new HttpException({ message: [{ field: 'rPassword', messages: [`Passwords do not match! Recheck your password`] }] }, HttpStatus.NOT_FOUND);
+    try { return this.authService.resetPass(body.email, hashedNewPass); }
     catch (error) { throw error; }
   }
 

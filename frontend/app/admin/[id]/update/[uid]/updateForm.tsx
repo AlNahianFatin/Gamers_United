@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import Button from "../../../../components/Button";
 import Alert from "../../../../components/Alert";
@@ -21,10 +20,10 @@ export default function UpdateForm({ adminID }: { adminID: number }) {
     const [globalError, setGlobalError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // const router = useRouter();
     const [successMsg, setSuccessMsg] = useState("");
 
     useEffect(() => { setClientReady(true); }, []);
+
     if (!clientReady)
         return null;
 
@@ -43,10 +42,6 @@ export default function UpdateForm({ adminID }: { adminID: number }) {
             setErrors({ noInput: "Please update at least one field" });
             return;
         }
-        // else {
-        //     newErrors.noInput = "";
-        //     setErrors(prev => ({ ...prev, noInput: "" }));
-        // }
 
         if (password === "")
             newErrors.password = "Please enter current password first!";
@@ -62,17 +57,15 @@ export default function UpdateForm({ adminID }: { adminID: number }) {
             return;
 
         try {
-            // const existingData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminByID/${adminID}`, { withCredentials: true });
-
             const userData = new FormData();
             if (username.trim()) userData.set('username', username);
             if (email.trim()) userData.set('email', email);
+            if (image) userData.set("image", image);
             if (NID.trim()) userData.set('NID', NID);
             if (phone.trim()) userData.set('phone', phone);
-            if (image) userData.set("image", image);
+            if (password.trim()) userData.set('password', password);
 
             const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/updateFullAdmin/${adminID}`, userData, { withCredentials: true });
-            console.log("BODY SENT:", Object.fromEntries(userData.entries()));
 
             if (response.status === 200) {
                 setUsername("");
@@ -94,27 +87,6 @@ export default function UpdateForm({ adminID }: { adminID: number }) {
             console.log("FULL ERROR:", error);
             console.log("MESSAGE:", error.message);
             console.log("CODE:", error.code);
-
-            // if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
-            //     const backendErrors: Record<string, string> = {};
-            //     // error.response.data.message.forEach((err: any) => {
-            //     //     backendErrors[err.field] = err.messages.join(', ');
-            //     // });
-            //     error.response?.data?.message.forEach((err: any) => {
-            //         backendErrors[err.property] =
-            //             Object.values(err.constraints).join(", ");
-            //     });
-            //     setErrors(prev => ({ ...prev, ...backendErrors }));
-            // }
-            // // if (error.response?.data?.message) {
-            // //     if (Array.isArray(error.response.data.message)) {
-            // //         setErrors({ backendErrors: error.response.data.message.join(", ") });
-            // //     } else {
-            // //         setErrors({ backendErrors: error.response.data.message });
-            // //     }
-            // // }
-            // else
-            //     showError("Server not reachable. Check your internet connection.");
 
             if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
                 const backendErrors: Record<string, string> = {};

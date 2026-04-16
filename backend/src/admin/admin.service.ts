@@ -1,22 +1,23 @@
 import { HttpException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { IsNull, Like, MoreThanOrEqual, MoreThan, Not, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import path from 'path';
+import * as bcrypt from 'bcrypt';
+import { promises } from 'fs';
+import { LoginDTO } from '../dto/login.dto';
+import { CreateAdminDTO } from '../dto/createAdmin.dto';
+import { UpdateAdminDTO } from '../dto/updateAdmin.dto';
+import { DeveloperDTO } from '../dto/developer.dto';
+import { PlayerDTO } from '../dto/player.dto';
 import { GamesDTO } from '../dto/games.dto';
+import { CategoriesDTO } from '../dto/categories.dto';
 import { PurchasesDTO } from '../dto/purchases.dto';
 import { ViewsDTO } from '../dto/views.dto';
 import { PlaysDTO } from '../dto/plays.dto';
-import { CategoriesDTO } from '../dto/categories.dto';
-import { CreateAdminDTO } from '../dto/createAdmin.dto';
-import { UpdateAdminDTO } from '../dto/updateAdmin.dto';
-import { PlayerDTO } from '../dto/player.dto';
-import { DeveloperDTO } from '../dto/developer.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { LoginEntity } from '../entities/login.entity';
 import { AdminEntity } from '../entities/admin.entity';
-import { PlayerEntity } from '../entities/player.entity';
 import { DeveloperEntity } from '../entities/developer.entity';
-import { LoginDTO } from '../dto/login.dto';
-import path from 'path';
-import { promises } from 'fs';
+import { PlayerEntity } from '../entities/player.entity';
 import { GamesEntity } from '../entities/games.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
 import { PurchasesEntity } from '../entities/purchases.entity';
@@ -101,7 +102,7 @@ export class AdminService {
     }
   }
 
-  async updateFullAdmin(id: number, adminDto: UpdateAdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
+  async updateFullAdmin(id: number, password: string, adminDto: UpdateAdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
     const exists = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
     if (!exists)
       throw new HttpException({ message: [{ field: 'id', messages: [`Admin with id ${id} not found!`] }] }, HttpStatus.NOT_FOUND);
@@ -109,8 +110,15 @@ export class AdminService {
       const adminExists = await this.adminRepository.findOne({ where: { username: adminDto.username, id: Not(id) } });
       const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(exists.login.id) } });
       if (adminExists || loginExists)
-        throw new HttpException({ message: [{ field: 'username', messages: [`User with username ${adminDto.username} already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
+        throw new HttpException({ message: [{ field: 'username', messages: [`User with username '${adminDto.username}' already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
       else {
+        if (!password)
+          throw new HttpException({ message: [{ field: 'password', messages: ['Password is required'] }] }, HttpStatus.BAD_REQUEST);
+
+        const isMatch = await bcrypt.compare(password, exists.login.password);
+        if (!isMatch)
+          throw new HttpException({ message: [{ field: 'password', messages: [`Incorrect password`] }] }, HttpStatus.BAD_REQUEST);
+
         await this.adminRepository.update({ id }, {
           username: adminDto.username ?? exists.username,
           image: adminDto.image ?? exists.image,

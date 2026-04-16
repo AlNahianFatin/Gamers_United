@@ -9,15 +9,14 @@ import ErrorAlert from "../components/Alert";
 
 export default function ForgotPass() {
     const [email, setEmail] = useState("");
-    const [emailError, setEmailError] = useState("");
-    const router = useRouter();
-
+    // const [emailError, setEmailError] = useState("");
     const [globalError, setGlobalError] = useState("");
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const router = useRouter();
     const [clientReady, setClientReady] = useState(false);
-    useEffect(() => {
-        setClientReady(true);
-    }, []);
+
+    useEffect(() => { setClientReady(true); }, []);
     if (!clientReady)
         return null;
 
@@ -30,31 +29,31 @@ export default function ForgotPass() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const newErrors: Record<string, string> = {};
 
-        if (email == "") {
-            setEmailError("Please enter your email!")
+        if (email.trim() == "")
+            newErrors.email = "Please enter your email!";
+
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0)
             return;
-        }
-        else
-            setEmailError("")
 
         try {
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/forgotpass`, { email: email });
-            router.push(`/verifyotp/${email}`);
+
+            if (response.status === 201)
+                router.push(`/verifyotp/${email}`);
         }
         catch (error: any) {
-            // console.log("API:", process.env.NEXT_PUBLIC_API_URL);
-            // console.log("FULL ERROR:", error);
-            // console.log("MESSAGE:", error.message);
-            // console.log("CODE:", error.code);
-            if (error.response)
-                setEmailError(error.response.data.message || "Something went wrong")
-            // alert(error.response.data.message || "Something went wrong");
-            else if (error.request)
-                showError("Server not reachable. Check your internet connection.");
-
+            if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
+                const backendErrors: Record<string, string> = {};
+                error.response.data.message.forEach((err: any) => {
+                    backendErrors[err.field] = err.messages.join(', ');
+                });
+                setErrors(backendErrors);
+            }
             else
-                showError("Unexpected error occurred");
+                showError("Server not reachable. Check your internet connection.");
         }
     };
 
@@ -89,8 +88,8 @@ export default function ForgotPass() {
                 <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
                     <div className="form-control w-full max-w-md">
                         <label>Enter your email: </label>
-                        <input type="email" placeholder="Email" className="input input-bordered w-full max-w-md" name="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(""); }} />
-                        <p style={{ color: "red", textAlign: "center" }}> {emailError} </p> <br></br>
+                        <input type="email" placeholder="Email" className="input input-bordered w-full max-w-md" name="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.email} </p> <br></br>
                     </div>
                     <Button text={"Send OTP"}></Button> <br></br>
                 </form >

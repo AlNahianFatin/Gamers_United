@@ -21,7 +21,7 @@ import { PlayerEntity } from '../entities/player.entity';
 import { DeveloperEntity } from '../entities/developer.entity';
 import { LoginDTO } from '../dto/login.dto';
 import { plainToInstance } from 'class-transformer';
-import { validateOrReject, ValidationError } from 'class-validator';
+import { validate, validateOrReject, ValidationError } from 'class-validator';
 import { GamesEntity } from '../entities/games.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -141,7 +141,7 @@ export class AdminController {
   @Put('updateFullAdmin/:id')
   @UseInterceptors(FileInterceptor('image', {
     fileFilter: (req, image, cb) => {
-      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg|png)$/))
+      if (image.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
         cb(null, true);
       else
         cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
@@ -188,22 +188,41 @@ export class AdminController {
     });
     // await validateOrReject(loginDto);
 
-    try {
-      await validateOrReject(adminDto);
-      await validateOrReject(loginDto);
-    } 
-    catch (errors) {
-      const formattedErrors = (errors as ValidationError[]).map(err => ({
-        field: err.property,
-        messages: Object.values(err.constraints ?? {}),
-      }));
+    // try {
+    //   await validateOrReject(adminDto);
+    //   await validateOrReject(loginDto);
+    // } 
+    // catch (errors) {
+    //   const formattedErrors = (errors as ValidationError[]).map(err => ({
+    //     field: err.property,
+    //     messages: Object.values(err.constraints ?? {}),
+    //   }));
 
-      throw new BadRequestException({ message: formattedErrors });
+    //   throw new BadRequestException({ message: formattedErrors });
+    // }
+
+    try {
+      const errors = [
+        ...(await validate(adminDto)),
+        ...(await validate(loginDto))
+      ];
+
+      if (errors.length > 0) {
+        const formattedErrors = errors.map(err => ({
+          field: err.property,
+          messages: Object.values(err.constraints ?? {}),
+        }));
+
+        throw new BadRequestException({ message: formattedErrors });
+      }
+    }
+    catch (error) {
+      throw error;
     }
 
     if (file)
       adminDto.image = file.filename;
-    try { return this.adminService.updateFullAdmin(id, adminDto, loginDto); }
+    try { return this.adminService.updateFullAdmin(id, body.password, adminDto, loginDto); }
     catch (error) { throw error; }
   }
 

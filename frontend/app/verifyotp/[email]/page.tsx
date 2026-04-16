@@ -11,25 +11,16 @@ export default function VerifyOTPPage() {
   const [otp, setOtp] = useState("");
 
   const [globalError, setGlobalError] = useState("");
-  const [otpError, setOtpError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const router = useRouter();
   const params = useParams();
   const email = decodeURIComponent(params.email as string);
-
   const [clientReady, setClientReady] = useState(false);
-  useEffect(() => {
-    setClientReady(true);
-  }, []);
 
+  useEffect(() => { setClientReady(true); }, []);
   if (!clientReady)
     return null;
-
-  // useEffect(() => {
-  //   if (params.otp) {
-  //     setOtp(params.otp as string);
-  //   }
-  // }, [params.otp]);
 
   const showError = (msg: string) => {
     setGlobalError(msg);
@@ -40,25 +31,31 @@ export default function VerifyOTPPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email) {
-      setOtpError("Email missing. Please restart password reset.");
+    const newErrors: Record<string, string> = {};
+
+    if (!email.trim())
+      newErrors.otp = "Email missing. Please restart password reset.";
+
+    if (otp === "")
+      newErrors.otp = "Please enter the OTP first!";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0)
       return;
-    }
-    if (otp === "") {
-      setOtpError("Please enter the OTP first!");
-      return;
-    }
-    setOtpError("");
 
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/verifyotp`, { email, otp: otp.trim() });
-      router.push(`/resetpass/${email}`);
+
+      if (response.status === 201)
+        router.push(`/resetpass/${email}`);
     }
     catch (error: any) {
-      if (error.response) {
-        const status = error.response.status;
-        const message = error.response.data?.message || "OTP validation failed";
-        setOtpError(message);
+      if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
+        const backendErrors: Record<string, string> = {};
+        error.response.data.message.forEach((err: any) => {
+          backendErrors[err.field] = err.messages.join(', ');
+        });
+        setErrors(backendErrors);
       }
       else
         showError("Server not reachable. Check your internet connection.");
@@ -96,8 +93,8 @@ export default function VerifyOTPPage() {
         <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
           <div className="form-control w-full max-w-md">
             <label>Enter OTP: </label>
-            <input type="text" placeholder="OTP" className="input input-bordered w-full max-w-md" name="otp" value={otp} onChange={e => { setOtp(e.target.value); setOtpError(""); }} /> <br />
-            <p style={{ color: "red", textAlign: "center" }}> {otpError} </p> <br></br>
+            <input type="text" placeholder="OTP" className="input input-bordered w-full max-w-md" name="otp" value={otp} onChange={e => { setOtp(e.target.value); setErrors(prev => ({ ...prev, otp: "" })); }} /> <br />
+            <p style={{ color: "red", textAlign: "center" }}> {errors.otp} </p> <br></br>
           </div>
           <Button text={"Verify"}></Button> <br></br>
         </form>

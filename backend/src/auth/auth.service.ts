@@ -31,18 +31,21 @@ export class AuthService {
 
     const userExists = await this.loginRepository.findOne({ where: { username: login.username } });
     if (!userExists)
-      throw new HttpException(`User '${login.username}' does not exist`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'username', messages: [`User '${login.username}' does not exist`] }] }, HttpStatus.NOT_FOUND);
+      // throw new HttpException(`User '${login.username}' does not exist`, HttpStatus.NOT_FOUND);
 
     const isMatch = await bcrypt.compare(login.password, userExists.password);
     if (!isMatch)
-      throw new HttpException('Incorrect password', HttpStatus.BAD_REQUEST);
+      throw new HttpException({ message: [{ field: 'password', messages: [`Incorrect password`] }] }, HttpStatus.BAD_REQUEST);
+      // throw new HttpException('Incorrect password', HttpStatus.BAD_REQUEST);
 
     if (!userExists.activation) {
       const id = userExists.id;
       await this.loginRepository.update({ id }, { activation: true });
     }
     if (userExists.ban)
-      throw new HttpException('Your account is currently banned! Contact with authority for further details', HttpStatus.UNAUTHORIZED);
+      throw new HttpException({ message: [{ field: 'username', messages: [`Your account is currently banned! Contact with authority for further details`] }] }, HttpStatus.UNAUTHORIZED);
+      // throw new HttpException('Your account is currently banned! Contact with authority for further details', HttpStatus.UNAUTHORIZED);
 
     session.user = { id: userExists.id, role: userExists.role };
 
@@ -84,7 +87,7 @@ export class AuthService {
       return { message: 'Logged out successfully' };
     }
     catch (err) {
-      throw new HttpException('Logout failed', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException({ message: [{ field: 'username', messages: [`Logout failed`] }] }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -92,7 +95,7 @@ export class AuthService {
   async forgotpass(email: string): Promise<object> {
     const emailExists = await this.loginRepository.findOne({ where: { email: email } });
     if (!emailExists)
-      throw new HttpException(`User with email '${email}' does not exist`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'email', messages: [`User with email '${email}' does not exist`] }] }, HttpStatus.NOT_FOUND);
 
     var keys = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let randomKey;
@@ -107,7 +110,7 @@ export class AuthService {
 
     const existing = this.otpStore.get(emailKey);
     if (existing && Date.now() < existing.expires)
-      throw new HttpException("OTP already sent. Please wait.", HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException({ message: [{ field: 'email', messages: [`OTP already sent. Please wait`] }] }, HttpStatus.TOO_MANY_REQUESTS);
 
     const expiresIn = 5 * 60 * 1000;
     const expires = Date.now() + expiresIn;
@@ -123,8 +126,7 @@ export class AuthService {
       text: `Your OTP for Gamers United password reset is ${pass}. Please enter OTP within next 5 minutes or it will expire. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
     });
     if (!mailed)
-      throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
-
+      throw new HttpException({ message: [{ field: 'email', messages: [`Email could not be verified. Please recheck your email`] }] }, HttpStatus.BAD_REQUEST);
 
     return { message: "OTP sent to email" };
   }
@@ -134,15 +136,15 @@ export class AuthService {
     const record = this.otpStore.get(email);
 
     if (!record)
-      throw new HttpException("OTP not found", HttpStatus.BAD_REQUEST);
+      throw new HttpException({ message: [{ field: 'otp', messages: [`OTP not found`] }] }, HttpStatus.BAD_REQUEST);
 
     if (Date.now() > record.expires) {
       this.otpStore.delete(email);
-      throw new HttpException("OTP expired", HttpStatus.BAD_REQUEST);
+      throw new HttpException({ message: [{ field: 'otp', messages: [`OTP expired`] }] }, HttpStatus.BAD_REQUEST);
     }
 
     if (record.otp !== otp)
-      throw new HttpException("Invalid OTP", HttpStatus.BAD_REQUEST);
+      throw new HttpException({ message: [{ field: 'otp', messages: [`Invalid OTP`] }] }, HttpStatus.BAD_REQUEST);
 
     this.otpStore.delete(email);
     return { message: "OTP verified" };
@@ -155,7 +157,7 @@ export class AuthService {
     const user = await this.loginRepository.findOneBy({ email: email });
 
     if (!user)
-      throw new HttpException(`User with email ${email} not found!`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'password', messages: [`User with email ${email} not found!`] }] }, HttpStatus.NOT_FOUND);
     else {
       // if (admin)
       //   await this.loginRepository.update({ id: admin.id }, { password: newPassword });
@@ -164,7 +166,7 @@ export class AuthService {
       // if (player)
       //   await this.loginRepository.update({ id: player.id }, { password: newPassword });
       try { await this.loginRepository.update({ id: user.id }, { password: newPassword }); }
-      catch (error) { throw new HttpException('Something went wrong! Password could not be reset.', HttpStatus.BAD_REQUEST); }
+      catch (error) { throw new HttpException({ message: [{ field: 'password', messages: [`Something went wrong! Password could not be reset`] }] }, HttpStatus.BAD_REQUEST); }
       return { message: "Password reset successful" };
     }
   }
@@ -190,7 +192,7 @@ export class AuthService {
         text: `You have successfully signed up for Gamers United with account '${playerDto.username}'. Welcome to the community.`
       });
     }
-    catch (error) { throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST); }
+    catch (error) { throw new HttpException({ message: [{ field: 'email', messages: [`Email could not be verified. Please recheck the email you have entered`] }] }, HttpStatus.BAD_REQUEST); }
 
     const player = this.playerRepository.create({
       ...playerDto,

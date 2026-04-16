@@ -10,7 +10,7 @@ import Alert from "../../components/Alert";
 
 export default function VerifyOTPPage() {
     const [password, setPassword] = useState("");
-    const [rpassword, setRPassword] = useState("");
+    const [rPassword, setRPassword] = useState("");
 
     const [globalError, setGlobalError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -20,9 +20,8 @@ export default function VerifyOTPPage() {
     const email = decodeURIComponent(params.email as string);
 
     const [clientReady, setClientReady] = useState(false);
-    useEffect(() => {
-        setClientReady(true);
-    }, []);
+
+    useEffect(() => { setClientReady(true); }, []);
     if (!clientReady)
         return null;
 
@@ -33,37 +32,34 @@ export default function VerifyOTPPage() {
         }, 2000);
     };
 
-    // useEffect(() => {
-    //   if (params.otp) {
-    //     setOtp(params.otp as string);
-    //   }
-    // }, [params.otp]);
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const newErrors: Record<string, string> = {};
-        if (password === "")
+        if (!password.trim())
             newErrors.password = "Please enter password first!";
 
-        if (rpassword === "")
-            newErrors.rpassword = "Please reenter your password for confirmation!";
+        if (!rPassword.trim())
+            newErrors.rPassword = "Please reenter your password for confirmation!";
 
-        if (password && rpassword && password !== rpassword)
-            newErrors.rpassword = "Password does not match. Recheck your password";
+        if (password && rPassword && password !== rPassword)
+            newErrors.rPassword = "Passwords do not match! Recheck your password";
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0)
             return;
 
         try {
-            const response = await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/resetpass`, { email, newPass: password.trim() });
-            router.push(`/login`);
+            const response = await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/resetpass`, { email, newPass: password, oldPass: rPassword });
+
+            if (response.status === 200)
+                router.push(`/login`);
         }
         catch (error: any) {
             console.log("FULL ERROR:", error);
             console.log("MESSAGE:", error.message);
             console.log("CODE:", error.code);
-            if (Array.isArray(error.response.data.message)) {
+
+            if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
                 const backendErrors: Record<string, string> = {};
                 error.response.data.message.forEach((err: any) => {
                     backendErrors[err.field] = err.messages.join(', ');
@@ -112,8 +108,8 @@ export default function VerifyOTPPage() {
 
                     <div className="form-control w-full max-w-md">
                         <label>Retype Password:</label>
-                        <input type="password" placeholder="Retype Password" className="input input-bordered w-full max-w-md" name="rpassword" value={rpassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rpassword: "" })); }} />
-                        <p style={{ color: "red", textAlign: "center" }}> {errors.rpassword} </p> <br></br>
+                        <input type="password" placeholder="Retype Password" className="input input-bordered w-full max-w-md" name="rpassword" value={rPassword} onChange={e => { setRPassword(e.target.value); setErrors(prev => ({ ...prev, rPassword: "" })); }} />
+                        <p style={{ color: "red", textAlign: "center" }}> {errors.rPassword} </p> <br></br>
                     </div>
                     <Button text={"Reset"}></Button> <br></br>
                 </form>
