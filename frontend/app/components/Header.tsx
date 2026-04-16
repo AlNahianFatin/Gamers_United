@@ -1,7 +1,5 @@
 "use client"
 
-import React from 'react'
-
 export default function Header({ name, id, imageUrl }: any) {
     return (
         <>
@@ -12,7 +10,7 @@ export default function Header({ name, id, imageUrl }: any) {
                 </div>
             </div>
             <h2 className='flex justify-end px-4 pt-4'>Welcome Back, {name}</h2>
-            <h2 className='flex justify-end px-4 pt-4'>ID: {id}</h2>
+            <h2 className='flex px-4 pt-2'>ID: {id}</h2>
         </>
     )
 }

@@ -5,7 +5,8 @@ import { PurchasesDTO } from '../dto/purchases.dto';
 import { ViewsDTO } from '../dto/views.dto';
 import { PlaysDTO } from '../dto/plays.dto';
 import { CategoriesDTO } from '../dto/categories.dto';
-import { AdminDTO } from '../dto/admin.dto';
+import { CreateAdminDTO } from '../dto/createAdmin.dto';
+import { UpdateAdminDTO } from '../dto/updateAdmin.dto';
 import { PlayerDTO } from '../dto/player.dto';
 import { DeveloperDTO } from '../dto/developer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -38,9 +39,9 @@ export class AdminService {
   }
 
   async getAdminByID(adminID: number): Promise<AdminEntity> {
-    const exists = await this.adminRepository.findOne({ where: { id: adminID } });
+    const exists = await this.adminRepository.findOne({ where: { id: adminID }, relations: ['login'] });
     if (!exists)
-      throw new HttpException(`Admin with id ${adminID} does not exist`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`Admin with id ${adminID} does not exist`] }] }, HttpStatus.NOT_FOUND);
     else
       return exists;
   }
@@ -48,25 +49,25 @@ export class AdminService {
   async getAdminPicByID(adminID: number, @Res() res): Promise<any> {
     const admin = await this.adminRepository.findOne({ where: { id: adminID }, select: { image: true } });
     if (!admin || !admin.image)
-      throw new HttpException('Admin image not found', HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'image', messages: [`Admin image not found`] }] }, HttpStatus.NOT_FOUND);
     return res.sendFile(admin.image, { root: './uploads/users/admin' })
   }
 
   async getAdminsByNullName(): Promise<object | AdminEntity[]> {
     const admins = await this.adminRepository.find({ where: [{ username: IsNull() }, { username: "" }, { username: " " }], relations: ['login'] });
     if (admins.length === 0)
-      throw new HttpException('No admin with null username has been found', HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'username', messages: [`No admin with null username has been found`] }] }, HttpStatus.NOT_FOUND);
     return admins;
   }
 
-  async addAdmin(adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity> {
+  async addAdmin(adminDto: CreateAdminDTO, loginDto: LoginDTO): Promise<AdminEntity> {
     const adminExists = await this.adminRepository.findOneBy({ username: adminDto.username });
     const emailExists = await this.loginRepository.findOneBy({ email: loginDto.email });
     const loginExists = await this.loginRepository.findOneBy({ username: loginDto.username });
     if (adminExists || loginExists)
-      throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
+      throw new HttpException({ message: [{ field: 'username', messages: [`User with username ${adminDto.username} already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
     else if (emailExists)
-      throw new HttpException(`User with email ${loginDto.email} already exists`, HttpStatus.NOT_ACCEPTABLE);
+      throw new HttpException({ message: [{ field: 'email', messages: [`User with email ${loginDto.email} already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
     else {
       loginDto.role = "admin";
       const login = this.loginRepository.create(loginDto);
@@ -84,37 +85,37 @@ export class AdminService {
 
   async updateAdminPhoneById(id: any, newPhone: any): Promise<AdminEntity | null> {
     if (!Number(id))
-      throw new HttpException(`Please enter a valid ID number`, HttpStatus.NOT_ACCEPTABLE);
+      throw new HttpException({ message: [{ field: 'id', messages: [`Please enter a valid ID number`] }] }, HttpStatus.NOT_ACCEPTABLE);
     id = Number(id)
 
     const exists = await this.adminRepository.findOneBy({ id });
     if (!exists)
-      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`Admin with id ${id} not found!`] }] }, HttpStatus.NOT_FOUND);
     else {
       if (!Number(newPhone))
-        throw new HttpException("Please enter a valid Phone No.", HttpStatus.NOT_ACCEPTABLE);
+        throw new HttpException({ message: [{ field: 'phone', messages: [`Please enter a valid Phone No.`] }] }, HttpStatus.NOT_ACCEPTABLE);
       if (newPhone.length !== 11)
-        throw new HttpException('Phone No. must be a valid format of 11 digits', HttpStatus.NOT_ACCEPTABLE);
+        throw new HttpException({ message: [{ field: 'phone', messages: [`Phone No. must be a valid format of 11 digits`] }] }, HttpStatus.NOT_ACCEPTABLE);
       await this.adminRepository.update({ id }, { phone: newPhone });
       return await this.adminRepository.findOneBy({ id: id });
     }
   }
 
-  async updateFullAdmin(id: number, adminDto: AdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
+  async updateFullAdmin(id: number, adminDto: UpdateAdminDTO, loginDto: LoginDTO): Promise<AdminEntity | null> {
     const exists = await this.adminRepository.findOne({ where: { id }, relations: ['login'] });
     if (!exists)
-      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`Admin with id ${id} not found!`] }] }, HttpStatus.NOT_FOUND);
     else {
       const adminExists = await this.adminRepository.findOne({ where: { username: adminDto.username, id: Not(id) } });
       const loginExists = await this.loginRepository.findOne({ where: { username: loginDto.username, id: Not(exists.login.id) } });
       if (adminExists || loginExists)
-        throw new HttpException(`User with username ${adminDto.username} already exists`, HttpStatus.NOT_ACCEPTABLE);
+        throw new HttpException({ message: [{ field: 'username', messages: [`User with username ${adminDto.username} already exists`] }] }, HttpStatus.NOT_ACCEPTABLE);
       else {
         await this.adminRepository.update({ id }, {
-          username: adminDto.username || exists.username,
-          image: adminDto.image || exists.image,
-          phone: adminDto.phone || exists.phone,
-          NID: adminDto.NID || exists.NID
+          username: adminDto.username ?? exists.username,
+          image: adminDto.image ?? exists.image,
+          phone: adminDto.phone ?? exists.phone,
+          NID: adminDto.NID ?? exists.NID
         });
 
         loginDto.ban = String(loginDto.ban) === "true";
@@ -125,10 +126,10 @@ export class AdminService {
           loginDto.ban = false;
         loginDto.role = "admin";
         await this.loginRepository.update({ id: exists.login.id }, {
-          username: loginDto.username || exists.login.username,
-          password: loginDto.password || exists.login.password,
-          email: loginDto.email || exists.login.email,
-          role: loginDto.role || exists.login.role,
+          username: loginDto.username ?? exists.login.username,
+          // password: loginDto.password || exists.login.password,
+          email: loginDto.email ?? exists.login.email,
+          role: loginDto.role ?? exists.login.role,
           activation: loginDto.activation ?? exists.login.activation,
           ban: loginDto.ban ?? exists.login.ban
         });
@@ -141,7 +142,7 @@ export class AdminService {
   async removeAdmin(id: number): Promise<object> {
     const admin = await this.adminRepository.findOneBy({ id: id });
     if (!admin)
-      throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`Admin with id ${id} not found!`] }] }, HttpStatus.NOT_FOUND);
     else {
       if (admin.image) {
         const filePath = path.join('uploads/users/admin', admin.image);
@@ -150,7 +151,7 @@ export class AdminService {
           await promises.unlink(filePath);
         }
         catch (err) {
-          throw new HttpException(`Profile image file not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
+          throw new HttpException({ message: [{ field: 'image', messages: [`Profile image file not found or already deleted: ${filePath}`] }] }, HttpStatus.NOT_FOUND);
         }
       }
       await this.loginRepository.delete(id);
@@ -162,7 +163,7 @@ export class AdminService {
   async removeAdminByEmail(email: string): Promise<object> {
     const login = await this.loginRepository.find({ where: { email }, relations: ['login'] });
     if (!login || login.length < 1)
-      throw new HttpException(`No admins found with email ${email}!`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'email', messages: [`No admins found with email ${email}!`] }] }, HttpStatus.NOT_FOUND);
     for (const admin of login) {
       if (admin.admin.image) {
         const filePath = path.join('uploads/users/admin', admin.admin.image);
@@ -171,7 +172,7 @@ export class AdminService {
           await promises.unlink(filePath);
         }
         catch (err) {
-          throw new HttpException(`Profile image not found or already deleted: ${filePath}`, HttpStatus.NOT_FOUND);
+          throw new HttpException({ message: [{ field: 'image', messages: [`Profile image not found or already deleted: ${filePath}`] }] }, HttpStatus.NOT_FOUND);
         }
       }
     }
@@ -184,47 +185,48 @@ export class AdminService {
   async searchAdmin(key: any): Promise<object> {
     let admins: object[] = [];
     if (!isNaN(Number(key)))
-      admins = await this.adminRepository.find({ where: { id: Number(key) }, relations: ['login'] })
+      // admins = await this.adminRepository.find({ where: { id: Number(key) }, relations: ['login'] })
+      admins = await this.adminRepository.createQueryBuilder('admin').leftJoinAndSelect('admin.login', 'login').where('admin.id LIKE :key', { key: `%${key}%` })
+        .orWhere('admin.phone LIKE :key', { key: `%${key}%` }).getMany();
     if (admins.length === 0) {
       // admins = await this.adminRepository.find({ where: [{ username: Like(`%${key}%`) }, { NID: Like(`%${key}%`) }, { phone: Like(`%${key}%`) }] });
       // admins.push(await this.loginRepository.find({ where: [{ email: Like(`%${key}%`) }] }));
       admins = await this.adminRepository.createQueryBuilder('admin').leftJoinAndSelect('admin.login', 'login').where('admin.username LIKE :key', { key: `%${key}%` })
         .orWhere('admin.NID LIKE :key', { key: `%${key}%` })
-        .orWhere('admin.phone LIKE :key', { key: `%${key}%` })
         .orWhere('login.email LIKE :key', { key: `%${key}%` })
         .getMany();
     }
 
     if (admins.length === 0)
-      throw new HttpException(`No admin found! Try searching with another key`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`No admin found! Try searching with another key`] }] }, HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async sortAdminByIDAsc(): Promise<object> {
     const admins = await this.adminRepository.find({ order: { id: 'ASC' } });
     if (!admins || admins.length < 0)
-      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`No admin found!`] }] }, HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async sortAdminByIDDesc(): Promise<object> {
     const admins = await this.adminRepository.find({ order: { id: 'DESC' } });
     if (!admins || admins.length < 0)
-      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'id', messages: [`No admin found!`] }] }, HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async sortAdminByNameAsc(): Promise<object> {
     const admins = await this.adminRepository.find({ order: { username: 'ASC' } });
     if (!admins || admins.length < 0)
-      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'username', messages: [`No admin found!`] }] }, HttpStatus.NOT_FOUND);
     return admins;
   }
 
   async sortAdminByNameDesc(): Promise<object> {
     const admins = await this.adminRepository.find({ order: { username: 'DESC' } });
     if (!admins || admins.length < 0)
-      throw new HttpException(`No admin found`, HttpStatus.NOT_FOUND);
+      throw new HttpException({ message: [{ field: 'username', messages: [`No admin found!`] }] }, HttpStatus.NOT_FOUND);
     return admins;
   }
 

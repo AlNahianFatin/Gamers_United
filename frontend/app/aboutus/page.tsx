@@ -1,10 +1,4 @@
 import Link from "next/link";
-// import { Jaro, Itim, Inika, Inter } from 'next/font/google';
-
-// const jaro = Jaro({ subsets: ['latin'], weight: '400' });
-// const itim = Itim({ subsets: ['latin'], weight: '400' });
-// const inika = Inika({ subsets: ['latin'], weight: '400' });
-// const inter = Inter({ subsets: ['latin'] });
 
 export default function AboutPage() {
   return (

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
 import Button from "../components/Button";
-import ErrorAlert from "../components/ErrorAlert";
+import Alert from "../components/Alert";
 
 export default function LoginForm() {
     const [username, setUsername] = useState("");
@@ -114,7 +114,7 @@ export default function LoginForm() {
 
     return (
         <>
-            {globalError && <ErrorAlert text={globalError} />}
+            {globalError && <Alert text={globalError} type="error" />}
             <div className="flex items-center justify-center p-4">
                 <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
                     <legend className="text-2xl font-bold text-center">Login</legend>

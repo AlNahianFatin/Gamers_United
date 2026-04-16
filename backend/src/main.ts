@@ -28,7 +28,7 @@ async function bootstrap() {
     // allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  app.useGlobalFilters(new MulterExceptionFilter()); 
+  app.useGlobalFilters(new MulterExceptionFilter());
 
   app.use(cookieParser());
 

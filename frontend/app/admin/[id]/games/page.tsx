@@ -13,8 +13,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import "tailwindcss";
 import Search from "../../../components/Search";
-import ErrorAlert from "../../../components/ErrorAlert";
 import GetGames from "./getGames";
+import Alert from "../../../components/Alert";
 
 export default function Game() {
   const params = useParams();
@@ -68,7 +68,7 @@ export default function Game() {
             router.replace(`/admin/${params.id}/not-found`);
         }
         else {
-          alert("Server not reachable. Check your internet connection.");
+          showError("Server not reachable. Check your internet connection.");
           router.push('/login');
         }
       }
@@ -83,7 +83,7 @@ export default function Game() {
   const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      {globalError && <ErrorAlert text={globalError} />}
+      {globalError && <Alert text={globalError} type="error" />}
       <div className="flex min-h-screen">
         <Sidebar id={userData?.id} index={5} />
 

@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import "../globals.css";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Button from "../components/Button";
-import ErrorAlert from "../components/ErrorAlert";
+import Alert from "../components/Alert";
 
 export default function SignupForm() {
     const [clientReady, setClientReady] = useState(false);
@@ -38,19 +37,19 @@ export default function SignupForm() {
         e.preventDefault();
         const newErrors: Record<string, string> = {};
 
-        if (username === "")
+        if (username.trim() === "")
             newErrors.username = "Please enter username first!";
 
-        if (email === "")
+        if (email.trim() === "")
             newErrors.email = "Please enter email first!";
 
         if (!image || image === null)
             newErrors.image = "Please select a profile image first!";
 
-        if (NID === "")
+        if (NID.trim() === "")
             newErrors.NID = "Please enter NID No. first!";
 
-        if (phone === "")
+        if (phone.trim() === "")
             newErrors.phone = "Please enter phone no. first!";
 
         if (password === "")
@@ -68,12 +67,12 @@ export default function SignupForm() {
 
         try {
             const userData = new FormData();
-            userData.append('username', username);
-            userData.append('email', email);
+            userData.append('username', username.trim());
+            userData.append('email', email.trim());
             if (image && image !== null)
                 userData.append("image", image);
-            userData.append('NID', NID);
-            userData.append('phone', phone);
+            userData.append('NID', NID.trim());
+            userData.append('phone', phone.trim());
             userData.append('password', password);
 
             const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/signup', userData);
@@ -82,10 +81,6 @@ export default function SignupForm() {
                 router.push(`./login`);
         }
         catch (error: any) {
-            // console.log("FULL ERROR:", error);
-            // console.log("MESSAGE:", error.message);
-            // console.log("CODE:", error.code);
-
             if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
                 const backendErrors: Record<string, string> = {};
                 error.response.data.message.forEach((err: any) => {
@@ -100,7 +95,7 @@ export default function SignupForm() {
 
     return (
         <>
-            {globalError && <ErrorAlert text={globalError} />}
+            {globalError && <Alert text={globalError} type="error" />}
             <div className="min-h-screen flex items-center justify-center p-4">
                 <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
                     <legend className="text-2xl font-bold text-center">Signup</legend>

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
 import Button from "../components/Button";
-import ErrorAlert from "../components/ErrorAlert";
+import ErrorAlert from "../components/Alert";
 
 export default function ForgotPass() {
     const [email, setEmail] = useState("");

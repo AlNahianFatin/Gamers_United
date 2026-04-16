@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, ForbiddenException, Get, HttpException, HttpStatus, Param, Patch, Post, Put, Query, Req, Request, Res, Session, UploadedFile, UploadedFiles, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, HttpException, HttpStatus, Param, Patch, Post, Put, Query, Req, Request, Res, Session, UploadedFile, UploadedFiles, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { MulterError, diskStorage } from 'multer';
 import * as bcrypt from 'bcrypt';
@@ -9,7 +9,8 @@ import { PurchasesDTO } from '../dto/purchases.dto';
 import { ViewsDTO } from '../dto/views.dto';
 import { PlaysDTO } from '../dto/plays.dto';
 import { CategoriesDTO } from '../dto/categories.dto';
-import { AdminDTO } from '../dto/admin.dto';
+import { CreateAdminDTO } from '../dto/createAdmin.dto';
+import { UpdateAdminDTO } from '../dto/updateAdmin.dto';
 import { PlayerDTO } from '../dto/player.dto';
 import { DeveloperDTO } from '../dto/developer.dto';
 import path from 'path';
@@ -20,10 +21,11 @@ import { PlayerEntity } from '../entities/player.entity';
 import { DeveloperEntity } from '../entities/developer.entity';
 import { LoginDTO } from '../dto/login.dto';
 import { plainToInstance } from 'class-transformer';
-import { validateOrReject } from 'class-validator';
+import { validateOrReject, ValidationError } from 'class-validator';
 import { GamesEntity } from '../entities/games.entity';
 import { CategoriesEntity } from '../entities/categories.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ifError } from 'assert';
 
 @Controller('admin')
 export class AdminController {
@@ -32,19 +34,19 @@ export class AdminController {
     @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
     @InjectRepository(DeveloperEntity) private developerRepository: Repository<DeveloperEntity>) { }
 
-  // @UseGuards(JwtAuthGuard)
+  // @UseGuards(SessionGuard, JwtAuthGuard)
   // @Get('dashboard')
   // dashboard() {
   //   return "Admin dashboard protected by JWT";
   // }
 
-  // @UseGuards(JwtAuthGuard)
+  // @UseGuards(SessionGuard, JwtAuthGuard)
   // @Get('profile')
   // getProfile(@Request() req) {
   //   return req.user;
   // }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   // @UseGuards(SessionGuard)
   @Get('getAdmins')
   async getAdmins() {
@@ -52,8 +54,7 @@ export class AdminController {
     catch (error) { throw error };
   }
 
-  @UseGuards(JwtAuthGuard)
-  // @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getAdminByID/:adminID')
   async getAdminByID(@Param('adminID') adminID: number, @Req() req) {
     const sessionUser = req.session.user;
@@ -69,22 +70,16 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getAdminPicByID/:adminID')
   async getAdminPicByID(@Param('adminID') adminID: number, @Res() res, @Req() req) {
     const sessionUser = req.session.user;
-
-    // if (sessionUser.role !== "admin")
-    //   throw new ForbiddenException();
-
-    // if (sessionUser.id !== Number(adminID))
-    //   throw new ForbiddenException("Access denied");
 
     try { return await this.adminService.getAdminPicByID(adminID, res); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getAdminsByNullName')
   async getAdminsByNullName(): Promise<object | AdminEntity[] | null> {
     try { return await this.adminService.getAdminsByNullName(); }
@@ -107,10 +102,10 @@ export class AdminController {
       },
     })
   }))
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async addAdmin(@Session() session, @UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<AdminEntity> {
-    const adminDto = plainToInstance(AdminDTO, {
+    const adminDto = plainToInstance(CreateAdminDTO, {
       username: body.username,
       phone: body.phone,
       NID: body.NID
@@ -136,7 +131,7 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Patch('updateAdminPhoneByID/:id')
   async updateAdminPhoneById(@Param('id') id: string, @Query('newPhone') newPhone: string) {
     try { return await this.adminService.updateAdminPhoneById(id, newPhone); }
@@ -159,113 +154,137 @@ export class AdminController {
       },
     })
   }))
-  @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe({ transform: true }))
   async updateFullAdmin(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body() body: any) {
-    const adminDto = plainToInstance(AdminDTO, {
-      username: body.username,
-      phone: body.phone,
-      NID: body.NID
+    let existingAdmin;
+    try {
+      existingAdmin = await this.adminService.getAdminByID(id);
+      if (!existingAdmin)
+        throw new HttpException(`Admin with id ${id} not found!`, HttpStatus.NOT_FOUND);
+    }
+    catch (error) { throw error; }
+    const adminDto = plainToInstance(UpdateAdminDTO, {
+      username: body.username ?? existingAdmin.username,
+      phone: body.phone ?? existingAdmin.phone,
+      NID: body.NID ?? existingAdmin.NID
     });
-    await validateOrReject(adminDto);
+    // await validateOrReject(adminDto);
 
-    const salt = await bcrypt.genSalt();
-    const hashedpass = await bcrypt.hash(body.password, salt);
+    let hashedpass = existingAdmin.login.password;
+
+    // if (body.password?.trim()) {
+    //   const salt = await bcrypt.genSalt();
+    //   hashedpass = await bcrypt.hash(body.password, salt);
+    // }
 
     const loginDto = plainToInstance(LoginDTO, {
-      username: body.username,
+      username: body.username ?? existingAdmin.username,
       password: hashedpass,
-      email: body.email,
-      role: body.role,
-      activation: body.activation,
-      ban: body.ban
+      email: body.email ?? existingAdmin.login.email,
+      role: body.role ?? existingAdmin.login.role,
+      activation: body.activation ?? existingAdmin.login.activation,
+      ban: body.ban ?? existingAdmin.login.ban
     });
-    await validateOrReject(loginDto);
+    // await validateOrReject(loginDto);
+
+    try {
+      await validateOrReject(adminDto);
+      await validateOrReject(loginDto);
+    } 
+    catch (errors) {
+      const formattedErrors = (errors as ValidationError[]).map(err => ({
+        field: err.property,
+        messages: Object.values(err.constraints ?? {}),
+      }));
+
+      throw new BadRequestException({ message: formattedErrors });
+    }
 
     if (file)
       adminDto.image = file.filename;
-    return this.adminService.updateFullAdmin(id, adminDto, loginDto);
+    try { return this.adminService.updateFullAdmin(id, adminDto, loginDto); }
+    catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removeAdmin')
   async removeAdmin(@Query('id') id: number): Promise<object> {
     try { return await this.adminService.removeAdmin(id); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removeAdminByEmail')
   async removeAdminByEmail(@Query('email') email: string): Promise<object> {
     try { return await this.adminService.removeAdminByEmail(email); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('searchAdmin/:key')
   async searchAdmin(@Param('key') key: any): Promise<object> {
     try { return await this.adminService.searchAdmin(key); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortAdminByIDAsc')
   async sortAdminByIDAsc(): Promise<object> {
     try { return await this.adminService.sortAdminByIDAsc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortAdminByIDDesc')
   async sortAdminByIDDesc(): Promise<object> {
     try { return await this.adminService.sortAdminByIDDesc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortAdminByNameAsc')
   async sortAdminByNameAsc(): Promise<object> {
     try { return await this.adminService.sortAdminByNameAsc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortAdminByNameDesc')
   async sortAdminByNameDesc(): Promise<object> {
     try { return await this.adminService.sortAdminByNameDesc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getPlayers')
   async getPlayers() {
     try { return await this.adminService.getPlayers(); }
     catch (error) { throw error; }
   }
-  
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getNoOfActivePlayers')
   async getNoOfActivePlayers() {
     try { return await this.adminService.getNoOfActivePlayers(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getPlayerByID/:playerID')
   async getPlayerByID(@Param('playerID') playerID: number) {
     try { return await this.adminService.getPlayerByID(playerID); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getPlayerPicByID/:playerID')
   async getPlayerPicByID(@Param('playerID') playerID: number, @Res() res) {
     try { return await this.adminService.getPlayerPicByID(playerID, res); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getPlayersByNullName')
   async getPlayersByNullName(): Promise<object | PlayerEntity[] | null> {
     try { return await this.adminService.getPlayersByNullName(); }
@@ -288,7 +307,7 @@ export class AdminController {
       },
     })
   }))
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async addPlayer(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<PlayerEntity> {
     const playerDto = plainToInstance(PlayerDTO, {
@@ -317,7 +336,7 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Patch('updatePlayerPhoneByID/:id')
   async updatePlayerPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
     try { return await this.adminService.updatePlayerPhoneByID(id, newPhone); }
@@ -340,8 +359,7 @@ export class AdminController {
       },
     })
   }))
-  @UseGuards(SessionGuard)
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async updateFullPlayer(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const playerDto = plainToInstance(PlayerDTO, {
@@ -371,77 +389,77 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removePlayer')
   async removePlayer(@Query('id') id: number): Promise<object> {
     try { return await this.adminService.removePlayer(id); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removePlayerByEmail')
   async removePlayerByEmail(@Query('email') email: string): Promise<object> {
     try { return await this.adminService.removePlayerByEmail(email); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('searchPlayer/:key')
   async searchPlayer(@Param('key') key: any): Promise<object> {
     try { return await this.adminService.searchPlayer(key); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortPlayerByIDAsc')
   async sortPlayerByIDAsc(): Promise<object> {
     try { return await this.adminService.sortPlayerByIDAsc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortPlayerByIDDesc')
   async sortPlayerByIDDesc(): Promise<object> {
     try { return await this.adminService.sortPlayerByIDDesc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortPlayerByNameAsc')
   async sortPlayerByNameAsc(): Promise<object> {
     try { return await this.adminService.sortPlayerByNameAsc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortPlayerByNameDesc')
   async sortPlayerByNameDesc(): Promise<object> {
     try { return await this.adminService.sortPlayerByNameDesc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getDevelopers')
   async getDevelopers() {
     try { return await this.adminService.getDevelopers(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getDeveloperByID/:developerID')
   async getDeveloperByID(@Param('developerID') developerID: number) {
     try { return await this.adminService.getDeveloperByID(developerID); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(JwtAuthGuard)  
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getDeveloperPicByID/:developerID')
   async getDeveloperPicByID(@Param('developerID') developerID: number, @Res() res) {
     try { return await this.adminService.getDeveloperPicByID(developerID, res); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getDevelopersByNullName')
   async getDevelopersByNullName(): Promise<object | DeveloperEntity[] | null> {
     try { return await this.adminService.getDevelopersByNullName(); }
@@ -464,7 +482,7 @@ export class AdminController {
       },
     })
   }))
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async addDeveloper(@UploadedFile() file: Express.Multer.File, @Body(new ValidationPipe({ transform: true })) body: any): Promise<DeveloperEntity> {
     const developerDto = plainToInstance(DeveloperDTO, {
@@ -493,7 +511,7 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Patch('updateDeveloperPhoneByID/:id')
   async updateDeveloperPhoneByID(@Param('id') id: string, @Query('newPhone') newPhone: string) {
     try { return await this.adminService.updateDeveloperPhoneByID(id, newPhone); }
@@ -516,7 +534,7 @@ export class AdminController {
       },
     })
   }))
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async updateFullDeveloper(@UploadedFile() file: Express.Multer.File, @Param('id') id: number, @Body(new ValidationPipe({ transform: true })) body: any) {
     const developerDto = plainToInstance(DeveloperDTO, {
@@ -545,49 +563,49 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removeDeveloper')
   async removeDeveloper(@Query('id') id: number): Promise<object> {
     try { return await this.adminService.removeDeveloper(id); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removeDeveloperByEmail')
   async removeDeveloperByEmail(@Query('email') email: string): Promise<object> {
     try { return await this.adminService.removeDeveloperByEmail(email); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('searchDeveloper/:key')
   async searchDeveloper(@Param('key') key: any): Promise<object> {
     try { return await this.adminService.searchDeveloper(key); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortDeveloperByIDAsc')
   async sortDeveloperByIDAsc(): Promise<object> {
     try { return await this.adminService.sortDeveloperByIDAsc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortDeveloperByIDDesc')
   async sortDeveloperByIDDesc(): Promise<object> {
     try { return await this.adminService.sortDeveloperByIDDesc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortDeveloperByNameAsc')
   async sortDeveloperByNameAsc(): Promise<object> {
     try { return await this.adminService.sortDeveloperByNameAsc(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('sortDeveloperByNameDesc')
   async sortDeveloperByNameDesc(): Promise<object> {
     try { return await this.adminService.sortDeveloperByNameDesc(); }
@@ -595,68 +613,63 @@ export class AdminController {
   }
 
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getGames')
   async getGames() {
     try { return await this.adminService.getGames(); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getFiveBestsellerGames')
   async getFiveBestsellerGames() {
     try { return await this.adminService.getFiveBestsellerGames(); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getBestsellerGames')
   async getBestsellerGames() {
     try { return await this.adminService.getBestsellerGames(); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getTotalNoOfGames')
   async getTotalNoOfGames() {
     try { return await this.adminService.getTotalNoOfGames(); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getFullGameByID/:gameID')
   async getFullGameByID(@Param('gameID') gameID: number) {
     try { return await this.adminService.getFullGameByID(gameID); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getGamePicByID/:gameID')
   async getGamePicByID(@Param('gameID') gameID: number, @Res() res) {
     try { return await this.adminService.getGamePicByID(gameID, res); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getGameTrailerByID/:gameID')
   async getGameTrailerByID(@Param('gameID') gameID: number, @Res() res) {
     try { return await this.adminService.getGameTrailerByID(gameID, res); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getGameByID/:gameID')
   async getGameByID(@Param('gameID') gameID: number, @Res() res) {
     try { return await this.adminService.getGameByID(gameID, res); }
     catch (error) { throw error; }
   }
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getGamesByDeveloperID/:developerId')
   async getGamesByDeveloperID(@Param('developerId') developerId: number): Promise<GamesEntity[]> {
     try { return await this.adminService.getGamesByDeveloperID(developerId); }
@@ -700,7 +713,7 @@ export class AdminController {
     },
     limits: { fileSize: 30 * 1024 * 1024 }
   }))
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   async addGame(@UploadedFiles() files: { image: Express.Multer.File[], trailer: Express.Multer.File[], game: Express.Multer.File[] }, @Body(new ValidationPipe({ transform: true })) body: any): Promise<GamesEntity> {
     const gameDto = plainToInstance(GamesDTO, {
@@ -724,14 +737,14 @@ export class AdminController {
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Post('addCategoryToGame')
   async addCategoryToGame(@Query('gameTitle') gameTitle: string, @Query('categoryName') categoryName: string) {
     try { return await this.adminService.addCategoryToGame(gameTitle, categoryName); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removeCategoryFromGame')
   async removeCategoryFromGame(@Query('gameTitle') gameTitle: string, @Query('categoryName') categoryName: string) {
     try { return await this.adminService.removeCategoryFromGame(gameTitle, categoryName); }
@@ -754,12 +767,13 @@ export class AdminController {
   // // }
 
 
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getCategories')
   getCategories() {
     return this.adminService.getCategories()
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Post('addCategory')
   async addCategory(@Body() category: CategoriesDTO): Promise<CategoriesEntity> {
     const categoryDto = plainToInstance(CategoriesDTO, {
@@ -781,8 +795,7 @@ export class AdminController {
   // //   return this.adminService.updateFullCategory(category, id);
   // // }
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removeCategory')
   async removeCategory(@Query('id') id: number): Promise<object> {
     try { return await this.adminService.removeCategory(id); }
@@ -790,28 +803,28 @@ export class AdminController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getPurchases')
   async getPurchases() {
     try { return await this.adminService.getPurchases(); }
     catch (error) { throw error; }
   }
-  
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getRecentTopPurchases')
   async getPurcgetRecentTopPurchaseshases() {
     try { return await this.adminService.getRecentTopPurchases(); }
     catch (error) { throw error; }
   }
-  
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getLastWeekTotalPurchases')
   async getLastWeekTotalPurchases() {
     try { return await this.adminService.getLastWeekTotalPurchases(); }
     catch (error) { throw error; }
   }
-  
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Get('getLastWeekPurchases')
   async getLastWeekPurchases() {
     try { return await this.adminService.getLastWeekPurchases(); }
@@ -833,8 +846,7 @@ export class AdminController {
   //   return this.adminService.updateFullPurchase(purchase, id);
   // }
 
-  // @UseGuards(SessionGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Delete('removePurchase/:id')
   async removePurchase(@Param('id') id: number): Promise<object> {
     try { return await this.adminService.removePurchase(id); }
@@ -892,14 +904,14 @@ export class AdminController {
   //   return this.adminService.deletePlay(id);
   // }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Patch('userActivation/:id')
   async userActivation(@Param('id') id: string, @Query('activation') activation: boolean) {
     try { return await this.adminService.userActivation(id, activation); }
     catch (error) { throw error; }
   }
 
-  @UseGuards(SessionGuard)
+  @UseGuards(SessionGuard, JwtAuthGuard)
   @Patch('userBan/:id')
   async userBan(@Param('id') id: string, @Query('ban') ban: boolean) {
     try { return await this.adminService.userBan(id, ban); }

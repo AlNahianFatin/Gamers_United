@@ -1,16 +1,9 @@
 import FiveBestsellers from "./fiveBestsellers";
 
 import Link from "next/link";
-import { Jaro, Itim, Inika, Inter } from 'next/font/google';
 import Accordion from "../components/Accordion";
-import PasswordField from "../components/PasswordField";
 
 export const dynamic = "force-dynamic";
-
-const jaro = Jaro({ subsets: ['latin'], weight: '400' });
-const itim = Itim({ subsets: ['latin'], weight: '400' });
-const inika = Inika({ subsets: ['latin'], weight: '400' });
-const inter = Inter({ subsets: ['latin'] });
 
 export default async function HomePage() {
   return (

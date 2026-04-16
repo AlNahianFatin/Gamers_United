@@ -12,13 +12,12 @@ import Sidebar from "../../components/Sidebar";
 import TopCards from "../../components/TopCards";
 import BarChart from "../../components/BarChart";
 import RecentPurchases from "../../components/RecentPurchases";
-import ErrorAlert from "../../components/ErrorAlert";
+import Alert from "../../components/Alert";
 
 export default function AdminPage() {
   const params = useParams();
   const [clientReady, setClientReady] = useState(false);
   const [userData, setUserData] = useState<Record<string, any> | null>(null);
-  // const [token, setToken] = useState<string | null>(null);
 
   const [globalError, setGlobalError] = useState("");
 
@@ -30,18 +29,6 @@ export default function AdminPage() {
       setGlobalError("");
     }, 2000);
   };
-
-  // const logout = async () => {
-  //   try {
-  //     localStorage.clear();
-  //     await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
-  //     router.push(`/login`);
-  //   }
-  //   catch (error) {
-  //     console.warn("Logout failed, forcing client logout. Error:", error);
-  //     router.push("/");
-  //   }
-  // };
 
   useEffect(() => {
     if (!params.id) {
@@ -100,7 +87,7 @@ export default function AdminPage() {
   const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/admin/getAdminPicByID/${params.id}`);
   return (
     <>
-      {globalError && <ErrorAlert text={globalError} />}
+      {globalError && <Alert text={globalError} type="error" />}
       <div className="flex min-h-screen">
         <Sidebar id={userData?.id} index={1} />
 

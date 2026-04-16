@@ -12,7 +12,7 @@ import Sidebar from "../../components/Sidebar";
 import TopCards from "../../components/TopCards";
 import BarChart from "../../components/BarChart";
 import RecentPurchases from "../../components/RecentPurchases";
-import ErrorAlert from "../../components/ErrorAlert";
+import ErrorAlert from "../../components/Alert";
 
 type Category = {
     id: number;

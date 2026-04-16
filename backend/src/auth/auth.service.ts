@@ -23,7 +23,7 @@ export class AuthService {
     @InjectRepository(PlayerEntity) private playerRepository: Repository<PlayerEntity>,
     @InjectRepository(GamesEntity) private gamesRepository: Repository<GamesEntity>,) { }
 
-  private revokedTokens = new Set<string>();
+  // private revokedTokens = new Set<string>();
 
   async login(session, login: LoginRequestDTO, res): Promise<object> {
     login.username = login.username?.trim();
@@ -35,7 +35,7 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(login.password, userExists.password);
     if (!isMatch)
-      throw new HttpException('Password does not match', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Incorrect password', HttpStatus.BAD_REQUEST);
 
     if (!userExists.activation) {
       const id = userExists.id;
@@ -55,47 +55,10 @@ export class AuthService {
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000,
     });
-
-    // const mailed = await this.mailerService.sendMail({
-    //   to: userExists.email,
-    //   subject: 'Account logged in',
-    //   text: `Your account '${userExists.username}' has been logged into Gamers United. If this wasn't you, try resetting your password or contact admin_gamersunited@gmail.com`
-    // });
-    // if (!mailed)
-    //   throw new HttpException('Email could not be verified. Please recheck your email', HttpStatus.BAD_REQUEST);
-
     return { message: "Login Successful!", userExists }; //accessToken: this.jwtService.sign(payload), 
   }
 
-  // isTokenRevoked(token?: string): boolean {
-  //   if (!token)
-  //     return false;
-  //   return this.revokedTokens.has(token);
-  // }
-
   async logout(session?, res?): Promise<object> {
-    // if (!session?.user)
-    //   throw new HttpException('You are not currently logged in', HttpStatus.BAD_REQUEST);
-
-    // if (!token)
-    //   throw new HttpException('JWT Token missing', HttpStatus.BAD_REQUEST);
-
-    // if (this.isTokenRevoked(token))
-    //   throw new HttpException('JWT Token already revoked', HttpStatus.BAD_REQUEST);
-
-    // const isDestroyed: Boolean = await res.clearCookie('connect.sid');
-    // if (!isDestroyed)
-    //   throw new HttpException('Cookie deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
-    // await session.destroy((err) => {
-    //   if (err)
-    //     throw new HttpException('Session deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
-    // });
-
-    // if (!this.revokedTokens.add(token))
-    //   throw new HttpException('JWT token deletion failed. Please try again later', HttpStatus.INTERNAL_SERVER_ERROR);
-
-    // return { message: 'Logged out successfully' };
-
     try {
       res.clearCookie('jwtToken', {
         httpOnly: true,
@@ -143,7 +106,7 @@ export class AuthService {
     const emailKey = email.trim().toLowerCase();
 
     const existing = this.otpStore.get(emailKey);
-    if (existing && Date.now() < existing.expires) 
+    if (existing && Date.now() < existing.expires)
       throw new HttpException("OTP already sent. Please wait.", HttpStatus.TOO_MANY_REQUESTS);
 
     const expiresIn = 5 * 60 * 1000;
