@@ -20,9 +20,20 @@ export default function SignupForm() {
     const [globalError, setGlobalError] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+
     const router = useRouter();
 
-    useEffect(() => { setClientReady(true); }, []);
+    useEffect(() => {
+        setClientReady(true);
+
+        return () => {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
+
     if (!clientReady)
         return null;
 
@@ -31,6 +42,15 @@ export default function SignupForm() {
         setTimeout(() => {
             setGlobalError("");
         }, 2000);
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImage(file);
+            setImagePreview(URL.createObjectURL(file));
+            setErrors(prev => ({ ...prev, image: "" }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -114,7 +134,12 @@ export default function SignupForm() {
 
                     <div className="form-control w-full max-w-md">
                         <span className="label-text">Profile Image:</span>
-                        <input type="file" className="file-input file-input-bordered w-full max-w-md" id="image" name="image" onChange={(e) => { if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); setErrors(prev => ({ ...prev, image: "" })); } }} />
+                        <div className="flex justify-center">
+                            {imagePreview && (
+                                <img src={imagePreview} alt="Preview" className="w-100% h-32 object-cover rounded" />
+                            )}
+                        </div>
+                        <input type="file" className="file-input file-input-bordered w-full max-w-md" id="file" name="image" onChange={(e) => { handleImageChange(e); if (e.target.files && e.target.files.length > 0) { setImage(e.target.files[0]); setErrors(prev => ({ ...prev, image: "" })); } }} />
                         <p className="label-text-alt font-extralight" style={{ textAlign: "right" }}>Max size 10MB</p>
                         <p style={{ color: "red", textAlign: "center" }}> {errors.image} </p> <br></br>
                     </div>

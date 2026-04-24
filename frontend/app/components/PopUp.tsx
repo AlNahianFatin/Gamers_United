@@ -15,7 +15,7 @@ export default function PopUp({ topic, text, option1, option2, onConfirm, onClos
     };
 
     return (
-        <dialog ref={dialogRef} className="modal" onClick={handleClose} >
+        <dialog ref={dialogRef} className="modal" onClick={handleClose}>
             <div className="modal-box" onClick={(e) => e.stopPropagation()}>
                 <h3 className="font-bold text-lg">{topic}</h3>
                 <p className="py-4">{text}</p>
@@ -27,7 +27,7 @@ export default function PopUp({ topic, text, option1, option2, onConfirm, onClos
                 </div>
             </div>
 
-            <form method="dialog" className="modal-backdrop">
+            <form method="dialog" className="modal-backdrop bg-transparent">
                 <button onClick={() => { dialogRef.current?.close(); onClose(); }}></button>
             </form>
         </dialog>
