@@ -40,13 +40,9 @@ export default function LoginForm() {
 
         if (!username.trim())
             newErrors.username = "Please enter username first!";
-        // else
-        //     newErrors.username = "";
 
         if (password == "")
             newErrors.password = "Please enter password first!";
-        // else
-        //     newErrors.password = "Please enter password first!";
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0)
@@ -58,18 +54,7 @@ export default function LoginForm() {
                 password: password
             };
 
-            // if (!userData.username) {
-            //     setUNameError("Username cannot be empty");
-            //     return;
-            // }
-
-            // if (!userData.password) {
-            //     setPassError("Password cannot be empty");
-            //     return;
-            // }
-
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, userData, { withCredentials: true });
-            // setIsLoggedIn(true);
 
             const role = response.data.userExists.role;
             const id = response.data.userExists.id;

@@ -26,7 +26,7 @@ export default function AboutPage() {
         </div>
 
       </div>
-      <p style={{ textAlign: "center", fontFamily: "Inika", marginBottom: "3rem", padding: "20px" }}>We are young developers aiming to learn and build qualityful industry level web applications.<br></br>
+      <p style={{ textAlign: "center", fontFamily: "Inika", marginBottom: "3rem", padding: "20px" }}>I am a young developer aiming to learn and build qualityful industry-level web applications.<br></br>
         This web application was built on NEXT.JS for frontend and NestJS for backend following Node.JS architecture.<br></br>
         Feel free to share your thoughts!
       </p>
@@ -41,7 +41,7 @@ export default function AboutPage() {
             <p>ID: 23-50884-1</p>
           </div>
         </div>
-        <div className="card bg-base-100 w-66 shadow-sm">
+        {/* <div className="card bg-base-100 w-66 shadow-sm">
           <figure className="px-10 pt-10">
             <img src="/Murshed.jpeg" alt="Murshed Ahmed" className="rounded-xl" />
           </figure>
@@ -58,7 +58,7 @@ export default function AboutPage() {
             <h2 className="card-title">Shanjidul Islam</h2>
             <p>ID: 23-50912-1</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

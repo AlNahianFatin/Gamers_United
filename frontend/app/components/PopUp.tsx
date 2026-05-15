@@ -15,19 +15,18 @@ export default function PopUp({ topic, text, option1, option2, onConfirm, onClos
     };
 
     return (
-        <dialog ref={dialogRef} className="modal" onClick={handleClose}>
+        <dialog ref={dialogRef} className="modal backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl p-5" onClick={handleClose}>
             <div className="modal-box" onClick={(e) => e.stopPropagation()}>
                 <h3 className="font-bold text-lg">{topic}</h3>
                 <p className="py-4">{text}</p>
 
                 <div className="flex justify-end gap-4">
                     <button className="btn bg-red-400 hover:bg-red-500 text-black" onClick={() => { onConfirm(); dialogRef.current?.close(); }} > {option1} </button>
-
                     <button className="btn btn-outline" onClick={() => { dialogRef.current?.close(); onClose(); }} > {option2} </button>
                 </div>
             </div>
 
-            <form method="dialog" className="modal-backdrop bg-transparent">
+            <form method="dialog" className="modal-backdrop bg-transparent max-w-fit">
                 <button onClick={() => { dialogRef.current?.close(); onClose(); }}></button>
             </form>
         </dialog>
