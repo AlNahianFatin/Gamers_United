@@ -1,12 +1,12 @@
 # 🚀 Gamers United
 
-[![GitHub stars](https://img.shields.io/github/stars/AlNahianFatin/Gamers_United?style=for-the-badge)](https://github.com/AlNahianFatin/Gamers_United/stargazers)
+<!-- [![GitHub stars](https://img.shields.io/github/stars/AlNahianFatin/Gamers_United?style=for-the-badge)](https://github.com/AlNahianFatin/Gamers_United/stargazers)
 
 [![GitHub forks](https://img.shields.io/github/forks/AlNahianFatin/Gamers_United?style=for-the-badge)](https://github.com/AlNahianFatin/Gamers_United/network)
 
 [![GitHub issues](https://img.shields.io/github/issues/AlNahianFatin/Gamers_United?style=for-the-badge)](https://github.com/AlNahianFatin/Gamers_United/issues)
 
-[![GitHub license](https://img.shields.io/github/license/AlNahianFatin/Gamers_United?style=for-the-badge)](LICENSE) <!-- TODO: Add LICENSE file -->
+[![GitHub license](https://img.shields.io/github/license/AlNahianFatin/Gamers_United?style=for-the-badge)](LICENSE) --> <!-- TODO: Add LICENSE file -->
 
 **Unite, play, and conquer: Your ultimate hub for the gaming community!**
 
