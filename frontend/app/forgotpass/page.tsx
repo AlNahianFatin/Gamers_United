@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import "../globals.css"
 import Button from "../components/Button";
-import ErrorAlert from "../components/Alert";
+import Alert from "../components/Alert";
 
 export default function ForgotPass() {
     const [email, setEmail] = useState("");
@@ -39,7 +39,7 @@ export default function ForgotPass() {
             return;
 
         try {
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/forgotpass`, { email: email });
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgotpass`, { email: email });
 
             if (response.status === 201)
                 router.push(`/verifyotp/${email}`);
@@ -83,7 +83,7 @@ export default function ForgotPass() {
 
             </div>
 
-            {globalError && <ErrorAlert text={globalError} />}
+            {globalError && <Alert text={globalError} />}
             <div className="flex items-center justify-center p-4">
                 <form onSubmit={handleSubmit} className="bg-base-200 border-base-900 rounded-box min-w-[30em] max-w-xs border p-6 my-[1em]">
                     <div className="form-control w-full max-w-md">

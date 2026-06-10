@@ -74,7 +74,7 @@ export default function Game() {
 
     const fetchGame = async () => {
         try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/getFullGameByID/${params.id}`, { withCredentials: true });
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/getFullGameByID/${params.id}`, { withCredentials: true });
             setGame(response.data);
         }
         catch (error) {
@@ -97,7 +97,7 @@ export default function Game() {
     }
 
 
-    const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${params.id}`);
+    const imageUrl = (`${process.env.NEXT_PUBLIC_API_URL}/auth/getGamePicByID/${params.id}`);
     return (
         <>
         <div className="bg-red-500">
@@ -160,7 +160,7 @@ export default function Game() {
                         </div>
                     </div>
                     <div className="flex flex-col gap-3 shrink-0">
-                        <video src={`${process.env.NEXT_PUBLIC_API_URL}/getGameTrailerByID/${game?.id}`} controls className="w-68 h-46 object-contain rounded" />
+                        <video src={`${process.env.NEXT_PUBLIC_API_URL}/auth/getGameTrailerByID/${game?.id}`} controls className="w-68 h-46 object-contain rounded" />
                     </div>
                 </div>
             </div>

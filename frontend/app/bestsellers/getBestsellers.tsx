@@ -40,7 +40,7 @@ type PaginatedGames = {
 
 async function getGames(page: number): Promise<PaginatedGames> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getBestsellerGames?page=${page}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/getBestsellerGames?page=${page}`, {
             cache: "no-store",
         });
 
@@ -72,7 +72,7 @@ export default async function GetBestsellers({ page }: { page: number }) {
                     <div key={item.id} className="card bg-base-100 w-60 shadow-md">
                         <Link href={`/game/${item.id}`}>
                             <div className="relative h-56 w-full overflow-hidden">
-                                <img src={`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${item.id}`} alt={item.title} className="h-full w-full object-contain" />
+                                <img src={`${process.env.NEXT_PUBLIC_API_URL}/auth/getGamePicByID/${item.id}`} alt={item.title} className="h-full w-full object-contain" />
                             </div>
 
                             <div className="card-body">

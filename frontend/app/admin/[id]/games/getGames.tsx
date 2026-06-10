@@ -73,7 +73,7 @@ export default function getGames() {
                 <div key={item.id} className="relative w-full min-w-0 bg-base-100 shadow-md rounded-lg p-4 flex flex-col md:flex-row gap-4">
 
                     <div className="flex flex-col gap-3 shrink-0">
-                        <img src={`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${item.id}`} alt={item.title} className="w-48 object-contain rounded" />
+                        <img src={`${process.env.NEXT_PUBLIC_API_URL}/admin/getGamePicByID/${item.id}`} alt={item.title} className="w-48 object-contain rounded" />
                     </div>
 
                     <div className="flex flex-col gap-2 flex-1">
@@ -110,7 +110,7 @@ export default function getGames() {
                     </div>
 
                     <div className="flex flex-col gap-3 shrink-0">
-                        <video src={`${process.env.NEXT_PUBLIC_API_URL}/getGameTrailerByID/${item.id}`} controls className="w-68 h-46 object-contain rounded" />
+                        <video src={`${process.env.NEXT_PUBLIC_API_URL}/admin/getGameTrailerByID/${item.id}`} controls className="w-68 h-46 object-contain rounded" />
                     </div>
                 </div>
             ))}

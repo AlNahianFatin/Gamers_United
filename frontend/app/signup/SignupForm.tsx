@@ -95,7 +95,7 @@ export default function SignupForm() {
             userData.append('phone', phone.trim());
             userData.append('password', password);
 
-            const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/signup', userData);
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, userData);
 
             if (response.status === 201)
                 router.push(`./login`);

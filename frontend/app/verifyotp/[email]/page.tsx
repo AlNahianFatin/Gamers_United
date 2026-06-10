@@ -44,7 +44,7 @@ export default function VerifyOTPPage() {
       return;
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/verifyotp`, { email, otp: otp.trim() });
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/verifyotp`, { email, otp: otp.trim() });
 
       if (response.status === 201)
         router.push(`/resetpass/${email}`);

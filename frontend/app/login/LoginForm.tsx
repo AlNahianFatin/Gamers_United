@@ -54,7 +54,7 @@ export default function LoginForm() {
                 password: password
             };
 
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/login`, userData, { withCredentials: true });
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, userData, { withCredentials: true });
 
             const role = response.data.userExists.role;
             const id = response.data.userExists.id;

@@ -13,7 +13,7 @@ import { LoginRequestDTO } from '../dto/loginRequest.dto';
 import * as fs from 'fs';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
-@Controller()
+@Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
 
@@ -50,12 +50,12 @@ export class AuthController {
   }
 
   @Patch('resetpass')
-  async resetPass(@Body() body: { email: string; newPass: string, oldPass: string }): Promise<any> {
+  async resetPass(@Body() body: { email: string; newPass: string, rePass: string }): Promise<any> {
     const salt = await bcrypt.genSalt();
     const hashedNewPass = await bcrypt.hash(body.newPass, salt);
-    const hashedOldPass = await bcrypt.hash(body.oldPass, salt);
+    const hashedRePass = await bcrypt.hash(body.rePass, salt);
 
-    if (hashedNewPass !== hashedOldPass)
+    if (hashedNewPass !== hashedRePass)
       throw new HttpException({ message: [{ field: 'rPassword', messages: [`Passwords do not match! Recheck your password`] }] }, HttpStatus.NOT_FOUND);
     try { return this.authService.resetPass(body.email, hashedNewPass); }
     catch (error) { throw error; }

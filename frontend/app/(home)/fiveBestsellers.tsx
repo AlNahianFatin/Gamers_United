@@ -33,7 +33,7 @@ type Game = {
 
 async function getGames(): Promise<Game[]> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getFiveBestsellerGames`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/getFiveBestsellerGames`, {
             cache: "no-store",
         });
 
@@ -60,7 +60,7 @@ export default async function FiveBestsellers() {
                 <div key={item.id} className="card bg-base-100 w-60 shadow-md">
                     <Link href={`/game/${item.id}`}>
                         <div className="relative h-56 w-full overflow-hidden">
-                            <img src={`${process.env.NEXT_PUBLIC_API_URL}/getGamePicByID/${item.id}`} alt={item.title} className="h-full w-full object-contain" />
+                            <img src={`${process.env.NEXT_PUBLIC_API_URL}/auth/getGamePicByID/${item.id}`} alt={item.title} className="h-full w-full object-contain" />
                         </div>
 
                         <div className="card-body">

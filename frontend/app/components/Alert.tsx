@@ -1,7 +1,7 @@
 
 type AlertProps = {
     text: string;
-    type: "success" | "error" | "warning";
+    type?: "success" | "error" | "warning";
 };
 
 export default function Alert({ text, type = "success" }: AlertProps) {

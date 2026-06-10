@@ -45,7 +45,7 @@ export default function Admin() {
         if (!storedToken)
           router.replace(`/admin/${params.id}/not-found`);
 
-        const profileRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/profile`, { withCredentials: true });
+        const profileRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, { withCredentials: true });
 
         if (Number(params.id) !== profileRes.data.id) {
           router.replace(`/admin/${params.id}/not-found`);

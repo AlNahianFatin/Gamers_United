@@ -18,7 +18,7 @@ export default function Sidebar({ children, id, index }: any) {
     const logout = async () => {
         try {
             localStorage.clear();
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {}, { withCredentials: true });
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {}, { withCredentials: true });
             router.push(`../login`);
         }
         catch (error) {
@@ -32,7 +32,7 @@ export default function Sidebar({ children, id, index }: any) {
         <>
             {showPopup && (<PopUp topic="Confirm Logout" text="Are you sure you want to logout?" option1="Yes" option2="Cancel" onConfirm={logout} onClose={() => setShowPopup(false)} />)}
             <div className="flex flex-1 min-h-full">
-                <div className='w-20 h-full p-4 bg-black border-r-[1px] flex flex-col justify-between' style={{ borderColor: "red" }}>
+                <div className='w-20 h-full p-4 bg-black border-r flex flex-col justify-between' style={{ borderColor: "red" }}>
                     <div className='flex flex-col items-center'>
 
                         <Link href='/'>
@@ -40,7 +40,7 @@ export default function Sidebar({ children, id, index }: any) {
                                 <img src="/home.png" alt="Home" style={{ width: "30px", height: "auto" }} />
                             </div>
                         </Link>
-                        <span className='border-b-[1px] border-gray-200 w-full p-2' style={{ borderColor: "red" }}></span>
+                        <span className='border-b border-gray-200 w-full p-2' style={{ borderColor: "red" }}></span>
 
                         <Link href={`/admin/${id}`}>
                             <div className={`${index === 1 ? 'bg-red-500 text-white' : 'bg-white hover:bg-red-400 cursor-pointer'} my-4 p-3 rounded-lg inline-block tooltip`} data-tip={"Dashboard"}>
@@ -85,7 +85,7 @@ export default function Sidebar({ children, id, index }: any) {
                         </Link>
 
                         <button onClick={() => setShowPopup(true)}>
-                            <div className='bg-black border-[1px] border-gray-200 hover:bg-red-400 cursor-pointer my-4 p-3 rounded-lg inline-block tooltip' data-tip={"Logout"}>
+                            <div className='bg-black border border-gray-200 hover:bg-red-400 cursor-pointer my-4 p-3 rounded-lg inline-block tooltip' data-tip={"Logout"}>
                                 <FiLogOut size={20} />
                             </div>
                         </button>

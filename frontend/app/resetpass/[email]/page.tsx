@@ -49,7 +49,7 @@ export default function VerifyOTPPage() {
             return;
 
         try {
-            const response = await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/resetpass`, { email, newPass: password, oldPass: rPassword });
+            const response = await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resetpass`, { email, newPass: password, oldPass: rPassword });
 
             if (response.status === 200)
                 router.push(`/login`);
