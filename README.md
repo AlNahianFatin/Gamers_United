@@ -14,14 +14,13 @@
 
 ## 📖 Overview
 
-Gamers United is a full-stack web application designed to create a vibrant community platform for gamers. It provides a centralized hub where users can connect, discover new games, manage their profiles, and interact with fellow enthusiasts. Built with a modern tech stack, this application aims to deliver a seamless and engaging experience for gamers worldwide.
+Gamers United is a full-stack web application designed to create a vibrant community platform for gamers. It provides a centralized hub where users can browse, discover new games, manage their profiles, and purchase games. Built with a modern tech stack, this application aims to deliver a seamless and engaging experience for gamers worldwide.
 
 ## ✨ Features
 
 -   🎯 **User Authentication:** Secure registration, login, and profile management for personalized experiences.
 -   🎮 **Game Discovery:** Browse and search for a wide array of games across different platforms and genres.
 -   👤 **User Profiles:** Customize personal profiles, showcase game libraries, and track gaming achievements.
--   🤝 **Community Interaction:** Connect with other gamers, join groups, and participate in discussions.
 -   📰 **News & Updates:** Stay informed with the latest gaming news and updates.
 -   📱 **Responsive Design:** Optimized for a consistent experience across desktop and mobile devices.
 
@@ -56,7 +55,7 @@ Follow these steps to get Gamers United up and running on your local machine.
 Before you begin, ensure you have the following installed:
 
 -   **Node.js** (LTS version, e.g., 18.x or 20.x)
--   **npm** (comes with Node.js) or **Yarn**
+-   **npm** (comes with Node.js) 
 -   **PostgreSQL** (running locally)
 
 ### Installation
@@ -71,39 +70,59 @@ Before you begin, ensure you have the following installed:
     Navigate into the `backend` directory and install its dependencies:
     ```bash
     cd backend
-    npm install # or yarn install
+    npm install 
     ```
 
     **Environment setup for backend:**
-    Create a `.env` file in the `backend` directory based on `.env.example` (if present, otherwise create one with below variables):
+    Create a `.env` file in the `backend` directory based on `.env`:
     ```
-    cp .env.example .env # If .env.example exists
+    touch .env
     ```
     Configure your environment variables:
     ```ini
-    PORT=5000
-    MONGO_URI=mongodb://localhost:27017/gamers_united_db
-    JWT_SECRET=supersecretjwtkey
-    # Add any other backend specific variables
+    DB_HOST=<host>
+    DB_PORT=<port_no>
+    DB_USERNAME=<db_username>
+    DB_PASSWORD=<your_postgres_password>
+    DB_NAME=<your_db_name>
+
+    ADMIN_Email=<your_email_to_send_otp_and_other_emails>
+    ADMIN_Email_Pass=<your_email_3rd_party_app_password>
+
+    BACKEND_PORT=<backend_port>
+    FRONTEND_URL=<frontend_url>
+
+    SESSION_SECRET=<your_session_secret>
+
+    JWT_SECRET=<your_jwt_secret>
+
     ```
-    *   `PORT`: The port the backend server will run on.
-    *   `MONGO_URI`: Your MongoDB connection string.
-    *   `JWT_SECRET`: A strong, random key for JWT token signing.
 
     **Database Setup for backend:**
-    Ensure your MongoDB instance is running. No specific migration commands are detected, but schema creation would be handled by the ORM (e.g., Mongoose).
+    Ensure your PostgreSQL instance is running. Schema creation would be handled by the ORM (TypeORM).
 
 3.  **Frontend Setup**
     Navigate into the `frontend` directory and install its dependencies:
     ```bash
     cd ../frontend
-    npm install # or yarn install
+    npm install 
     ```
 
     **Environment setup for frontend:**
-    Create a `.env` file in the `frontend` directory based on `.env.example` (if present, otherwise create one with below variables):
+    Create a `.env` file in the `backend` directory based on `.env`:
     ```
-    cp .env.example .env # If .env.example exists
+    touch .env
+    ```
+Configure your environment variables:
+    ```ini
+    
+    ADMIN_Email=<your_email_to_send_otp_and_other_emails>
+    ADMIN_Email_Pass=<your_email_3rd_party_app_password>
+
+    BACKEND_PORT=<frontend_port>
+    NEXT_PUBLIC_API_URL=<backend_url>
+    NEXT_PUBLIC_API_ENDPOINT=<frontend_url>
+
     ```
 
 ### Start Development Servers
@@ -112,9 +131,9 @@ Before you begin, ensure you have the following installed:
     Open a new terminal, navigate to the `backend` directory, and run:
     ```bash
     cd backend
-    npm run dev # Or 'npm start' if 'dev' is not available
+    npm run start:dev # Or 'npm start' if 'dev' is not available
     ```
-    The backend server should start on `http://localhost:5000` (or your configured `PORT`).
+    The backend server should start on `http://localhost:BACKEND_PORT`.
 
 2.  **Start the Frontend Development Server**
     Open another new terminal, navigate to the `frontend` directory, and run:
@@ -122,43 +141,48 @@ Before you begin, ensure you have the following installed:
     cd frontend
     npm run dev
     ```
-    The frontend application should start on `http://localhost:5173` (Vite's default port) or another available port.
+    The frontend application should start on `http://localhost:PORT`.
 
 3.  **Open your browser**
-    Visit `http://localhost:5173` (or the port indicated by your frontend server) to access the application.
+    Visit `http://localhost:PORT` (or the port indicated by your frontend server) to access the application.
 
 ## 📁 Project Structure
 
 ```
 Gamers_United/
-├── .gitignore          # Files and directories to ignore in Git
-├── README.md           # This documentation file
-├── backend/            # Backend server code
-│   ├── src/            # Source code for the backend
-│   │   ├── controllers/ # Logic for handling requests
-│   │   ├── models/      # Database schemas (e.g., Mongoose models)
-│   │   ├── routes/      # API route definitions
-│   │   ├── middleware/  # Express middleware
-│   │   └── index.ts     # Backend entry point
-│   ├── .env.example    # Example environment variables for backend
-│   ├── package.json    # Backend dependencies and scripts
-│   ├── tsconfig.json   # TypeScript configuration for backend
+├── .gitignore              # Files and directories to ignore in Git
+├── README.md               # This documentation file
+├── backend/                # Backend server code
+│   ├── src/                # Source code for the backend
+│   │   ├── admin/          # Logic for handling admin routes, logics and models (controller,       |   |   |                      module, service)
+│   │   ├── auth/           # Handling authentication with JWT
+│   │   ├── dto/            # Handling user input validations
+│   │   ├── entities/       # PostgreSQL entities
+|   |   ├── app.controller  # Handling app routes
+|   |   ├── app.module      # Importing modules, controllers, services (providers) and typeORM      |   |   |                      module
+|   |   ├── main.ts         # Handling session, CORS, global filters, cookie, and port number    
+│   │   ├── MulterExceptionFilter.ts  # Handling MULTER exception filters
+|   |   └── session.guard.ts   # Handling session guards
+|   ├── uploads             # Storing user uploaded files
+│   ├── .env                # Environment variables for backend
+│   ├── package.json        # Backend dependencies and scripts
+│   ├── tsconfig.json       # TypeScript configuration for backend
 │   └── (other config files)
-└── frontend/           # Frontend client code
-    ├── public/         # Static assets (images, favicon, etc.)
-    ├── src/            # Source code for the frontend
-    │   ├── components/  # Reusable UI components (React)
-    │   ├── pages/       # Application pages/views
-    │   ├── assets/      # Images, icons specific to frontend
-    │   ├── hooks/       # Custom React hooks
-    │   ├── services/    # API interaction logic
-    │   ├── styles/      # Global styles, Tailwind CSS config
-    │   └── main.tsx     # Frontend entry point
-    ├── .env.example    # Example environment variables for frontend
-    ├── package.json    # Frontend dependencies and scripts
-    ├── tsconfig.json   # TypeScript configuration for frontend
-    ├── postcss.config.js # Tailwind CSS configuration
-    └── tailwind.config.js # Tailwind CSS configuration
+└── frontend/               # Frontend client code
+    ├── public/             # Static assets (images, favicon, etc.)
+    ├── src/                # Source code for the frontend
+    │   ├── components/     # Reusable UI components (React)
+    │   ├── pages/          # Application pages/views
+    │   ├── assets/         # Images, icons specific to frontend
+    │   ├── hooks/          # Custom React hooks
+    │   ├── services/       # API interaction logic
+    │   ├── styles/         # Global styles, Tailwind CSS config
+    │   └── main.tsx        # Frontend entry point
+    ├── .env.example        # Example environment variables for frontend
+    ├── package.json        # Frontend dependencies and scripts
+    ├── tsconfig.json       # TypeScript configuration for frontend
+    ├── postcss.config.js   # Tailwind CSS configuration
+    └── tailwind.config.js  # Tailwind CSS configuration
 
 ```
 
@@ -166,27 +190,7 @@ Gamers_United/
 
 ### Environment Variables
 
-Both the frontend and backend utilize environment variables for sensitive information and configuration. Please refer to the respective `.env.example` files in each directory for a complete list.
-
-#### Backend (`backend/.env`)
-
-| Variable      | Description                               | Default                 | Required |
-
-|---------------|-------------------------------------------|-------------------------|----------|
-
-| `PORT`        | Port for the backend server               | `5000`                  | Yes      |
-
-| `MONGO_URI`   | MongoDB connection string                 | `mongodb://localhost:27017/gamers_united_db` | Yes      |
-
-| `JWT_SECRET`  | Secret key for signing JWT tokens         | `supersecretjwtkey`     | Yes      |
-
-#### Frontend (`frontend/.env`)
-
-| Variable      | Description                               | Default                 | Required |
-
-|---------------|-------------------------------------------|-------------------------|----------
-
-| `VITE_API_URL` | Base URL for the backend API              | `http://localhost:5000/api` | Yes      |
+Both the frontend and backend utilize environment variables for sensitive information and configuration. 
 
 ### Configuration Files
 
@@ -194,8 +198,7 @@ Both the frontend and backend utilize environment variables for sensitive inform
 -   `backend/tsconfig.json`: TypeScript compiler options for the backend.
 -   `frontend/package.json`: Manages frontend dependencies and scripts.
 -   `frontend/tsconfig.json`: TypeScript compiler options for the frontend.
--   `frontend/vite.config.ts`: Configuration for Vite, the frontend build tool.
--   `frontend/tailwind.config.js`: Tailwind CSS configuration for custom styles, themes, etc.
+-   `frontend/next.config.ts`: Configuration for Next.js, the frontend build tool.
 
 ## 🔧 Development
 
@@ -209,7 +212,7 @@ Each sub-directory (`backend` and `frontend`) has its own set of scripts:
 
 |---------------|----------------------------------------------|
 
-| `npm run dev` | Starts the backend server in development mode (with hot-reloading). |
+| `npm run start: dev` | Starts the backend server in development mode (with hot-reloading). |
 
 | `npm start`   | Starts the compiled backend server (production mode). |
 
@@ -287,20 +290,20 @@ To prepare the application for production deployment, you'll need to build both 
     ```
     This will create an optimized production build in the `frontend/dist` directory.
 
-### Deployment Options
+<!-- ### Deployment Options
 
 -   **Docker:** A `Dockerfile` (potentially located in `backend/` or `project-root/`) can be used to containerize the application for easier deployment to any Docker-compatible environment.
 -   **Cloud Hosting (e.g., Vercel/Netlify for Frontend, Render/Heroku for Backend):**
     The `frontend/dist` directory can be deployed to static site hosts. The backend can be deployed to Node.js compatible cloud platforms.
--   **Monorepo Deployment:** Tools like Vercel or Netlify often have monorepo support that can build and deploy both parts of the application.
+-   **Monorepo Deployment:** Tools like Vercel or Netlify often have monorepo support that can build and deploy both parts of the application. -->
 
 ## 📚 API Reference
 
-The backend exposes a RESTful API to manage game data, user profiles, authentication, and community interactions.
+The backend exposes a RESTful API to manage game data, user profiles, authentication, and others.
 
 ### Base URL
 
-`http://localhost:5000/api` (during development)
+`http://localhost:BACKEND_PORT/api` (during development)
 
 ### Authentication
 
@@ -310,10 +313,10 @@ API access typically requires authentication. Users can register and log in to o
 
 ### Endpoints
 
-(This section requires detailed code analysis of routes, e.g., from `backend/src/routes/*.ts`)
+(This section requires detailed code analysis of routes, e.g., from `backend/src/*/*.controller.ts`)
 
-#### `POST /api/auth/register`
--   **Description**: Register a new user account.
+#### `POST /api/auth/signup`
+-   **Description**: Signup a new user account.
 -   **Request Body**: `{ "username": "...", "email": "...", "password": "..." }`
 -   **Response**: `{ "token": "...", "user": { ... } }`
 
@@ -322,7 +325,7 @@ API access typically requires authentication. Users can register and log in to o
 -   **Request Body**: `{ "email": "...", "password": "..." }`
 -   **Response**: `{ "token": "...", "user": { ... } }`
 
-#### `GET /api/users/profile`
+<!-- #### `GET /api/users/profile`
 -   **Description**: Get the authenticated user's profile.
 -   **Authentication**: Required (JWT)
 -   **Response**: `{ "user": { "username": "...", "email": "...", "games": [...] } }`
@@ -334,7 +337,7 @@ API access typically requires authentication. Users can register and log in to o
 
 #### `GET /api/games/:id`
 -   **Description**: Get details for a specific game.
--   **Response**: `{ "id": "...", "title": "...", "description": "...", "releaseDate": "...", "developer": "..." }`
+-   **Response**: `{ "id": "...", "title": "...", "description": "...", "releaseDate": "...", "developer": "..." }` -->
 
 ## 🤝 Contributing
 
