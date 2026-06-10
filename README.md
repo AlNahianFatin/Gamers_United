@@ -113,7 +113,7 @@ Before you begin, ensure you have the following installed:
     ```
     touch .env
     ```
-Configure your environment variables:
+    Configure your environment variables:
     ```ini
     
     ADMIN_Email=<your_email_to_send_otp_and_other_emails>
